@@ -139,6 +139,12 @@ jobs:
 
               // Map Jira issue type to GitHub labels
               const labels = ['jira-synced'];
+              
+              // Add the Jira issue type as a label (e.g., "type: Bug", "type: Task", "type: Story")
+              const typeLabel = 'type: ' + issueType;
+              labels.push(typeLabel);
+              
+              // Also add standard GitHub labels based on type
               if (issueType.toLowerCase().includes('bug')) {
                 labels.push('bug');
               } else if (issueType.toLowerCase().includes('story') || issueType.toLowerCase().includes('feature')) {
@@ -169,16 +175,30 @@ jobs:
                 // Ensure labels exist
                 for (const label of labels) {
                   try {
+                    // Determine label color based on type
+                    let labelColor = '666666'; // default gray
+                    if (label === 'bug') {
+                      labelColor = 'd73a4a'; // red
+                    } else if (label === 'enhancement') {
+                      labelColor = 'a2eeef'; // cyan
+                    } else if (label === 'task') {
+                      labelColor = 'fbca04'; // yellow
+                    } else if (label === 'jira-synced') {
+                      labelColor = '0366d6'; // blue
+                    } else if (label.includes('high')) {
+                      labelColor = 'b60205'; // dark red
+                    } else if (label.includes('low')) {
+                      labelColor = 'c5def5'; // light blue
+                    } else if (label.startsWith('type:')) {
+                      // Type labels get purple color
+                      labelColor = '7057ff';
+                    }
+                    
                     await github.rest.issues.createLabel({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       name: label,
-                      color: label === 'bug' ? 'd73a4a' : 
-                             label === 'enhancement' ? 'a2eeef' :
-                             label === 'task' ? 'fbca04' :
-                             label === 'jira-synced' ? '0366d6' :
-                             label.includes('high') ? 'b60205' :
-                             label.includes('low') ? 'c5def5' : '666666'
+                      color: labelColor
                     });
                   } catch (e) {
                     // Label already exists
