@@ -1,4 +1,4 @@
-name: AI Code Review (Gemini)
+name: AI Code Review (Groq)
 
 on:
   issue_comment:
@@ -10,9 +10,9 @@ permissions:
 
 jobs:
   ai-review:
-    name: Generate Gemini code review
+    name: Generate AI code review with Groq
     runs-on: ubuntu-latest
-    if: github.event.issue.pull_request && contains(github.event.comment.body, 'gemini-review')
+    if: github.event.issue.pull_request && contains(github.event.comment.body, 'ai-review')
     steps:
       - name: Add rocket reaction to comment
         uses: actions/github-script@v7
@@ -62,71 +62,72 @@ jobs:
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Run AI code review with Gemini
+      - name: Run AI code review with Groq
         uses: actions/github-script@v7
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PR_DIFF: ${{ steps.diff.outputs.diff }}
         with:
           script: |
             const prDetails = ${{ steps.pr_info.outputs.result }};
             const diff = process.env.PR_DIFF || '';
 
-            const maxDiffLength = 50000;
+            const maxDiffLength = 30000;
             const truncatedDiff = diff.length > maxDiffLength
               ? diff.substring(0, maxDiffLength) + '\n\n... (diff truncated due to length)'
               : diff;
 
-            const prompt = `You are an expert code reviewer. Review this pull request and provide constructive feedback.
+            const systemPrompt = 'You are an expert code reviewer. Provide concise, actionable feedback.';
+            
+            const userPrompt = `Review this pull request:
 
-            PR Title: ${prDetails.title}
-            PR Description: ${prDetails.description}
-            PR Author: ${prDetails.author}
+PR Title: ${prDetails.title}
+PR Description: ${prDetails.description}
+PR Author: ${prDetails.author}
 
-            Code Changes:
-            \`\`\`diff
-            ${truncatedDiff}
-            \`\`\`
+Code Changes:
+\`\`\`diff
+${truncatedDiff}
+\`\`\`
 
-            Please provide:
-            1. A brief summary of the changes
-            2. Potential issues or bugs
-            3. Code quality and best practices feedback
-            4. Security concerns (if any)
-            5. Suggestions for improvement
+Provide:
+1. Brief summary of changes
+2. Potential issues or bugs
+3. Code quality and best practices feedback
+4. Security concerns (if any)
+5. Suggestions for improvement
 
-            Keep your review concise and actionable.`;
+Keep your review concise and actionable.`;
 
-            const geminiKey = process.env.GEMINI_API_KEY;
+            const groqKey = process.env.GROQ_API_KEY;
 
             try {
-              const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+              const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json'
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${groqKey}`
                 },
                 body: JSON.stringify({
-                  contents: [{
-                    parts: [{
-                      text: prompt
-                    }]
-                  }],
-                  generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 8192
-                  }
+                  model: 'llama-3.3-70b-versatile',
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                  ],
+                  temperature: 0.7,
+                  max_tokens: 4096
                 })
               });
 
               if (!response.ok) {
                 const errorBody = await response.text();
-                throw new Error(`Gemini API returned ${response.status}: ${errorBody}`);
+                throw new Error(`Groq API returned ${response.status}: ${errorBody}`);
               }
 
               const data = await response.json();
-              const review = data.candidates[0].content.parts[0].text;
+              const review = data.choices[0].message.content;
 
-              const commentBody = '## 🤖 Gemini Code Review\n\n' + review + '\n\n---\n*Review powered by Google Gemini*';
+              const commentBody = '## 🤖 AI Code Review\n\n' + review + '\n\n---\n*Review powered by Groq (Llama 3)*';
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -135,14 +136,14 @@ jobs:
                 body: commentBody
               });
 
-              console.log('✅ Gemini review posted successfully');
+              console.log('✅ AI review posted successfully');
             } catch (error) {
-              console.error('❌ Error during Gemini review:', error.message);
+              console.error('❌ Error during AI review:', error.message);
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: '## 🤖 Gemini Code Review\n\n⚠️ Unable to generate automated review: ' + error.message
+                body: '## 🤖 AI Code Review\n\n⚠️ Unable to generate automated review: ' + error.message
               });
             }
