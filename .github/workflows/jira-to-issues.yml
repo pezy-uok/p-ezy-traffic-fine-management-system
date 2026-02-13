@@ -49,19 +49,20 @@ jobs:
             console.log('Fetching Jira issues with JQL:', jql);
             console.log('Jira Base URL:', jiraBaseUrl);
 
-            // Fetch ALL Jira issues with pagination using GET
+            // Fetch ALL Jira issues with pagination using new API
             let allJiraIssues = [];
             let startAt = 0;
             const maxResults = 100;
-            let totalIssues = 0;
+            let hasMoreResults = true;
             
             // Paginate through all Jira issues
-            do {
+            while (hasMoreResults) {
               console.log('Fetching issues starting at ' + startAt + '...');
               
-              const searchUrl = jiraBaseUrl + '/rest/api/3/search?jql=' + encodeURIComponent(jql) + 
+              // Use the new search/jql endpoint directly
+              const searchUrl = jiraBaseUrl + '/rest/api/3/search/jql?jql=' + encodeURIComponent(jql) + 
                 '&startAt=' + startAt + 
-                '&maxResults=' + maxResults + 
+                '&maxResults=' + maxResults +
                 '&fields=summary,description,issuetype,priority,status';
               
               const jiraResponse = await fetch(searchUrl, {
@@ -75,49 +76,45 @@ jobs:
               if (!jiraResponse.ok) {
                 const errorText = await jiraResponse.text();
                 console.error('Jira API error:', jiraResponse.status, errorText);
-                
-                // If old API deprecated, try new endpoint
-                if (jiraResponse.status === 410) {
-                  console.log('Trying new search/jql endpoint...');
-                  const newSearchUrl = jiraBaseUrl + '/rest/api/3/search/jql?jql=' + encodeURIComponent(jql) + 
-                    '&startAt=' + startAt + 
-                    '&maxResults=' + maxResults;
-                  
-                  const newResponse = await fetch(newSearchUrl, {
-                    method: 'GET',
-                    headers: {
-                      'Authorization': 'Basic ' + authHeader,
-                      'Accept': 'application/json'
-                    }
-                  });
-                  
-                  if (!newResponse.ok) {
-                    const newErrorText = await newResponse.text();
-                    console.error('New API error:', newResponse.status, newErrorText);
-                    core.setFailed('Jira API error: ' + newResponse.status);
-                    return;
-                  }
-                  
-                  const newData = await newResponse.json();
-                  totalIssues = newData.total;
-                  allJiraIssues = allJiraIssues.concat(newData.issues);
-                  startAt += maxResults;
-                  console.log('Fetched ' + newData.issues.length + ' issues (total: ' + totalIssues + ')');
-                  continue;
-                }
-                
                 core.setFailed('Jira API error: ' + jiraResponse.status);
                 return;
               }
 
               const jiraData = await jiraResponse.json();
-              totalIssues = jiraData.total;
-              allJiraIssues = allJiraIssues.concat(jiraData.issues);
+              
+              // Log response structure for debugging
+              console.log('Response keys:', Object.keys(jiraData).join(', '));
+              
+              // Handle different response formats (issues vs values)
+              const issues = jiraData.issues || jiraData.values || [];
+              const total = jiraData.total !== undefined ? jiraData.total : (jiraData.maxResults ? startAt + issues.length : issues.length);
+              
+              if (issues.length === 0) {
+                hasMoreResults = false;
+                break;
+              }
+              
+              // Log first issue structure for debugging
+              if (startAt === 0 && issues.length > 0) {
+                console.log('First issue keys:', Object.keys(issues[0]).join(', '));
+                if (issues[0].fields) {
+                  console.log('First issue fields keys:', Object.keys(issues[0].fields).join(', '));
+                }
+              }
+              
+              allJiraIssues = allJiraIssues.concat(issues);
               startAt += maxResults;
               
-              console.log('Fetched ' + jiraData.issues.length + ' issues (total: ' + totalIssues + ')');
+              console.log('Fetched ' + issues.length + ' issues (total so far: ' + allJiraIssues.length + ')');
               
-            } while (startAt < totalIssues);
+              // Check if we have more results
+              if (jiraData.total !== undefined) {
+                hasMoreResults = startAt < jiraData.total;
+              } else {
+                // If no total, check if we got fewer than max results
+                hasMoreResults = issues.length === maxResults;
+              }
+            }
             
             console.log('Found ' + allJiraIssues.length + ' total Jira issues');
             
@@ -161,8 +158,16 @@ jobs:
 
             for (const jiraIssue of allJiraIssues) {
               const jiraKey = jiraIssue.key;
-              const summary = jiraIssue.fields.summary;
-              const issueType = jiraIssue.fields.issuetype.name;
+              
+              // Handle case where fields might not exist
+              if (!jiraIssue.fields) {
+                console.log('Skipping ' + jiraKey + ' - no fields data');
+                skippedCount++;
+                continue;
+              }
+              
+              const summary = jiraIssue.fields.summary || 'No summary';
+              const issueType = jiraIssue.fields.issuetype ? jiraIssue.fields.issuetype.name : 'Task';
               const priority = jiraIssue.fields.priority ? jiraIssue.fields.priority.name : 'Medium';
               const jiraUrl = jiraBaseUrl + '/browse/' + jiraKey;
 
