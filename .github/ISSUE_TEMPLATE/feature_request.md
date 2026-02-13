@@ -16,4 +16,4 @@ Describe the problem this feature would solve. Ex. I'm always frustrated when [.
 A clear and concise description of what you want to happen.
 
 ## Expected Outcome
-Describe what the expected behavior or result would be after implementing this feature.
+Describe what the expected behavior or result would be after implementing this feature
