@@ -268,12 +268,22 @@ jobs:
 
                 generated = JSON.parse(jsonMatch[0]);
 
+                // Ensure description is a string, not an object
+                let finalDescription = generated.description;
+                if (typeof finalDescription === 'object') {
+                  finalDescription = JSON.stringify(finalDescription);
+                  console.log('Warning: description was an object, converted to string');
+                }
+                if (!finalDescription || typeof finalDescription !== 'string') {
+                  throw new Error('Generated description is not a valid string');
+                }
+
                 console.log('Groq generated:');
                 console.log('Title:', generated.title);
-                console.log('Description length:', generated.description.length);
+                console.log('Description length:', finalDescription.length);
 
                 // Add marker to prevent re-processing and update PR
-                const markedDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' + generated.description;
+                const markedDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' + finalDescription;
                 
                 await github.rest.pulls.update({
                   owner: context.repo.owner,
