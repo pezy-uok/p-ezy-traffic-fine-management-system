@@ -49,6 +49,28 @@ jobs:
             console.log('Fetching Jira issues with JQL:', jql);
             console.log('Jira Base URL:', jiraBaseUrl);
 
+            // Helper function to delay execution
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            
+            // Helper function to fetch with retry on rate limit
+            const fetchWithRetry = async (url, options, maxRetries = 3) => {
+              for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                const response = await fetch(url, options);
+                
+                if (response.status === 429) {
+                  const waitTime = attempt * 5000; // 5s, 10s, 15s
+                  console.log('Rate limited. Waiting ' + (waitTime/1000) + ' seconds before retry ' + attempt + '/' + maxRetries);
+                  await delay(waitTime);
+                  continue;
+                }
+                
+                return response;
+              }
+              
+              // Final attempt after all retries
+              return await fetch(url, options);
+            };
+
             // Fetch ALL Jira issues with pagination using new API
             let allJiraIssues = [];
             let startAt = 0;
@@ -65,7 +87,7 @@ jobs:
                 '&maxResults=' + maxResults +
                 '&fields=summary,description,issuetype,priority,status';
               
-              const jiraResponse = await fetch(searchUrl, {
+              const jiraResponse = await fetchWithRetry(searchUrl, {
                 method: 'GET',
                 headers: {
                   'Authorization': 'Basic ' + authHeader,
@@ -115,6 +137,11 @@ jobs:
               } else {
                 // If no total or isLast, check if we got fewer than max results
                 hasMoreResults = issues.length === maxResults;
+              }
+              
+              // Add delay between requests to avoid rate limiting
+              if (hasMoreResults) {
+                await delay(1000);
               }
             }
             
@@ -315,7 +342,7 @@ jobs:
                 '&maxResults=' + maxResults +
                 '&fields=key';
               
-              const doneResponse = await fetch(doneSearchUrl, {
+              const doneResponse = await fetchWithRetry(doneSearchUrl, {
                 method: 'GET',
                 headers: {
                   'Authorization': 'Basic ' + authHeader,
@@ -339,6 +366,11 @@ jobs:
                   doneHasMore = doneStartAt < doneData.total;
                 } else {
                   doneHasMore = doneIssues.length === maxResults;
+                }
+                
+                // Add delay between requests to avoid rate limiting
+                if (doneHasMore) {
+                  await delay(1000);
                 }
               } else {
                 console.log('Could not fetch done issues, skipping close phase');
