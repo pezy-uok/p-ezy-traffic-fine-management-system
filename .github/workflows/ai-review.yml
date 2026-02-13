@@ -79,25 +79,19 @@ jobs:
 
             const systemPrompt = 'You are an expert code reviewer. Provide concise, actionable feedback.';
             
-            const userPrompt = `Review this pull request:
-
-PR Title: ${prDetails.title}
-PR Description: ${prDetails.description}
-PR Author: ${prDetails.author}
-
-Code Changes:
-\`\`\`diff
-${truncatedDiff}
-\`\`\`
-
-Provide:
-1. Brief summary of changes
-2. Potential issues or bugs
-3. Code quality and best practices feedback
-4. Security concerns (if any)
-5. Suggestions for improvement
-
-Keep your review concise and actionable.`;
+            const codeBlock = '```';
+            const userPrompt = 'Review this pull request:\n\n' +
+              'PR Title: ' + prDetails.title + '\n' +
+              'PR Description: ' + prDetails.description + '\n' +
+              'PR Author: ' + prDetails.author + '\n\n' +
+              'Code Changes:\n' + codeBlock + 'diff\n' + truncatedDiff + '\n' + codeBlock + '\n\n' +
+              'Provide:\n' +
+              '1. Brief summary of changes\n' +
+              '2. Potential issues or bugs\n' +
+              '3. Code quality and best practices feedback\n' +
+              '4. Security concerns (if any)\n' +
+              '5. Suggestions for improvement\n\n' +
+              'Keep your review concise and actionable.';
 
             const groqKey = process.env.GROQ_API_KEY;
 
