@@ -187,41 +187,42 @@ jobs:
               console.log('Generating PR content with Groq (Llama 3)...');
 
               try {
-                const systemPrompt = 'You are a technical writer helping to create a pull request description. Return ONLY valid JSON with no markdown code blocks.';
+                const systemPrompt = 'You are a technical writer. Return ONLY a JSON object with "title" and "description" fields. The description must be a plain markdown STRING, not a nested object.';
                 
                 const linkedIssuesList = linkedIssues.length > 0 
                   ? linkedIssues.map(function(i) { return '- #' + i.number + ': ' + i.title; }).join('\n') 
                   : 'None';
-                const relatedSection = linkedIssues.length > 0 
-                  ? '\\n\\n## Related Issues\\nFixes #' + linkedIssues[0].number 
-                  : '';
                 
                 // Map Jira issue type to PR type checkboxes
                 const jiraType = primaryJira.type.toLowerCase();
                 let typeOfChange = '';
                 if (jiraType.includes('bug')) {
-                  typeOfChange = '- [x] Bug fix\\n- [ ] New feature\\n- [ ] Documentation\\n- [ ] Other';
+                  typeOfChange = '- [x] Bug fix\n- [ ] New feature\n- [ ] Documentation\n- [ ] Other';
                 } else if (jiraType.includes('story') || jiraType.includes('feature') || jiraType.includes('task')) {
-                  typeOfChange = '- [ ] Bug fix\\n- [x] New feature\\n- [ ] Documentation\\n- [ ] Other';
+                  typeOfChange = '- [ ] Bug fix\n- [x] New feature\n- [ ] Documentation\n- [ ] Other';
                 } else if (jiraType.includes('doc')) {
-                  typeOfChange = '- [ ] Bug fix\\n- [ ] New feature\\n- [x] Documentation\\n- [ ] Other';
+                  typeOfChange = '- [ ] Bug fix\n- [ ] New feature\n- [x] Documentation\n- [ ] Other';
                 } else {
-                  typeOfChange = '- [ ] Bug fix\\n- [ ] New feature\\n- [ ] Documentation\\n- [x] Other';
+                  typeOfChange = '- [ ] Bug fix\n- [ ] New feature\n- [ ] Documentation\n- [x] Other';
                 }
                 
-                const userPrompt = 'Jira Issue Details:\n' +
+                const relatedIssuesSection = linkedIssues.length > 0 
+                  ? '\n\n## Related Issues\nFixes #' + linkedIssues[0].number 
+                  : '';
+                
+                const userPrompt = 'Jira Issue:\n' +
                   '- Key: ' + primaryJira.key + '\n' +
                   '- Summary: ' + primaryJira.summary + '\n' +
                   '- Description: ' + primaryJira.description + '\n' +
-                  '- Type: ' + primaryJira.type + '\n' +
-                  '- Status: ' + primaryJira.status + '\n\n' +
-                  'Linked GitHub Issues:\n' + linkedIssuesList + '\n\n' +
-                  'Code Changes Summary:\n' + prDiff.substring(0, 4000) + '\n\n' +
-                  'Generate a PR title and description. Return ONLY this JSON (no markdown):\n' +
-                  '{\n' +
-                  '  "title": "' + primaryJira.key + ': Brief summary based on actual code changes (max 72 chars)",\n' +
-                  '  "description": "## Description\\n[2-3 sentences]\\n\\n## Type of Change\\n' + typeOfChange + '\\n\\n## Jira Reference\\n- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\\n\\n## Changes\\n- [bullet points]' + relatedSection + '"\n' +
-                  '}';
+                  '- Type: ' + primaryJira.type + '\n\n' +
+                  'Code diff:\n' + prDiff.substring(0, 3000) + '\n\n' +
+                  'Return JSON like this example (description is a STRING with newlines):\n' +
+                  '{"title": "PEZY-123: Add user login", "description": "## Description\\nAdded login feature.\\n\\n## Type of Change\\n- [x] New feature\\n\\n## Jira Reference\\n- [PEZY-123](url)"}\n\n' +
+                  'Generate title starting with ' + primaryJira.key + ': and description with these sections:\n' +
+                  '## Description\n[2-3 sentences about actual code changes]\n\n' +
+                  '## Type of Change\n' + typeOfChange + '\n\n' +
+                  '## Jira Reference\n- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\n\n' +
+                  '## Changes\n- [bullet points of actual changes]' + relatedIssuesSection;
 
                 console.log('Calling Groq API...');
                 const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -258,7 +259,7 @@ jobs:
                 }
                 
                 const groqText = groqData.choices[0].message.content;
-                console.log('Groq text:', groqText.substring(0, 300) + '...');
+                console.log('Groq text:', groqText.substring(0, 500));
 
                 // Extract JSON from response (handle markdown code blocks)
                 let jsonMatch = groqText.match(/\{[\s\S]*\}/);
@@ -271,8 +272,38 @@ jobs:
                 // Ensure description is a string, not an object
                 let finalDescription = generated.description;
                 if (typeof finalDescription === 'object') {
-                  finalDescription = JSON.stringify(finalDescription);
-                  console.log('Warning: description was an object, converted to string');
+                  // Convert object to markdown format
+                  console.log('Converting object description to markdown...');
+                  let md = '';
+                  if (finalDescription.Description) {
+                    md += '## Description\n' + finalDescription.Description + '\n\n';
+                  }
+                  if (finalDescription['Type of Change']) {
+                    const types = finalDescription['Type of Change'];
+                    md += '## Type of Change\n';
+                    const isBug = types.includes('Bug fix') || types.includes('bug');
+                    const isFeature = types.includes('New feature') || types.includes('feature');
+                    const isDoc = types.includes('Documentation') || types.includes('doc');
+                    md += (isBug ? '- [x]' : '- [ ]') + ' Bug fix\n';
+                    md += (isFeature ? '- [x]' : '- [ ]') + ' New feature\n';
+                    md += (isDoc ? '- [x]' : '- [ ]') + ' Documentation\n';
+                    md += (!isBug && !isFeature && !isDoc ? '- [x]' : '- [ ]') + ' Other\n\n';
+                  }
+                  if (finalDescription['Jira Reference']) {
+                    const jiraRef = finalDescription['Jira Reference'];
+                    md += '## Jira Reference\n';
+                    if (typeof jiraRef === 'object') {
+                      md += '- Issue: [' + (jiraRef.Issue || primaryJira.key) + '](' + (jiraRef.Link || primaryJira.url) + ')\n\n';
+                    } else {
+                      md += '- ' + jiraRef + '\n\n';
+                    }
+                  }
+                  if (finalDescription.Changes) {
+                    md += '## Changes\n';
+                    const changes = Array.isArray(finalDescription.Changes) ? finalDescription.Changes : [finalDescription.Changes];
+                    changes.forEach(function(c) { md += '- ' + c + '\n'; });
+                  }
+                  finalDescription = md || JSON.stringify(finalDescription);
                 }
                 if (!finalDescription || typeof finalDescription !== 'string') {
                   throw new Error('Generated description is not a valid string');
@@ -280,7 +311,7 @@ jobs:
 
                 console.log('Groq generated:');
                 console.log('Title:', generated.title);
-                console.log('Description length:', finalDescription.length);
+                console.log('Description preview:', finalDescription.substring(0, 200));
 
                 // Add marker to prevent re-processing and update PR
                 const markedDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' + finalDescription;
