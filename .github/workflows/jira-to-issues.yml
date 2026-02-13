@@ -49,52 +49,78 @@ jobs:
             console.log('Fetching Jira issues with JQL:', jql);
             console.log('Jira Base URL:', jiraBaseUrl);
 
-            // Fetch Jira issues using new API endpoint (POST /rest/api/3/search/jql)
+            // Fetch ALL Jira issues with pagination
             const searchUrl = jiraBaseUrl + '/rest/api/3/search/jql';
             console.log('Search URL:', searchUrl);
             
-            const jiraResponse = await fetch(searchUrl, {
-              method: 'POST',
-              headers: {
-                'Authorization': 'Basic ' + authHeader,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                jql: jql,
-                maxResults: 50,
-                fields: ['summary', 'description', 'issuetype', 'priority', 'status']
-              })
-            });
-
-            console.log('Jira API response status:', jiraResponse.status);
-
-            if (!jiraResponse.ok) {
-              const errorText = await jiraResponse.text();
-              console.error('Jira API error:', jiraResponse.status, errorText);
-              core.setFailed('Jira API error: ' + jiraResponse.status);
-              return;
-            }
-
-            const jiraData = await jiraResponse.json();
-            console.log('Found ' + jiraData.issues.length + ' Jira issues');
+            let allJiraIssues = [];
+            let startAt = 0;
+            const maxResults = 100;
+            let totalIssues = 0;
             
-            if (jiraData.issues.length === 0) {
+            // Paginate through all Jira issues
+            do {
+              console.log('Fetching issues starting at ' + startAt + '...');
+              
+              const jiraResponse = await fetch(searchUrl, {
+                method: 'POST',
+                headers: {
+                  'Authorization': 'Basic ' + authHeader,
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  jql: jql,
+                  startAt: startAt,
+                  maxResults: maxResults,
+                  fields: ['summary', 'description', 'issuetype', 'priority', 'status']
+                })
+              });
+
+              if (!jiraResponse.ok) {
+                const errorText = await jiraResponse.text();
+                console.error('Jira API error:', jiraResponse.status, errorText);
+                core.setFailed('Jira API error: ' + jiraResponse.status);
+                return;
+              }
+
+              const jiraData = await jiraResponse.json();
+              totalIssues = jiraData.total;
+              allJiraIssues = allJiraIssues.concat(jiraData.issues);
+              startAt += maxResults;
+              
+              console.log('Fetched ' + jiraData.issues.length + ' issues (total: ' + totalIssues + ')');
+              
+            } while (startAt < totalIssues);
+            
+            console.log('Found ' + allJiraIssues.length + ' total Jira issues');
+            
+            if (allJiraIssues.length === 0) {
               console.log('No issues found. Check if PEZY project exists and has issues.');
-              console.log('Try running with JQL: project = PEZY');
               return;
             }
 
-            // Get existing GitHub issues to avoid duplicates
-            const existingIssues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'all',
-              per_page: 100
-            });
+            // Get ALL existing GitHub issues to avoid duplicates (with pagination)
+            let allGitHubIssues = [];
+            let page = 1;
+            let hasMore = true;
+            
+            while (hasMore) {
+              const existingIssues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all',
+                per_page: 100,
+                page: page
+              });
+              
+              allGitHubIssues = allGitHubIssues.concat(existingIssues.data);
+              hasMore = existingIssues.data.length === 100;
+              page++;
+            }
 
             const existingJiraKeys = new Set();
-            existingIssues.data.forEach(function(issue) {
+            allGitHubIssues.forEach(function(issue) {
               // Check if issue title or body contains a Jira key
               const match = (issue.title + ' ' + (issue.body || '')).match(/PEZY-\d+/);
               if (match) {
@@ -102,12 +128,12 @@ jobs:
               }
             });
 
-            console.log('Found ' + existingJiraKeys.size + ' existing issues linked to Jira');
+            console.log('Found ' + existingJiraKeys.size + ' existing GitHub issues linked to Jira');
 
             let createdCount = 0;
             let skippedCount = 0;
 
-            for (const jiraIssue of jiraData.issues) {
+            for (const jiraIssue of allJiraIssues) {
               const jiraKey = jiraIssue.key;
               const summary = jiraIssue.fields.summary;
               const issueType = jiraIssue.fields.issuetype.name;
