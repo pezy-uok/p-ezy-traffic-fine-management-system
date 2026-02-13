@@ -43,8 +43,8 @@ jobs:
 
             const authHeader = Buffer.from(jiraEmail + ':' + jiraToken).toString('base64');
 
-            // Default JQL: Get ALL issues from the project (not just To Do)
-            const jql = customJql || 'project = ' + jiraProject + ' ORDER BY created DESC';
+            // Default JQL: Get only To Do issues from the project
+            const jql = customJql || 'project = ' + jiraProject + ' AND status = "To Do" ORDER BY created DESC';
             
             console.log('Fetching Jira issues with JQL:', jql);
             console.log('Jira Base URL:', jiraBaseUrl);
@@ -294,6 +294,91 @@ jobs:
               }
             }
 
-            console.log('\n=== Sync Complete ===');
+            console.log('\n=== Create Phase Complete ===');
             console.log('Created: ' + createdCount + ' issues');
             console.log('Skipped: ' + skippedCount + ' (already exist)');
+
+            // === PHASE 2: Close GitHub issues for completed Jira tasks ===
+            console.log('\n=== Checking for completed Jira tasks ===');
+            
+            // Fetch Done issues from Jira
+            const doneJql = 'project = ' + jiraProject + ' AND status = "Done" ORDER BY created DESC';
+            let doneJiraKeys = new Set();
+            let doneStartAt = 0;
+            let doneHasMore = true;
+            
+            while (doneHasMore) {
+              const doneSearchUrl = jiraBaseUrl + '/rest/api/3/search/jql?jql=' + encodeURIComponent(doneJql) + 
+                '&startAt=' + doneStartAt + 
+                '&maxResults=' + maxResults +
+                '&fields=key';
+              
+              const doneResponse = await fetch(doneSearchUrl, {
+                method: 'GET',
+                headers: {
+                  'Authorization': 'Basic ' + authHeader,
+                  'Accept': 'application/json'
+                }
+              });
+
+              if (doneResponse.ok) {
+                const doneData = await doneResponse.json();
+                const doneIssues = doneData.issues || doneData.values || [];
+                
+                doneIssues.forEach(function(issue) {
+                  doneJiraKeys.add(issue.key);
+                });
+                
+                doneStartAt += maxResults;
+                if (doneData.total !== undefined) {
+                  doneHasMore = doneStartAt < doneData.total;
+                } else {
+                  doneHasMore = doneIssues.length === maxResults;
+                }
+              } else {
+                console.log('Could not fetch done issues, skipping close phase');
+                doneHasMore = false;
+              }
+            }
+            
+            console.log('Found ' + doneJiraKeys.size + ' done Jira issues');
+            
+            // Close GitHub issues that have completed Jira tasks
+            let closedCount = 0;
+            
+            for (const ghIssue of allGitHubIssues) {
+              // Skip if already closed
+              if (ghIssue.state === 'closed') continue;
+              
+              // Find Jira key in title or body
+              const match = (ghIssue.title + ' ' + (ghIssue.body || '')).match(/PEZY-\d+/);
+              if (match && doneJiraKeys.has(match[0])) {
+                try {
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: ghIssue.number,
+                    state: 'closed',
+                    state_reason: 'completed'
+                  });
+                  
+                  // Add a comment explaining the closure
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: ghIssue.number,
+                    body: 'This issue has been automatically closed because the linked Jira task **' + match[0] + '** was marked as Done.'
+                  });
+                  
+                  console.log('Closed issue #' + ghIssue.number + ' - ' + match[0] + ' is Done');
+                  closedCount++;
+                } catch (error) {
+                  console.error('Failed to close issue #' + ghIssue.number + ':', error.message);
+                }
+              }
+            }
+            
+            console.log('\n=== Sync Complete ===');
+            console.log('Created: ' + createdCount + ' new issues');
+            console.log('Skipped: ' + skippedCount + ' (already exist)');
+            console.log('Closed: ' + closedCount + ' (Jira task done)');
