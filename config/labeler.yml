@@ -1,0 +1,73 @@
+# Labels applied based on changed files
+# Used by the label-pr.yml workflow
+
+# Frontend changes
+frontend:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/components/**/*'
+      - 'src/pages/**/*'
+      - 'src/styles/**/*'
+      - '*.css'
+      - '*.scss'
+
+# Backend changes
+backend:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/api/**/*'
+      - 'src/services/**/*'
+      - 'src/controllers/**/*'
+      - 'src/models/**/*'
+
+# Database changes
+database:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/db/**/*'
+      - 'migrations/**/*'
+      - '*.sql'
+
+# Documentation changes
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.md'
+      - 'docs/**/*'
+
+# Test changes
+testing:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.test.*'
+      - '**/*.spec.*'
+      - '__tests__/**/*'
+      - 'tests/**/*'
+
+# Configuration changes
+config:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '*.json'
+      - '*.yml'
+      - '*.yaml'
+      - '.env*'
+      - 'config/**/*'
+
+# CI/CD changes
+ci/cd:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**/*'
+      - 'Dockerfile*'
+      - 'docker-compose*'
+
+# Dependencies
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'yarn.lock'
+      - 'requirements.txt'
+      - 'Pipfile*'
