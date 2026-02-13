@@ -196,6 +196,19 @@ jobs:
                   ? '\\n\\n## Related Issues\\nFixes #' + linkedIssues[0].number 
                   : '';
                 
+                // Map Jira issue type to PR type checkboxes
+                const jiraType = primaryJira.type.toLowerCase();
+                let typeOfChange = '';
+                if (jiraType.includes('bug')) {
+                  typeOfChange = '- [x] Bug fix\\n- [ ] New feature\\n- [ ] Documentation\\n- [ ] Other';
+                } else if (jiraType.includes('story') || jiraType.includes('feature') || jiraType.includes('task')) {
+                  typeOfChange = '- [ ] Bug fix\\n- [x] New feature\\n- [ ] Documentation\\n- [ ] Other';
+                } else if (jiraType.includes('doc')) {
+                  typeOfChange = '- [ ] Bug fix\\n- [ ] New feature\\n- [x] Documentation\\n- [ ] Other';
+                } else {
+                  typeOfChange = '- [ ] Bug fix\\n- [ ] New feature\\n- [ ] Documentation\\n- [x] Other';
+                }
+                
                 const userPrompt = 'Jira Issue Details:\n' +
                   '- Key: ' + primaryJira.key + '\n' +
                   '- Summary: ' + primaryJira.summary + '\n' +
@@ -207,7 +220,7 @@ jobs:
                   'Generate a PR title and description. Return ONLY this JSON (no markdown):\n' +
                   '{\n' +
                   '  "title": "' + primaryJira.key + ': Brief summary based on actual code changes (max 72 chars)",\n' +
-                  '  "description": "## Description\\n[2-3 sentences]\\n\\n## Jira Reference\\n- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\\n\\n## Changes\\n- [bullet points]' + relatedSection + '"\n' +
+                  '  "description": "## Description\\n[2-3 sentences]\\n\\n## Type of Change\\n' + typeOfChange + '\\n\\n## Jira Reference\\n- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\\n\\n## Changes\\n- [bullet points]' + relatedSection + '"\n' +
                   '}';
 
                 console.log('Calling Groq API...');
@@ -275,9 +288,23 @@ jobs:
               } catch (error) {
                 console.error('Groq generation failed: ' + error.message);
 
+                // Map Jira issue type to PR type checkboxes for fallback
+                const jiraTypeFallback = primaryJira.type.toLowerCase();
+                let typeCheckboxes = '';
+                if (jiraTypeFallback.includes('bug')) {
+                  typeCheckboxes = '- [x] Bug fix\n- [ ] New feature\n- [ ] Documentation\n- [ ] Other';
+                } else if (jiraTypeFallback.includes('story') || jiraTypeFallback.includes('feature') || jiraTypeFallback.includes('task')) {
+                  typeCheckboxes = '- [ ] Bug fix\n- [x] New feature\n- [ ] Documentation\n- [ ] Other';
+                } else if (jiraTypeFallback.includes('doc')) {
+                  typeCheckboxes = '- [ ] Bug fix\n- [ ] New feature\n- [x] Documentation\n- [ ] Other';
+                } else {
+                  typeCheckboxes = '- [ ] Bug fix\n- [ ] New feature\n- [ ] Documentation\n- [x] Other';
+                }
+
                 // Fallback: Use template-based description
                 const fallbackDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' +
                   '## Description\n' + primaryJira.summary + '\n\n' +
+                  '## Type of Change\n' + typeCheckboxes + '\n\n' +
                   '## Jira Reference\n' +
                   '- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\n\n' +
                   '## Description from Jira\n' + primaryJira.description;
@@ -295,9 +322,23 @@ jobs:
             } else {
               console.log('GROQ_API_KEY not configured, using fallback');
 
+              // Map Jira issue type to PR type checkboxes
+              const jiraTypeNoKey = primaryJira.type.toLowerCase();
+              let typeBoxes = '';
+              if (jiraTypeNoKey.includes('bug')) {
+                typeBoxes = '- [x] Bug fix\n- [ ] New feature\n- [ ] Documentation\n- [ ] Other';
+              } else if (jiraTypeNoKey.includes('story') || jiraTypeNoKey.includes('feature') || jiraTypeNoKey.includes('task')) {
+                typeBoxes = '- [ ] Bug fix\n- [x] New feature\n- [ ] Documentation\n- [ ] Other';
+              } else if (jiraTypeNoKey.includes('doc')) {
+                typeBoxes = '- [ ] Bug fix\n- [ ] New feature\n- [x] Documentation\n- [ ] Other';
+              } else {
+                typeBoxes = '- [ ] Bug fix\n- [ ] New feature\n- [ ] Documentation\n- [x] Other';
+              }
+
               // Fallback without Groq
               const fallbackDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' +
                 '## Description\n' + primaryJira.summary + '\n\n' +
+                '## Type of Change\n' + typeBoxes + '\n\n' +
                 '## Jira Reference\n' +
                 '- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\n\n' +
                 '## Description from Jira\n' + primaryJira.description;
