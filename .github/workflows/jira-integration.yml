@@ -255,12 +255,12 @@ jobs:
 
                 generated = JSON.parse(jsonMatch[0]);
 
-                console.log('✅ Groq generated:');
+                console.log('Groq generated:');
                 console.log('Title:', generated.title);
                 console.log('Description length:', generated.description.length);
 
                 // Add marker to prevent re-processing and update PR
-                const markedDescription = `<!-- AI-GENERATED-PR-DESCRIPTION -->\n${generated.description}`;
+                const markedDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' + generated.description;
                 
                 await github.rest.pulls.update({
                   owner: context.repo.owner,
@@ -270,55 +270,47 @@ jobs:
                   body: markedDescription
                 });
 
-                console.log('✅ Updated PR title and description');
+                console.log('Updated PR title and description');
 
               } catch (error) {
-                console.error(`Groq generation failed: ${error.message}`);
+                console.error('Groq generation failed: ' + error.message);
 
                 // Fallback: Use template-based description
-                const fallbackDescription = `<!-- AI-GENERATED-PR-DESCRIPTION -->
-## Description
-${primaryJira.summary}
-
-## Jira Reference
-- Issue: [${primaryJira.key}](${primaryJira.url})
-
-## Description from Jira
-${primaryJira.description}`;
+                const fallbackDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' +
+                  '## Description\n' + primaryJira.summary + '\n\n' +
+                  '## Jira Reference\n' +
+                  '- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\n\n' +
+                  '## Description from Jira\n' + primaryJira.description;
 
                 await github.rest.pulls.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   pull_number: prNumber,
-                  title: `${primaryJira.key}: ${primaryJira.summary}`,
+                  title: primaryJira.key + ': ' + primaryJira.summary,
                   body: fallbackDescription
                 });
 
-                console.log('✅ Updated PR with fallback template');
+                console.log('Updated PR with fallback template');
               }
             } else {
-              console.log('⚠️ GROQ_API_KEY not configured, using fallback');
+              console.log('GROQ_API_KEY not configured, using fallback');
 
               // Fallback without Groq
-              const fallbackDescription = `<!-- AI-GENERATED-PR-DESCRIPTION -->
-## Description
-${primaryJira.summary}
-
-## Jira Reference
-- Issue: [${primaryJira.key}](${primaryJira.url})
-
-## Description from Jira
-${primaryJira.description}`;
+              const fallbackDescription = '<!-- AI-GENERATED-PR-DESCRIPTION -->\n' +
+                '## Description\n' + primaryJira.summary + '\n\n' +
+                '## Jira Reference\n' +
+                '- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\n\n' +
+                '## Description from Jira\n' + primaryJira.description;
 
               await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: prNumber,
-                title: `${primaryJira.key}: ${primaryJira.summary}`,
+                title: primaryJira.key + ': ' + primaryJira.summary,
                 body: fallbackDescription
               });
 
-              console.log('✅ Updated PR with template');
+              console.log('Updated PR with template');
             }
 
             // Add jira-linked label
