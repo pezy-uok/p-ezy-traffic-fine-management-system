@@ -12,4 +12,4 @@ A clear and concise description of what this PR does.
 **Link:** https://oshadadilshan.atlassian.net/browse/PEZY-XXX
 
 ## Related Issues
-Fixes #(issue numbers)
+Fixes #(issue number)

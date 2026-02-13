@@ -49,12 +49,23 @@ jobs:
 
             console.log('=== Starting Jira-GitHub Integration ===');
 
-            // Check if both title has Jira format AND body has Jira reference section
-            const jiraTitlePattern = /^PEZY-\d+:/;
-            const jiraReferenceSection = /##\s*Jira Reference/i;
+            // Extract direct Jira references (must have actual numbers, not XXX)
+            const jiraPattern = /PEZY-\d+/g;
+            let jiraKeys = [...new Set((title + ' ' + body).match(jiraPattern) || [])];
 
-            if (jiraTitlePattern.test(title) && jiraReferenceSection.test(body)) {
-              console.log('PR already has Jira title and description, skipping update');
+            console.log(`Found ${jiraKeys.length} direct Jira references: ${jiraKeys.join(', ')}`);
+
+            // Check if PR already has proper Jira title AND actual Jira reference in body
+            const jiraTitlePattern = /^PEZY-\d+:/;
+            const hasJiraInBody = jiraKeys.length > 0 && body.includes('## Description') && !body.includes('A clear and concise description of what this PR does');
+
+            if (jiraTitlePattern.test(title) && hasJiraInBody) {
+              console.log('PR already has Jira title and updated description, skipping');
+              return;
+            }
+
+            if (jiraKeys.length === 0) {
+              console.log('No Jira reference found (PEZY-XXX with numbers), skipping Jira integration');
               return;
             }
 
@@ -63,12 +74,7 @@ jobs:
             const issuePattern = new RegExp(`(${issueKeywords.join('|')})\\s+#(\\d+)`, 'gi');
             const issueMatches = [...body.matchAll(issuePattern)];
 
-            // Extract direct Jira references
-            const jiraPattern = /PEZY-\d+/g;
-            let jiraKeys = [...new Set((title + ' ' + body).match(jiraPattern) || [])];
-
             console.log(`Found ${issueMatches.length} GitHub issue references`);
-            console.log(`Found ${jiraKeys.length} direct Jira references`);
 
             // Fetch linked GitHub issues to extract Jira references
             let linkedIssues = [];
