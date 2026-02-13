@@ -1,0 +1,140 @@
+# Repository labels configuration
+# Used by sync-labels.yml workflow to synchronize labels
+
+# Type labels
+- name: enhancement
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: bug
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: documentation
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: style
+  color: "fef2c0"
+  description: "Code style changes (formatting, etc)"
+
+- name: refactor
+  color: "fbca04"
+  description: "Code refactoring without functionality changes"
+
+- name: performance
+  color: "7057ff"
+  description: "Performance improvements"
+
+- name: testing
+  color: "bfdadc"
+  description: "Test-related changes"
+
+- name: chore
+  color: "fef2c0"
+  description: "Maintenance tasks"
+
+- name: ci/cd
+  color: "0e8a16"
+  description: "CI/CD pipeline changes"
+
+- name: build
+  color: "c5def5"
+  description: "Build system changes"
+
+# Priority labels
+- name: "priority: critical"
+  color: "b60205"
+  description: "Critical priority - needs immediate attention"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "High priority"
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Medium priority"
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Low priority"
+
+# Status labels
+- name: "status: in progress"
+  color: "0052cc"
+  description: "Currently being worked on"
+
+- name: "status: needs review"
+  color: "006b75"
+  description: "Ready for review"
+
+- name: "status: blocked"
+  color: "b60205"
+  description: "Blocked by another issue or external factor"
+
+- name: "status: on hold"
+  color: "d4c5f9"
+  description: "Temporarily on hold"
+
+# Review time labels
+- name: "5min review"
+  color: "c2e0c6"
+  description: "Quick review - less than 100 lines changed"
+
+- name: "15min review"
+  color: "bfd4f2"
+  description: "Medium review - 100-500 lines changed"
+
+- name: "30min review"
+  color: "fef2c0"
+  description: "Longer review - 500-1500 lines changed"
+
+- name: "1hr review"
+  color: "f9d0c4"
+  description: "Extensive review - more than 1500 lines changed"
+
+# Component labels
+- name: frontend
+  color: "61dafb"
+  description: "Frontend/UI related"
+
+- name: backend
+  color: "68a063"
+  description: "Backend/API related"
+
+- name: database
+  color: "336791"
+  description: "Database related"
+
+- name: config
+  color: "ededed"
+  description: "Configuration changes"
+
+- name: dependencies
+  color: "0366d6"
+  description: "Dependency updates"
+
+# Special labels
+- name: jira-linked
+  color: "0052cc"
+  description: "PR is linked to a Jira issue"
+
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+- name: duplicate
+  color: "cfd3d7"
+  description: "This issue or PR already exists"
+
+- name: invalid
+  color: "e4e669"
+  description: "This doesn't seem right"
