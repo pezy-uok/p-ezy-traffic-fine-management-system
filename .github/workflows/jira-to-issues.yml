@@ -201,6 +201,20 @@ jobs:
               const typeLabel = 'type: ' + issueType;
               labels.push(typeLabel);
               
+              // Extract a meaningful label from the summary (convert to kebab-case)
+              // This creates labels like "payment-notification-system", "user-authentication", etc.
+              const summaryLabel = summary
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
+                .replace(/\s+/g, '-')           // Replace spaces with hyphens
+                .replace(/-+/g, '-')            // Remove multiple hyphens
+                .replace(/^-|-$/g, '')          // Trim hyphens from start/end
+                .substring(0, 50);              // Limit length
+              
+              if (summaryLabel && summaryLabel.length > 3) {
+                labels.push(summaryLabel);
+              }
+              
               // Also add standard GitHub labels based on type
               if (issueType.toLowerCase().includes('bug')) {
                 labels.push('bug');
@@ -233,7 +247,7 @@ jobs:
                 for (const label of labels) {
                   try {
                     // Determine label color based on type
-                    let labelColor = '666666'; // default gray
+                    let labelColor = '1d76db'; // default blue for feature/module labels
                     if (label === 'bug') {
                       labelColor = 'd73a4a'; // red
                     } else if (label === 'enhancement') {
@@ -249,6 +263,9 @@ jobs:
                     } else if (label.startsWith('type:')) {
                       // Type labels get purple color
                       labelColor = '7057ff';
+                    } else if (label === summaryLabel) {
+                      // Feature/module labels get teal color
+                      labelColor = '0e8a16'; // green
                     }
                     
                     await github.rest.issues.createLabel({

@@ -1,0 +1,69 @@
+name: Delete Jira-Synced Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DELETE to confirm deletion of all jira-synced issues'
+        required: true
+        default: ''
+
+permissions:
+  issues: write
+
+jobs:
+  delete-issues:
+    name: Delete All Jira-Synced Issues
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'DELETE' }}
+    steps:
+      - name: Delete Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('Fetching all issues with jira-synced label...');
+            
+            // Get ALL issues with jira-synced label (with pagination)
+            let allIssues = [];
+            let page = 1;
+            let hasMore = true;
+            
+            while (hasMore) {
+              const issues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'jira-synced',
+                per_page: 100,
+                page: page
+              });
+              
+              allIssues = allIssues.concat(issues.data);
+              hasMore = issues.data.length === 100;
+              page++;
+            }
+            
+            console.log('Found ' + allIssues.length + ' issues to delete');
+            
+            let deletedCount = 0;
+            
+            for (const issue of allIssues) {
+              try {
+                // Close the issue (GitHub doesn't allow true deletion via API)
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'not_planned'
+                });
+                
+                console.log('Closed issue #' + issue.number + ': ' + issue.title);
+                deletedCount++;
+              } catch (error) {
+                console.error('Failed to close issue #' + issue.number + ':', error.message);
+              }
+            }
+            
+            console.log('\n=== Deletion Complete ===');
+            console.log('Closed ' + deletedCount + ' issues');
