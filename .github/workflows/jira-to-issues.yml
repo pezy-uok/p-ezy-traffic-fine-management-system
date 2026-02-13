@@ -107,11 +107,13 @@ jobs:
               
               console.log('Fetched ' + issues.length + ' issues (total so far: ' + allJiraIssues.length + ')');
               
-              // Check if we have more results
-              if (jiraData.total !== undefined) {
+              // Check if we have more results using isLast field
+              if (jiraData.isLast !== undefined) {
+                hasMoreResults = !jiraData.isLast;
+              } else if (jiraData.total !== undefined) {
                 hasMoreResults = startAt < jiraData.total;
               } else {
-                // If no total, check if we got fewer than max results
+                // If no total or isLast, check if we got fewer than max results
                 hasMoreResults = issues.length === maxResults;
               }
             }
@@ -330,7 +332,10 @@ jobs:
                 });
                 
                 doneStartAt += maxResults;
-                if (doneData.total !== undefined) {
+                // Use isLast field for pagination
+                if (doneData.isLast !== undefined) {
+                  doneHasMore = !doneData.isLast;
+                } else if (doneData.total !== undefined) {
                   doneHasMore = doneStartAt < doneData.total;
                 } else {
                   doneHasMore = doneIssues.length === maxResults;
