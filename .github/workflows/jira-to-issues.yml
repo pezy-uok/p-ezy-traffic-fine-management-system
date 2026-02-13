@@ -2,14 +2,8 @@ name: Sync Jira to GitHub Issues
 
 on:
   schedule:
-    # Run every 6 hours
     - cron: '0 */6 * * *'
   workflow_dispatch:
-    inputs:
-      jql_query:
-        description: 'JQL query to filter Jira issues (optional)'
-        required: false
-        default: ''
 
 permissions:
   issues: write
@@ -26,15 +20,13 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_KEY }}
           JIRA_BASE_URL: 'https://oshadadilshan.atlassian.net'
           JIRA_EMAIL: 'gimansabandara2001@gmail.com'
-          JIRA_PROJECT: 'PEzy'
-          JQL_QUERY: ${{ github.event.inputs.jql_query }}
+          JIRA_PROJECT: 'PEZY'
         with:
           script: |
             const jiraToken = process.env.JIRA_API_TOKEN;
             const jiraEmail = process.env.JIRA_EMAIL;
             const jiraBaseUrl = process.env.JIRA_BASE_URL;
             const jiraProject = process.env.JIRA_PROJECT;
-            const customJql = process.env.JQL_QUERY || '';
 
             if (!jiraToken) {
               console.log('JIRA_API_TOKEN not configured');
@@ -42,138 +34,51 @@ jobs:
             }
 
             const authHeader = Buffer.from(jiraEmail + ':' + jiraToken).toString('base64');
-
-            // Default JQL: Get only To Do issues from the project
-            const jql = customJql || 'project = ' + jiraProject + ' AND status = "To Do" ORDER BY created DESC';
+            const jql = 'project = ' + jiraProject + ' AND status = "To Do" ORDER BY created DESC';
             
             console.log('Fetching Jira issues with JQL:', jql);
-            console.log('Jira Base URL:', jiraBaseUrl);
 
-            // Helper function to delay execution
-            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            // Fetch To Do issues from Jira (single request, max 100)
+            const searchUrl = jiraBaseUrl + '/rest/api/3/search/jql?jql=' + encodeURIComponent(jql) + 
+              '&maxResults=100&fields=summary,description,issuetype,priority,status';
             
-            // Helper function to fetch with retry on rate limit
-            const fetchWithRetry = async (url, options, maxRetries = 3) => {
-              for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                const response = await fetch(url, options);
-                
-                if (response.status === 429) {
-                  const waitTime = attempt * 5000; // 5s, 10s, 15s
-                  console.log('Rate limited. Waiting ' + (waitTime/1000) + ' seconds before retry ' + attempt + '/' + maxRetries);
-                  await delay(waitTime);
-                  continue;
-                }
-                
-                return response;
+            console.log('Calling Jira API...');
+            
+            const jiraResponse = await fetch(searchUrl, {
+              method: 'GET',
+              headers: {
+                'Authorization': 'Basic ' + authHeader,
+                'Accept': 'application/json'
               }
-              
-              // Final attempt after all retries
-              return await fetch(url, options);
-            };
+            });
 
-            // Fetch ALL Jira issues with pagination using new API
-            let allJiraIssues = [];
-            let startAt = 0;
-            const maxResults = 100;
-            let hasMoreResults = true;
-            
-            // Paginate through all Jira issues
-            while (hasMoreResults) {
-              console.log('Fetching issues starting at ' + startAt + '...');
-              
-              // Use the new search/jql endpoint directly
-              const searchUrl = jiraBaseUrl + '/rest/api/3/search/jql?jql=' + encodeURIComponent(jql) + 
-                '&startAt=' + startAt + 
-                '&maxResults=' + maxResults +
-                '&fields=summary,description,issuetype,priority,status';
-              
-              const jiraResponse = await fetchWithRetry(searchUrl, {
-                method: 'GET',
-                headers: {
-                  'Authorization': 'Basic ' + authHeader,
-                  'Accept': 'application/json'
-                }
-              });
-
-              if (!jiraResponse.ok) {
-                const errorText = await jiraResponse.text();
-                console.error('Jira API error:', jiraResponse.status, errorText);
-                core.setFailed('Jira API error: ' + jiraResponse.status);
-                return;
-              }
-
-              const jiraData = await jiraResponse.json();
-              
-              // Log response structure for debugging
-              console.log('Response keys:', Object.keys(jiraData).join(', '));
-              
-              // Handle different response formats (issues vs values)
-              const issues = jiraData.issues || jiraData.values || [];
-              const total = jiraData.total !== undefined ? jiraData.total : (jiraData.maxResults ? startAt + issues.length : issues.length);
-              
-              if (issues.length === 0) {
-                hasMoreResults = false;
-                break;
-              }
-              
-              // Log first issue structure for debugging
-              if (startAt === 0 && issues.length > 0) {
-                console.log('First issue keys:', Object.keys(issues[0]).join(', '));
-                if (issues[0].fields) {
-                  console.log('First issue fields keys:', Object.keys(issues[0].fields).join(', '));
-                }
-              }
-              
-              allJiraIssues = allJiraIssues.concat(issues);
-              startAt += maxResults;
-              
-              console.log('Fetched ' + issues.length + ' issues (total so far: ' + allJiraIssues.length + ')');
-              
-              // Check if we have more results using isLast field
-              if (jiraData.isLast !== undefined) {
-                hasMoreResults = !jiraData.isLast;
-              } else if (jiraData.total !== undefined) {
-                hasMoreResults = startAt < jiraData.total;
-              } else {
-                // If no total or isLast, check if we got fewer than max results
-                hasMoreResults = issues.length === maxResults;
-              }
-              
-              // Add delay between requests to avoid rate limiting
-              if (hasMoreResults) {
-                await delay(1000);
-              }
-            }
-            
-            console.log('Found ' + allJiraIssues.length + ' total Jira issues');
-            
-            if (allJiraIssues.length === 0) {
-              console.log('No issues found. Check if PEZY project exists and has issues.');
+            if (!jiraResponse.ok) {
+              const errorText = await jiraResponse.text();
+              console.error('Jira API error:', jiraResponse.status, errorText);
+              core.setFailed('Jira API error: ' + jiraResponse.status);
               return;
             }
 
-            // Get ALL existing GitHub issues to avoid duplicates (with pagination)
-            let allGitHubIssues = [];
-            let page = 1;
-            let hasMore = true;
+            const jiraData = await jiraResponse.json();
+            const jiraIssues = jiraData.issues || [];
             
-            while (hasMore) {
-              const existingIssues = await github.rest.issues.listForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'all',
-                per_page: 100,
-                page: page
-              });
-              
-              allGitHubIssues = allGitHubIssues.concat(existingIssues.data);
-              hasMore = existingIssues.data.length === 100;
-              page++;
+            console.log('Found ' + jiraIssues.length + ' To Do issues in Jira');
+
+            if (jiraIssues.length === 0) {
+              console.log('No To Do issues found.');
+              return;
             }
 
+            // Get existing GitHub issues
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+
             const existingJiraKeys = new Set();
-            allGitHubIssues.forEach(function(issue) {
-              // Check if issue title or body contains a Jira key
+            existingIssues.data.forEach(function(issue) {
               const match = (issue.title + ' ' + (issue.body || '')).match(/PEZY-\d+/);
               if (match) {
                 existingJiraKeys.add(match[0]);
@@ -185,12 +90,11 @@ jobs:
             let createdCount = 0;
             let skippedCount = 0;
 
-            for (const jiraIssue of allJiraIssues) {
+            for (const jiraIssue of jiraIssues) {
               const jiraKey = jiraIssue.key;
               
-              // Handle case where fields might not exist
               if (!jiraIssue.fields) {
-                console.log('Skipping ' + jiraKey + ' - no fields data');
+                console.log('Skipping ' + jiraKey + ' - no fields');
                 skippedCount++;
                 continue;
               }
@@ -200,14 +104,13 @@ jobs:
               const priority = jiraIssue.fields.priority ? jiraIssue.fields.priority.name : 'Medium';
               const jiraUrl = jiraBaseUrl + '/browse/' + jiraKey;
 
-              // Skip if already exists
               if (existingJiraKeys.has(jiraKey)) {
                 console.log('Skipping ' + jiraKey + ' - already exists');
                 skippedCount++;
                 continue;
               }
 
-              // Extract description text from ADF format
+              // Extract description
               let description = 'No description provided';
               if (jiraIssue.fields.description && jiraIssue.fields.description.content) {
                 const textParts = [];
@@ -223,79 +126,38 @@ jobs:
                 description = textParts.join(' ').trim() || 'No description provided';
               }
 
-              // Map Jira issue type to GitHub labels
-              const labels = ['jira-synced'];
+              // Create labels
+              const labels = ['jira-synced', 'type: ' + issueType];
               
-              // Add the Jira issue type as a label (e.g., "type: Bug", "type: Task", "type: Story")
-              const typeLabel = 'type: ' + issueType;
-              labels.push(typeLabel);
-              
-              // Extract a meaningful label from the summary (convert to kebab-case)
-              // This creates labels like "payment-notification-system", "user-authentication", etc.
+              // Create task-based label from summary
               const summaryLabel = summary
                 .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
-                .replace(/\s+/g, '-')           // Replace spaces with hyphens
-                .replace(/-+/g, '-')            // Remove multiple hyphens
-                .replace(/^-|-$/g, '')          // Trim hyphens from start/end
-                .substring(0, 50);              // Limit length
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+                .substring(0, 50);
               
               if (summaryLabel && summaryLabel.length > 3) {
                 labels.push(summaryLabel);
               }
-              
-              // Also add standard GitHub labels based on type
-              if (issueType.toLowerCase().includes('bug')) {
-                labels.push('bug');
-              } else if (issueType.toLowerCase().includes('story') || issueType.toLowerCase().includes('feature')) {
-                labels.push('enhancement');
-              } else if (issueType.toLowerCase().includes('task')) {
-                labels.push('task');
-              }
 
-              // Add priority label
-              if (priority.toLowerCase().includes('high') || priority.toLowerCase().includes('highest')) {
-                labels.push('priority: high');
-              } else if (priority.toLowerCase().includes('low') || priority.toLowerCase().includes('lowest')) {
-                labels.push('priority: low');
-              }
-
-              // Create GitHub issue body
+              // Create issue body
               const issueBody = '## ' + jiraKey + ': ' + summary + '\n\n' +
                 '### Description\n' + description + '\n\n' +
                 '### Jira Details\n' +
                 '- **Issue:** [' + jiraKey + '](' + jiraUrl + ')\n' +
                 '- **Type:** ' + issueType + '\n' +
                 '- **Priority:** ' + priority + '\n\n' +
-                '---\n' +
-                '*This issue was automatically created from Jira*';
+                '---\n*Auto-created from Jira*';
 
-              // Create the GitHub issue
               try {
                 // Ensure labels exist
                 for (const label of labels) {
                   try {
-                    // Determine label color based on type
-                    let labelColor = '1d76db'; // default blue for feature/module labels
-                    if (label === 'bug') {
-                      labelColor = 'd73a4a'; // red
-                    } else if (label === 'enhancement') {
-                      labelColor = 'a2eeef'; // cyan
-                    } else if (label === 'task') {
-                      labelColor = 'fbca04'; // yellow
-                    } else if (label === 'jira-synced') {
-                      labelColor = '0366d6'; // blue
-                    } else if (label.includes('high')) {
-                      labelColor = 'b60205'; // dark red
-                    } else if (label.includes('low')) {
-                      labelColor = 'c5def5'; // light blue
-                    } else if (label.startsWith('type:')) {
-                      // Type labels get purple color
-                      labelColor = '7057ff';
-                    } else if (label === summaryLabel) {
-                      // Feature/module labels get teal color
-                      labelColor = '0e8a16'; // green
-                    }
+                    let labelColor = '0e8a16';
+                    if (label === 'jira-synced') labelColor = '0366d6';
+                    if (label.startsWith('type:')) labelColor = '7057ff';
                     
                     await github.rest.issues.createLabel({
                       owner: context.repo.owner,
@@ -304,7 +166,7 @@ jobs:
                       color: labelColor
                     });
                   } catch (e) {
-                    // Label already exists
+                    // Label exists
                   }
                 }
 
@@ -323,71 +185,69 @@ jobs:
               }
             }
 
-            console.log('\n=== Create Phase Complete ===');
+            console.log('\n=== Sync Complete ===');
             console.log('Created: ' + createdCount + ' issues');
-            console.log('Skipped: ' + skippedCount + ' (already exist)');
+            console.log('Skipped: ' + skippedCount + ' issues');
 
-            // === PHASE 2: Close GitHub issues for completed Jira tasks ===
-            console.log('\n=== Checking for completed Jira tasks ===');
-            
-            // Fetch Done issues from Jira
+      - name: Close Done Issues
+        uses: actions/github-script@v7
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_KEY }}
+          JIRA_BASE_URL: 'https://oshadadilshan.atlassian.net'
+          JIRA_EMAIL: 'gimansabandara2001@gmail.com'
+          JIRA_PROJECT: 'PEZY'
+        with:
+          script: |
+            const jiraToken = process.env.JIRA_API_TOKEN;
+            const jiraEmail = process.env.JIRA_EMAIL;
+            const jiraBaseUrl = process.env.JIRA_BASE_URL;
+            const jiraProject = process.env.JIRA_PROJECT;
+
+            if (!jiraToken) return;
+
+            const authHeader = Buffer.from(jiraEmail + ':' + jiraToken).toString('base64');
             const doneJql = 'project = ' + jiraProject + ' AND status = "Done" ORDER BY created DESC';
-            let doneJiraKeys = new Set();
-            let doneStartAt = 0;
-            let doneHasMore = true;
             
-            while (doneHasMore) {
-              const doneSearchUrl = jiraBaseUrl + '/rest/api/3/search/jql?jql=' + encodeURIComponent(doneJql) + 
-                '&startAt=' + doneStartAt + 
-                '&maxResults=' + maxResults +
-                '&fields=key';
-              
-              const doneResponse = await fetchWithRetry(doneSearchUrl, {
-                method: 'GET',
-                headers: {
-                  'Authorization': 'Basic ' + authHeader,
-                  'Accept': 'application/json'
-                }
-              });
+            console.log('Fetching Done issues from Jira...');
 
-              if (doneResponse.ok) {
-                const doneData = await doneResponse.json();
-                const doneIssues = doneData.issues || doneData.values || [];
-                
-                doneIssues.forEach(function(issue) {
-                  doneJiraKeys.add(issue.key);
-                });
-                
-                doneStartAt += maxResults;
-                // Use isLast field for pagination
-                if (doneData.isLast !== undefined) {
-                  doneHasMore = !doneData.isLast;
-                } else if (doneData.total !== undefined) {
-                  doneHasMore = doneStartAt < doneData.total;
-                } else {
-                  doneHasMore = doneIssues.length === maxResults;
-                }
-                
-                // Add delay between requests to avoid rate limiting
-                if (doneHasMore) {
-                  await delay(1000);
-                }
-              } else {
-                console.log('Could not fetch done issues, skipping close phase');
-                doneHasMore = false;
+            const searchUrl = jiraBaseUrl + '/rest/api/3/search/jql?jql=' + encodeURIComponent(doneJql) + 
+              '&maxResults=100&fields=key';
+            
+            const response = await fetch(searchUrl, {
+              method: 'GET',
+              headers: {
+                'Authorization': 'Basic ' + authHeader,
+                'Accept': 'application/json'
               }
+            });
+
+            if (!response.ok) {
+              console.log('Could not fetch done issues');
+              return;
             }
+
+            const data = await response.json();
+            const doneIssues = data.issues || [];
             
-            console.log('Found ' + doneJiraKeys.size + ' done Jira issues');
+            const doneJiraKeys = new Set();
+            doneIssues.forEach(function(issue) {
+              doneJiraKeys.add(issue.key);
+            });
             
-            // Close GitHub issues that have completed Jira tasks
+            console.log('Found ' + doneJiraKeys.size + ' Done issues in Jira');
+
+            // Get open GitHub issues
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'jira-synced',
+              per_page: 100
+            });
+
             let closedCount = 0;
-            
-            for (const ghIssue of allGitHubIssues) {
-              // Skip if already closed
-              if (ghIssue.state === 'closed') continue;
-              
-              // Find Jira key in title or body
+
+            for (const ghIssue of openIssues.data) {
               const match = (ghIssue.title + ' ' + (ghIssue.body || '')).match(/PEZY-\d+/);
               if (match && doneJiraKeys.has(match[0])) {
                 try {
@@ -399,23 +259,19 @@ jobs:
                     state_reason: 'completed'
                   });
                   
-                  // Add a comment explaining the closure
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: ghIssue.number,
-                    body: 'This issue has been automatically closed because the linked Jira task **' + match[0] + '** was marked as Done.'
+                    body: 'Closed: Jira task **' + match[0] + '** is Done.'
                   });
                   
                   console.log('Closed issue #' + ghIssue.number + ' - ' + match[0] + ' is Done');
                   closedCount++;
                 } catch (error) {
-                  console.error('Failed to close issue #' + ghIssue.number + ':', error.message);
+                  console.error('Failed to close #' + ghIssue.number + ':', error.message);
                 }
               }
             }
             
-            console.log('\n=== Sync Complete ===');
-            console.log('Created: ' + createdCount + ' new issues');
-            console.log('Skipped: ' + skippedCount + ' (already exist)');
-            console.log('Closed: ' + closedCount + ' (Jira task done)');
+            console.log('Closed ' + closedCount + ' issues');
