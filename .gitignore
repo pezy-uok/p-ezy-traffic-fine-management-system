@@ -56,4 +56,4 @@ temp/
 # Secrets (never commit these)
 *.pem
 *.key
-
+secrets.json
