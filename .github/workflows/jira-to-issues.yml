@@ -1,0 +1,187 @@
+name: Sync Jira to GitHub Issues
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      jql_query:
+        description: 'JQL query to filter Jira issues (optional)'
+        required: false
+        default: ''
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync-jira-to-issues:
+    name: Sync Jira Tasks to GitHub Issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Jira to GitHub Issues
+        uses: actions/github-script@v7
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_KEY }}
+          JIRA_BASE_URL: 'https://oshadadilshan.atlassian.net'
+          JIRA_EMAIL: 'gimansabandara2001@gmail.com'
+          JIRA_PROJECT: 'PEZY'
+          JQL_QUERY: ${{ github.event.inputs.jql_query }}
+        with:
+          script: |
+            const jiraToken = process.env.JIRA_API_TOKEN;
+            const jiraEmail = process.env.JIRA_EMAIL;
+            const jiraBaseUrl = process.env.JIRA_BASE_URL;
+            const jiraProject = process.env.JIRA_PROJECT;
+            const customJql = process.env.JQL_QUERY || '';
+
+            if (!jiraToken) {
+              console.log('JIRA_API_TOKEN not configured');
+              return;
+            }
+
+            const authHeader = Buffer.from(jiraEmail + ':' + jiraToken).toString('base64');
+
+            // Default JQL: Get all To Do tasks from the project
+            const jql = customJql || 'project = ' + jiraProject + ' AND status = "To Do" ORDER BY created DESC';
+            
+            console.log('Fetching Jira issues with JQL:', jql);
+
+            // Fetch Jira issues
+            const searchUrl = jiraBaseUrl + '/rest/api/3/search?jql=' + encodeURIComponent(jql) + '&maxResults=50';
+            
+            const jiraResponse = await fetch(searchUrl, {
+              headers: {
+                'Authorization': 'Basic ' + authHeader,
+                'Accept': 'application/json'
+              }
+            });
+
+            if (!jiraResponse.ok) {
+              const errorText = await jiraResponse.text();
+              console.error('Jira API error:', jiraResponse.status, errorText);
+              return;
+            }
+
+            const jiraData = await jiraResponse.json();
+            console.log('Found ' + jiraData.issues.length + ' Jira issues');
+
+            // Get existing GitHub issues to avoid duplicates
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+
+            const existingJiraKeys = new Set();
+            existingIssues.data.forEach(function(issue) {
+              // Check if issue title or body contains a Jira key
+              const match = (issue.title + ' ' + (issue.body || '')).match(/PEZY-\d+/);
+              if (match) {
+                existingJiraKeys.add(match[0]);
+              }
+            });
+
+            console.log('Found ' + existingJiraKeys.size + ' existing issues linked to Jira');
+
+            let createdCount = 0;
+            let skippedCount = 0;
+
+            for (const jiraIssue of jiraData.issues) {
+              const jiraKey = jiraIssue.key;
+              const summary = jiraIssue.fields.summary;
+              const issueType = jiraIssue.fields.issuetype.name;
+              const priority = jiraIssue.fields.priority ? jiraIssue.fields.priority.name : 'Medium';
+              const jiraUrl = jiraBaseUrl + '/browse/' + jiraKey;
+
+              // Skip if already exists
+              if (existingJiraKeys.has(jiraKey)) {
+                console.log('Skipping ' + jiraKey + ' - already exists');
+                skippedCount++;
+                continue;
+              }
+
+              // Extract description text from ADF format
+              let description = 'No description provided';
+              if (jiraIssue.fields.description && jiraIssue.fields.description.content) {
+                const textParts = [];
+                const extractText = function(node) {
+                  if (node.type === 'text' && node.text) {
+                    textParts.push(node.text);
+                  }
+                  if (node.content) {
+                    node.content.forEach(extractText);
+                  }
+                };
+                jiraIssue.fields.description.content.forEach(extractText);
+                description = textParts.join(' ').trim() || 'No description provided';
+              }
+
+              // Map Jira issue type to GitHub labels
+              const labels = ['jira-synced'];
+              if (issueType.toLowerCase().includes('bug')) {
+                labels.push('bug');
+              } else if (issueType.toLowerCase().includes('story') || issueType.toLowerCase().includes('feature')) {
+                labels.push('enhancement');
+              } else if (issueType.toLowerCase().includes('task')) {
+                labels.push('task');
+              }
+
+              // Add priority label
+              if (priority.toLowerCase().includes('high') || priority.toLowerCase().includes('highest')) {
+                labels.push('priority: high');
+              } else if (priority.toLowerCase().includes('low') || priority.toLowerCase().includes('lowest')) {
+                labels.push('priority: low');
+              }
+
+              // Create GitHub issue body
+              const issueBody = '## ' + jiraKey + ': ' + summary + '\n\n' +
+                '### Description\n' + description + '\n\n' +
+                '### Jira Details\n' +
+                '- **Issue:** [' + jiraKey + '](' + jiraUrl + ')\n' +
+                '- **Type:** ' + issueType + '\n' +
+                '- **Priority:** ' + priority + '\n\n' +
+                '---\n' +
+                '*This issue was automatically created from Jira*';
+
+              // Create the GitHub issue
+              try {
+                // Ensure labels exist
+                for (const label of labels) {
+                  try {
+                    await github.rest.issues.createLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      name: label,
+                      color: label === 'bug' ? 'd73a4a' : 
+                             label === 'enhancement' ? 'a2eeef' :
+                             label === 'task' ? 'fbca04' :
+                             label === 'jira-synced' ? '0366d6' :
+                             label.includes('high') ? 'b60205' :
+                             label.includes('low') ? 'c5def5' : '666666'
+                    });
+                  } catch (e) {
+                    // Label already exists
+                  }
+                }
+
+                const newIssue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: jiraKey + ': ' + summary,
+                  body: issueBody,
+                  labels: labels
+                });
+
+                console.log('Created issue #' + newIssue.data.number + ' for ' + jiraKey);
+                createdCount++;
+              } catch (error) {
+                console.error('Failed to create issue for ' + jiraKey + ':', error.message);
+              }
+            }
+
+            console.log('\n=== Sync Complete ===');
+            console.log('Created: ' + createdCount + ' issues');
+            console.log('Skipped: ' + skippedCount + ' (already exist)');
