@@ -187,26 +187,28 @@ jobs:
               console.log('Generating PR content with Groq (Llama 3)...');
 
               try {
-                const systemPrompt = `You are a technical writer helping to create a pull request description. Return ONLY valid JSON with no markdown code blocks.`;
+                const systemPrompt = 'You are a technical writer helping to create a pull request description. Return ONLY valid JSON with no markdown code blocks.';
                 
-                const userPrompt = `Jira Issue Details:
-- Key: ${primaryJira.key}
-- Summary: ${primaryJira.summary}
-- Description: ${primaryJira.description}
-- Type: ${primaryJira.type}
-- Status: ${primaryJira.status}
-
-Linked GitHub Issues:
-${linkedIssues.length > 0 ? linkedIssues.map(i => `- #${i.number}: ${i.title}`).join('\n') : 'None'}
-
-Code Changes Summary:
-${prDiff.substring(0, 4000)}
-
-Generate a PR title and description. Return ONLY this JSON (no markdown):
-{
-  "title": "${primaryJira.key}: Brief summary based on actual code changes (max 72 chars)",
-  "description": "## Description\\n[2-3 sentences]\\n\\n## Jira Reference\\n- Issue: [${primaryJira.key}](${primaryJira.url})\\n\\n## Changes\\n- [bullet points]${linkedIssues.length > 0 ? `\\n\\n## Related Issues\\nFixes #${linkedIssues[0].number}` : ''}"
-}`;
+                const linkedIssuesList = linkedIssues.length > 0 
+                  ? linkedIssues.map(function(i) { return '- #' + i.number + ': ' + i.title; }).join('\n') 
+                  : 'None';
+                const relatedSection = linkedIssues.length > 0 
+                  ? '\\n\\n## Related Issues\\nFixes #' + linkedIssues[0].number 
+                  : '';
+                
+                const userPrompt = 'Jira Issue Details:\n' +
+                  '- Key: ' + primaryJira.key + '\n' +
+                  '- Summary: ' + primaryJira.summary + '\n' +
+                  '- Description: ' + primaryJira.description + '\n' +
+                  '- Type: ' + primaryJira.type + '\n' +
+                  '- Status: ' + primaryJira.status + '\n\n' +
+                  'Linked GitHub Issues:\n' + linkedIssuesList + '\n\n' +
+                  'Code Changes Summary:\n' + prDiff.substring(0, 4000) + '\n\n' +
+                  'Generate a PR title and description. Return ONLY this JSON (no markdown):\n' +
+                  '{\n' +
+                  '  "title": "' + primaryJira.key + ': Brief summary based on actual code changes (max 72 chars)",\n' +
+                  '  "description": "## Description\\n[2-3 sentences]\\n\\n## Jira Reference\\n- Issue: [' + primaryJira.key + '](' + primaryJira.url + ')\\n\\n## Changes\\n- [bullet points]' + relatedSection + '"\n' +
+                  '}';
 
                 console.log('Calling Groq API...');
                 const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
