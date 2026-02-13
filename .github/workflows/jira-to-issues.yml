@@ -43,13 +43,15 @@ jobs:
 
             const authHeader = Buffer.from(jiraEmail + ':' + jiraToken).toString('base64');
 
-            // Default JQL: Get all To Do tasks from the project
-            const jql = customJql || 'project = ' + jiraProject + ' AND status = "To Do" ORDER BY created DESC';
+            // Default JQL: Get ALL issues from the project (not just To Do)
+            const jql = customJql || 'project = ' + jiraProject + ' ORDER BY created DESC';
             
             console.log('Fetching Jira issues with JQL:', jql);
+            console.log('Jira Base URL:', jiraBaseUrl);
 
             // Fetch Jira issues
             const searchUrl = jiraBaseUrl + '/rest/api/3/search?jql=' + encodeURIComponent(jql) + '&maxResults=50';
+            console.log('Search URL:', searchUrl);
             
             const jiraResponse = await fetch(searchUrl, {
               headers: {
@@ -58,14 +60,23 @@ jobs:
               }
             });
 
+            console.log('Jira API response status:', jiraResponse.status);
+
             if (!jiraResponse.ok) {
               const errorText = await jiraResponse.text();
               console.error('Jira API error:', jiraResponse.status, errorText);
+              core.setFailed('Jira API error: ' + jiraResponse.status);
               return;
             }
 
             const jiraData = await jiraResponse.json();
             console.log('Found ' + jiraData.issues.length + ' Jira issues');
+            
+            if (jiraData.issues.length === 0) {
+              console.log('No issues found. Check if PEZY project exists and has issues.');
+              console.log('Try running with JQL: project = PEZY');
+              return;
+            }
 
             // Get existing GitHub issues to avoid duplicates
             const existingIssues = await github.rest.issues.listForRepo({
