@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   sync-jira-to-issues:
-    name: Sync Jira Tasks to GitHub Issues
+    name: Sync Jira Tasks to GitHub IssuesS
     runs-on: ubuntu-latest
     steps:
       - name: Sync Jira to GitHub Issues
