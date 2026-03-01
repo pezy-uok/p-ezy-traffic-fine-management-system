@@ -48,4 +48,4 @@ Used during roadside checks via mobile phone:
 
 ## 📄 License
 This project is developed for academic purposes as part of the s Software Engineering curriculum at the University of Kelaniya.  
-It is not intended for commercial use without prior permission from the project authors.
+It is not intended for commercial use without prior permission from the project autho
