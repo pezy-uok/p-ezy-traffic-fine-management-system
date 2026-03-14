@@ -2,8 +2,8 @@ name: Full Jira to GitHub Sync
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # Runs every 6 hours
-  workflow_dispatch:      # Allows manual trigger to clear the backlog
+    - cron: '0 */6 * * *'
+  workflow_dispatch: 
 
 permissions:
   issues: write
@@ -13,7 +13,7 @@ jobs:
   sync-jira:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync Issues
+      - name: Sync All Issues
         uses: actions/github-script@v7
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_KEY }}
@@ -26,30 +26,29 @@ jobs:
             const sleep = (ms) => new Promise(res => setTimeout(res, ms));
             const authHeader = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64');
             
-            // 1. Fetch ALL Jira Issues using Pagination
+            // 1. PAGINATED JIRA FETCH (Gets all 200+ issues)
             let allJiraIssues = [];
             let startAt = 0;
             const maxResults = 100;
             
-            console.log('Fetching all issues from Jira...');
+            console.log('--- Starting Jira Fetch ---');
             while (true) {
               const jql = encodeURIComponent(`project = ${JIRA_PROJECT} ORDER BY created DESC`);
               const jiraUrl = `${JIRA_BASE_URL}/rest/api/3/search/jql?jql=${jql}&maxResults=${maxResults}&startAt=${startAt}&fields=summary,description,status`;
               
-              const jiraRes = await fetch(jiraUrl, {
+              const res = await fetch(jiraUrl, {
                 headers: { 'Authorization': `Basic ${authHeader}`, 'Accept': 'application/json' }
               });
-              const jiraData = await jiraRes.json();
-              const batch = jiraData.issues || [];
-              
+              const data = await res.json();
+              const batch = data.issues || [];
               allJiraIssues = allJiraIssues.concat(batch);
-              console.log(`Retrieved ${allJiraIssues.length} / ${jiraData.total} Jira issues...`);
               
-              if (allJiraIssues.length >= jiraData.total || batch.length === 0) break;
+              console.log(`Fetched ${allJiraIssues.length} / ${data.total} issues...`);
+              if (allJiraIssues.length >= data.total || batch.length === 0) break;
               startAt += maxResults;
             }
 
-            // 2. Fetch all existing GitHub issues (Pagination already included)
+            // 2. PAGINATED GITHUB FETCH (Checks every existing issue)
             const existingJiraKeys = new Set();
             let ghPage = 1;
             while (true) {
@@ -61,20 +60,22 @@ jobs:
                 page: ghPage
               });
               if (issues.length === 0) break;
-              issues.forEach(issue => {
-                const match = (issue.title + ' ' + (issue.body || '')).match(/PEZY-\d+/);
+              issues.forEach(i => {
+                const match = (i.title + ' ' + (i.body || '')).match(/PEZY-\d+/);
                 if (match) existingJiraKeys.add(match[0]);
               });
               ghPage++;
             }
+            console.log(`Knowledge Base: ${existingJiraKeys.size} issues already on GitHub.`);
 
-            // 3. Process and Sync
+            // 3. SYNC LOOP
             for (const issue of allJiraIssues) {
               const key = issue.key;
               const status = issue.fields.status.name;
 
               if (existingJiraKeys.has(key)) continue;
 
+              // Parse Description
               let desc = 'No description provided.';
               if (issue.fields.description?.content) {
                 const parts = [];
@@ -87,14 +88,16 @@ jobs:
               }
 
               try {
+                // Create Issue
                 const { data: newIssue } = await github.rest.issues.create({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   title: `${key}: ${issue.fields.summary}`,
-                  body: `### Jira Issue: [${key}](${JIRA_BASE_URL}/browse/${key})\n\n${desc}`,
+                  body: `### Jira: [${key}](${JIRA_BASE_URL}/browse/${key})\n\n${desc}`,
                   labels: ['jira-synced', `status: ${status.toLowerCase()}`]
                 });
 
+                // Auto-close if Done
                 if (status.toLowerCase() === 'done') {
                   await github.rest.issues.update({
                     owner: context.repo.owner,
@@ -102,16 +105,19 @@ jobs:
                     issue_number: newIssue.number,
                     state: 'closed'
                   });
+                  console.log(`+ ${key} (Created & Closed)`);
+                } else {
+                  console.log(`+ ${key} (Created Open)`);
                 }
-                
-                console.log(`+ Synced ${key}`);
-                await sleep(3000); // Wait 3s between each creation to stay safe
+
+                // IMPORTANT: 3s sleep to avoid secondary rate limits
+                await sleep(3000);
 
               } catch (err) {
+                console.error(`Error with ${key}: ${err.message}`);
                 if (err.message.includes('secondary rate limit')) {
-                  console.log('Stopping loop: GitHub Secondary Rate Limit reached.');
+                  console.log('Rate limit hit. Stopping.');
                   break; 
                 }
-                console.error(`Error syncing ${key}: ${err.message}`);
               }
             }
