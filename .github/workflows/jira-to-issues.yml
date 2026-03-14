@@ -40,65 +40,63 @@ jobs:
                 headers: { 'Authorization': `Basic ${authHeader}`, 'Accept': 'application/json' }
               });
 
-              if (!res.ok) {
-                console.log(`Jira API Error: ${res.status}`);
-                break;
-              }
+              if (!res.ok) break;
 
               const data = await res.json();
               const batch = data.issues || [];
               
-              // Safety Break 1: No more issues returned
+              // STOP if Jira returns an empty page
               if (batch.length === 0) {
-                console.log('No more issues found in Jira.');
+                console.log('No more Jira issues found.');
                 break;
               }
 
               allJiraIssues = allJiraIssues.concat(batch);
-              console.log(`Fetched ${allJiraIssues.length} issues...`);
+              console.log(`Fetched ${allJiraIssues.length} issues from Jira...`);
               
-              // Safety Break 2: Reached the total count reported by Jira
-              if (data.total && allJiraIssues.length >= data.total) {
-                break;
-              }
-
+              if (data.total && allJiraIssues.length >= data.total) break;
+              
               startAt += maxResults;
-
-              // Safety Break 3: Emergency Hard Cap (Prevents Infinite Loops)
-              if (startAt > 1000) { 
-                console.log('Emergency safety cap reached (1000 issues).');
-                break; 
-              }
+              if (startAt > 2000) break; // Hard limit for safety
             }
 
-            // 2. PAGINATED GITHUB FETCH
+            // 2. STRENGTHENED GITHUB KNOWLEDGE BASE
             const existingJiraKeys = new Set();
             let ghPage = 1;
+            console.log('--- Checking Existing GitHub Issues ---');
             while (true) {
               const { data: issues } = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                state: 'all',
+                state: 'all', // Must check open and closed
                 per_page: 100,
                 page: ghPage
               });
+              
               if (issues.length === 0) break;
+              
               issues.forEach(i => {
                 const match = (i.title + ' ' + (i.body || '')).match(/PEZY-\d+/);
                 if (match) existingJiraKeys.add(match[0]);
               });
+              
+              console.log(`Page ${ghPage}: Found ${issues.length} total items.`);
               ghPage++;
+              if (ghPage > 50) break; // Safety cap
             }
-            console.log(`Knowledge Base: ${existingJiraKeys.size} issues already on GitHub.`);
+            console.log(`Knowledge Base: ${existingJiraKeys.size} unique keys tracked.`);
 
             // 3. SYNC LOOP
             for (const issue of allJiraIssues) {
               const key = issue.key;
               const status = issue.fields.status.name;
 
-              if (existingJiraKeys.has(key)) continue;
+              // SKIP if already on GitHub
+              if (existingJiraKeys.has(key)) {
+                continue;
+              }
 
-              let desc = 'No description provided.';
+              let desc = 'No description.';
               if (issue.fields.description?.content) {
                 const parts = [];
                 const walk = (n) => {
@@ -128,11 +126,13 @@ jobs:
                 }
                 
                 console.log(`+ Synced ${key}`);
-                await sleep(3000); // Wait 3s between each creation
+                
+                // CRITICAL: 3.5s delay to prevent GitHub Rate Limits
+                await sleep(3500);
 
               } catch (err) {
                 if (err.message.includes('secondary rate limit')) {
-                  console.log('Rate limit hit. Stopping.');
+                  console.log('Rate limit hit. Stopping execution.');
                   break; 
                 }
                 console.error(`Error with ${key}: ${err.message}`);
