@@ -1,9 +1,9 @@
-name: Sync Full Jira to GitHub Issues
+name: Full Jira to GitHub Sync
 
 on:
   schedule:
     - cron: '0 */6 * * *' # Runs every 6 hours
-  workflow_dispatch:      # Allows you to run it manually
+  workflow_dispatch:      # Allows manual trigger to clear the backlog
 
 permissions:
   issues: write
@@ -23,13 +23,13 @@ jobs:
         with:
           script: |
             const { JIRA_API_TOKEN, JIRA_EMAIL, JIRA_BASE_URL, JIRA_PROJECT } = process.env;
-            if (!JIRA_API_TOKEN) throw new Error('JIRA_API_KEY secret is missing');
+            const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
             const authHeader = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64');
             
-            // 1. Fetch ALL issues from Jira (Max 100 for now)
+            // 1. Fetch Jira Issues (Increased to 100 per run)
             const jql = encodeURIComponent(`project = ${JIRA_PROJECT} ORDER BY created DESC`);
-            const jiraUrl = `${JIRA_BASE_URL}/rest/api/3/search/jql?jql=${jql}&maxResults=100&fields=summary,description,issuetype,status`;
+            const jiraUrl = `${JIRA_BASE_URL}/rest/api/3/search/jql?jql=${jql}&maxResults=100&fields=summary,description,status`;
             
             const jiraRes = await fetch(jiraUrl, {
               headers: { 'Authorization': `Basic ${authHeader}`, 'Accept': 'application/json' }
@@ -37,7 +37,7 @@ jobs:
             const jiraData = await jiraRes.json();
             const jiraIssues = jiraData.issues || [];
 
-            // 2. Paginate through GitHub to find ALL existing Jira keys
+            // 2. Paginate GitHub to find ALL existing Jira keys (to avoid duplicates)
             const existingJiraKeys = new Set();
             let page = 1;
             while (true) {
@@ -48,9 +48,7 @@ jobs:
                 per_page: 100,
                 page: page
               });
-              
               if (issues.length === 0) break;
-              
               issues.forEach(issue => {
                 const match = (issue.title + ' ' + (issue.body || '')).match(/PEZY-\d+/);
                 if (match) existingJiraKeys.add(match[0]);
@@ -58,7 +56,7 @@ jobs:
               page++;
             }
 
-            console.log(`Knowledge base: ${existingJiraKeys.size} issues already tracked.`);
+            console.log(`Knowledge base: ${existingJiraKeys.size} issues already on GitHub.`);
 
             // 3. Process the Jira list
             for (const issue of jiraIssues) {
@@ -66,12 +64,12 @@ jobs:
               const status = issue.fields.status.name;
 
               if (existingJiraKeys.has(key)) {
-                console.log(`- ${key} exists. Skipping.`);
+                console.log(`- Skipping ${key} (Already synced)`);
                 continue;
               }
 
-              // Parse Jira's ADF description to plain text
-              let desc = 'No description.';
+              // Parse Jira ADF description
+              let desc = 'No description provided.';
               if (issue.fields.description?.content) {
                 const parts = [];
                 const walk = (n) => {
@@ -82,25 +80,37 @@ jobs:
                 desc = parts.join(' ').trim() || desc;
               }
 
-              // Create the issue on GitHub
-              const { data: newIssue } = await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `${key}: ${issue.fields.summary}`,
-                body: `### Jira: [${key}](${JIRA_BASE_URL}/browse/${key})\n\n${desc}`,
-                labels: ['jira-synced', `status: ${status.toLowerCase()}`]
-              });
-
-              // Close if Jira says "Done"
-              if (status.toLowerCase() === 'done') {
-                await github.rest.issues.update({
+              try {
+                // Create the issue on GitHub
+                const { data: newIssue } = await github.rest.issues.create({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: newIssue.number,
-                  state: 'closed'
+                  title: `${key}: ${issue.fields.summary}`,
+                  body: `### Jira Issue: [${key}](${JIRA_BASE_URL}/browse/${key})\n\n${desc}`,
+                  labels: ['jira-synced', `status: ${status.toLowerCase()}`]
                 });
-                console.log(`+ ${key} (Created & Closed)`);
-              } else {
-                console.log(`+ ${key} (Created Open)`);
+
+                // Auto-close if Jira status is Done
+                if (status.toLowerCase() === 'done') {
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: newIssue.number,
+                    state: 'closed'
+                  });
+                  console.log(`+ ${key} (Created & Closed)`);
+                } else {
+                  console.log(`+ ${key} (Created Open)`);
+                }
+
+                // PAUSE to avoid Secondary Rate Limits
+                await sleep(3000);
+
+              } catch (err) {
+                console.error(`Failed to create ${key}: ${err.message}`);
+                if (err.message.includes('secondary rate limit')) {
+                  console.log('Stopping loop to respect GitHub Rate Limits.');
+                  break; 
+                }
               }
             }
