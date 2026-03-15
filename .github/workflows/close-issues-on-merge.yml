@@ -125,14 +125,32 @@ jobs:
                       timeout=10
                   )
                   
-                  # Add completed label
-                  session.post(
-                      f'{base_url}/issues/{issue_num}/labels',
-                      json=['completed'],
-                      timeout=10
-                  )
+                  # Remove old status labels and add done label
+                  try:
+                      # Remove "status: todo" and "status: in progress" labels
+                      for old_label in ['status: todo', 'status: in progress']:
+                          try:
+                              session.delete(
+                                  f'{base_url}/issues/{issue_num}/labels/{old_label}',
+                                  timeout=10
+                              )
+                          except:
+                              pass
+                      
+                      # Add "status: done" label
+                      add_label_resp = session.post(
+                          f'{base_url}/issues/{issue_num}/labels',
+                          json={'labels': ['status: done']},
+                          timeout=10
+                      )
+                      
+                      if add_label_resp.ok:
+                          print(f"    ✓ Issue #{issue_num} closed and labeled as 'status: done'")
+                      else:
+                          print(f"    ⚠ Issue #{issue_num} closed but failed to add label: {add_label_resp.status_code}")
+                  except Exception as label_error:
+                      print(f"    ⚠ Issue #{issue_num} closed but failed to update labels: {str(label_error)}")
                   
-                  print(f"    ✓ Issue #{issue_num} closed and marked as completed")
                   closed_count += 1
               else:
                   print(f"    ✗ Failed to close issue #{issue_num}: {close_resp.status_code}")

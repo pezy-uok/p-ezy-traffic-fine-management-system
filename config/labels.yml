@@ -60,6 +60,10 @@
   description: "Low priority"
 
 # Status labels
+- name: "status: todo"
+  color: "cccccc"
+  description: "Task to be done"
+
 - name: "status: in progress"
   color: "0052cc"
   description: "Currently being worked on"
@@ -67,6 +71,10 @@
 - name: "status: needs review"
   color: "006b75"
   description: "Ready for review"
+
+- name: "status: done"
+  color: "0e8a16"
+  description: "Task completed and merged"
 
 - name: "status: blocked"
   color: "b60205"
