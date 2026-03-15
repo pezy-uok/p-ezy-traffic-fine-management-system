@@ -47,28 +47,67 @@ jobs:
               'Accept': 'application/vnd.github+json',
           })
           
-          # Extract issue numbers from PR description
+          # Extract PEZY issue references from PR description
           text = pr_body + ' ' + pr_title
           patterns = [
+              r'[Cc]loses\s+PEZY-(\d+)',
+              r'[Ff]ixes\s+PEZY-(\d+)',
+              r'[Rr]esolves\s+PEZY-(\d+)',
               r'[Cc]loses\s+#(\d+)',
               r'[Ff]ixes\s+#(\d+)',
               r'[Rr]esolves\s+#(\d+)',
           ]
           
-          issue_numbers = set()
+          pezy_issues = set()
+          gh_issues = set()
+          
           for pattern in patterns:
               matches = re.findall(pattern, text)
-              issue_numbers.update(matches)
+              if 'PEZY' in pattern:
+                  pezy_issues.update(matches)
+              else:
+                  gh_issues.update(matches)
           
-          if not issue_numbers:
-              print(f"No linked issues found in PR #{pr_number}")
+          if not pezy_issues and not gh_issues:
+              print(f"❌ No linked issues found in PR #{pr_number}")
               sys.exit(0)
           
-          print(f"Found {len(issue_numbers)} linked issues: {', '.join(f'#{i}' for i in issue_numbers)}")
+          # Convert PEZY-XXX to GitHub issue numbers by searching
+          base_url = f'https://api.github.com/repos/{repo}'
+          issue_numbers = set(gh_issues)
+          
+          if pezy_issues:
+              print(f"🔍 Found PEZY issues: {', '.join(f'PEZY-{i}' for i in pezy_issues)}")
+              print(f"🔍 Searching for corresponding GitHub issues...")
+              
+              for pezy_id in pezy_issues:
+                  # Search for GitHub issue with PEZY-XXX in title
+                  search_url = f'https://api.github.com/search/issues'
+                  search_params = {
+                      'q': f'repo:{repo} PEZY-{pezy_id} in:title',
+                      'per_page': 1
+                  }
+                  
+                  search_resp = session.get(search_url, params=search_params, timeout=10)
+                  if search_resp.ok:
+                      results = search_resp.json()
+                      if results.get('items'):
+                          gh_num = results['items'][0]['number']
+                          issue_numbers.add(str(gh_num))
+                          print(f"  ✓ PEZY-{pezy_id} → GitHub issue #{gh_num}")
+                      else:
+                          print(f"  ✗ GitHub issue not found for PEZY-{pezy_id}")
+          
+          if not issue_numbers:
+              print(f"❌ No GitHub issues to close")
+              sys.exit(0)
+          
+          print(f"\n✅ Found {len(issue_numbers)} GitHub issue(s) to close: {', '.join(f'#{i}' for i in issue_numbers)}\n")
           
           # Close each issue
+          closed_count = 0
           for issue_num in issue_numbers:
-              base_url = f'https://api.github.com/repos/{repo}'
+              print(f"  Closing issue #{issue_num}...")
               
               # Close issue
               close_resp = session.patch(
@@ -79,9 +118,10 @@ jobs:
               
               if close_resp.ok:
                   # Add comment
-                  comment_resp = session.post(
+                  comment_body = f'✅ **Closed by PR #{pr_number}**\n\n[View PR]({pr_url})'
+                  session.post(
                       f'{base_url}/issues/{issue_num}/comments',
-                      json={'body': f'✅ **Closed by PR #{pr_number}**\n\n[View PR]({pr_url})'},
+                      json={'body': comment_body},
                       timeout=10
                   )
                   
@@ -92,9 +132,12 @@ jobs:
                       timeout=10
                   )
                   
-                  print(f"✓ Issue #{issue_num} closed and marked as completed")
+                  print(f"    ✓ Issue #{issue_num} closed and marked as completed")
+                  closed_count += 1
               else:
-                  print(f"✗ Failed to close issue #{issue_num}: {close_resp.status_code}")
+                  print(f"    ✗ Failed to close issue #{issue_num}: {close_resp.status_code}")
+          
+          print(f"\n📊 Summary: {closed_count}/{len(issue_numbers)} issues closed")
           
           EOF
           

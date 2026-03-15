@@ -14,22 +14,26 @@ All of this happens **instantly and automatically** - no manual action needed!
 
 ## 📝 PR Description Format
 
-Use these keywords in your PR description to link issues:
+Use these keywords with **PEZY-XXX** or **GitHub issue numbers** to link issues:
 
 ```markdown
-## Description
-[Description of changes]
-
-## Linked Issues
-Closes #4365
-Fixes #4366
-Resolves #4367
+## Closes
+Closes PEZY-4365
+Fixes PEZY-4366
+Resolves PEZY-4367
 ```
 
-**Supported Keywords:**
-- `Closes #123` - Auto-closes issue #123
-- `Fixes #123` - Auto-closes issue #123
-- `Resolves #123` - Auto-closes issue #123
+**Supported Formats:**
+- `Closes PEZY-123` ⭐ RECOMMENDED - Auto-closes the PEZY issue
+- `Fixes PEZY-123` - Auto-closes the PEZY issue
+- `Resolves PEZY-123` - Auto-closes the PEZY issue
+- `Closes #123` - Auto-closes GitHub issue #123 (direct)
+
+**Workflow Behavior:**
+- Recognizes both PEZY-XXX and #XXX formats
+- For PEZY-XXX: Searches for GitHub issue with PEZY-XXX in title
+- Automatically closes the corresponding GitHub issue
+- Adds "completed" label and comment
 
 ## 📋 Example PR Description
 
@@ -44,9 +48,9 @@ Implemented the main content layout wrapper component as designed in Figma.
 - Tested across browsers
 
 ## Closes
-Closes #4365
-Closes #4366
-Fixes #4550
+Closes PEZY-4365
+Closes PEZY-4366
+Fixes PEZY-4550
 
 ## Testing
 - [x] Tested on desktop (1920x1080, 1366x768)
@@ -56,7 +60,8 @@ Fixes #4550
 ```
 
 When this PR is merged:
-- Issues #4365, #4366, #4550 automatically close
+- PEZY-4365, PEZY-4366, PEZY-4550 are searched in GitHub issues
+- Their corresponding GitHub issues automatically close
 - Each issue gets a "completed" label
 - Each issue receives a comment with the PR link
 
@@ -75,36 +80,36 @@ The workflow is configured in `.github/workflows/close-issues-on-merge.yml`
 
 ## 📊 Usage Examples
 
-### Example 1: Simple Issue Closure
+### Example 1: Simple PEZY Issue
 
 **PR Description:**
 ```markdown
 # Fix Login Component
 
-Closes #4370
+Closes PEZY-4370
 ```
 
-**Result:** Issue #4370 closes automatically when PR merges
+**Result:** GitHub issue with "PEZY-4370" in title closes automatically when PR merges
 
-### Example 2: Multiple Issues
+### Example 2: Multiple PEZY Issues
 
 **PR Description:**
 ```markdown
 # Implement User Dashboard
 
 ## Closes
-Closes #4365
-Closes #4366
-Fixes #4380
+Closes PEZY-4365
+Closes PEZY-4366
+Fixes PEZY-4380
 ```
 
-**Result:** Issues #4365, #4366, #4380 all close when PR merges
+**Result:** All corresponding GitHub issues close when PR merges
 
-### Example 3: In PR Title
+### Example 3: PEZY in PR Title
 
 **PR Title:**
 ```
-feat: Add header component (closes #4390)
+feat: Add header component (closes PEZY-4390)
 ```
 
 **PR Body:**
@@ -112,7 +117,23 @@ feat: Add header component (closes #4390)
 Implementation of main header component with navigation
 ```
 
-**Result:** Issue #4390 closes automatically
+**Result:** GitHub issue with "PEZY-4390" in title closes automatically
+
+### Example 4: Mixed Format
+
+**PR Description:**
+```markdown
+# Various Fixes
+
+Closes PEZY-4360
+Fixes #4400
+Resolves PEZY-4410
+```
+
+**Result:**
+- GitHub issue containing "PEZY-4360" → closes
+- GitHub issue #4400 → closes
+- GitHub issue containing "PEZY-4410" → closes
 
 ## 🔍 How to Monitor
 
@@ -161,19 +182,30 @@ Go to merged PR and see comments from automation bot
 
 ### Issues Not Closing?
 
-**Check 1: PR Description Format**
+**Check 1: PR Description Format (PEZY)**
 ```
-❌ Wrong: "Closes issue 4365"      (wrong format)
+❌ Wrong: "Closes pezy-4365"      (lowercase)
+❌ Wrong: "Closes PEZY 4365"      (space instead of dash)
+✅ Correct: "Closes PEZY-4365"    (capital PEZY, dash, number)
+```
+
+**Check 2: PR Description Format (GitHub)**
+```
 ❌ Wrong: "closes #4365"           (lowercase)
 ✅ Correct: "Closes #4365"         (capital C, with #)
 ```
 
-**Check 2: GitHub Actions Status**
+**Check 3: GitHub Issue Title**
+- If using PEZY-XXX format, verify GitHub issue title contains `PEZY-4365`
+- Example: `[PEZY-4365]: Issue Title` ✅
+- Workflow searches for PEZY-XXXX in title
+
+**Check 4: GitHub Actions Status**
 - Go to Actions tab
 - Check "Close Issues on PR Merge" workflow
-- Look for error messages
+- View logs to see if PEZY-XXX was found and mapped
 
-**Check 3: Merge vs Close PR**
+**Check 5: Merge vs Close PR**
 - Workflow only runs on **merge**, not on PR close
 - Manual PR close ≠ automatic issue closure
 
@@ -194,29 +226,37 @@ Then merge it and check:
 
 ## 📌 Best Practices
 
-1. **Always Link Issues**
-   - Use format: `Closes #123`
+1. **Use PEZY-XXX Format** (Recommended)
+   - Reference the original Jira issue: `Closes PEZY-4365`
+   - Workflow automatically finds matching GitHub issue
+   - Better for tracking original issue numbers
+
+2. **Link Related Issues**
+   - Always use keyword format: `Closes PEZY-XXX` or `Closes #123`
    - Include in every related PR
 
-2. **Clear Messages**
+3. **Clear Messages**
    - Describe what the PR fixes
-   - Reference the exact issues
+   - Reference the exact Jira and/or GitHub issues
 
-3. **Review Before Merge**
+4. **Review Before Merge**
    - Check workflow will close right issues
-   - Prevent accidental closures
+   - Verify PEZY-XXX references are correct
 
-4. **One Keyword Per Line**
+5. **One Reference Per Line**
    ```
    ✅ Correct:
+   Closes PEZY-4365
+   Closes PEZY-4366
+   
+   ✅ Also works:
    Closes #4365
-   Closes #4366
    
    ❌ Avoid:
-   Closes #4365 and #4366
+   Closes PEZY-4365 and PEZY-4366
    ```
 
-5. **Document Related Work**
+6. **Document Related Work**
    - Use PR description for context
    - Help team understand changes
 
