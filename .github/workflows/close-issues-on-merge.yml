@@ -1,0 +1,106 @@
+name: Close Issues on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  close-issues:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+      
+      - name: Close linked issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          cat > close_pr_issues.py << 'EOF'
+          import os
+          import re
+          import requests
+          import sys
+          
+          token = os.getenv('GITHUB_TOKEN')
+          repo = os.getenv('GITHUB_REPO')
+          pr_number = ${{ github.event.pull_request.number }}
+          pr_title = """${{ github.event.pull_request.title }}"""
+          pr_body = """${{ github.event.pull_request.body }}"""
+          pr_url = """${{ github.event.pull_request.html_url }}"""
+          
+          session = requests.Session()
+          session.headers.update({
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+          })
+          
+          # Extract issue numbers from PR description
+          text = pr_body + ' ' + pr_title
+          patterns = [
+              r'[Cc]loses\s+#(\d+)',
+              r'[Ff]ixes\s+#(\d+)',
+              r'[Rr]esolves\s+#(\d+)',
+          ]
+          
+          issue_numbers = set()
+          for pattern in patterns:
+              matches = re.findall(pattern, text)
+              issue_numbers.update(matches)
+          
+          if not issue_numbers:
+              print(f"No linked issues found in PR #{pr_number}")
+              sys.exit(0)
+          
+          print(f"Found {len(issue_numbers)} linked issues: {', '.join(f'#{i}' for i in issue_numbers)}")
+          
+          # Close each issue
+          for issue_num in issue_numbers:
+              base_url = f'https://api.github.com/repos/{repo}'
+              
+              # Close issue
+              close_resp = session.patch(
+                  f'{base_url}/issues/{issue_num}',
+                  json={'state': 'closed'},
+                  timeout=10
+              )
+              
+              if close_resp.ok:
+                  # Add comment
+                  comment_resp = session.post(
+                      f'{base_url}/issues/{issue_num}/comments',
+                      json={'body': f'✅ **Closed by PR #{pr_number}**\n\n[View PR]({pr_url})'},
+                      timeout=10
+                  )
+                  
+                  # Add completed label
+                  session.post(
+                      f'{base_url}/issues/{issue_num}/labels',
+                      json=['completed'],
+                      timeout=10
+                  )
+                  
+                  print(f"✓ Issue #{issue_num} closed and marked as completed")
+              else:
+                  print(f"✗ Failed to close issue #{issue_num}: {close_resp.status_code}")
+          
+          EOF
+          
+          python close_pr_issues.py
+      
+      - name: Log completion
+        run: |
+          echo "✅ Workflow completed"
+          echo "Issues linked to PR #${{ github.event.pull_request.number }} have been closed"
