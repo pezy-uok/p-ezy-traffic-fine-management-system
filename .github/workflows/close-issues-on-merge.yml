@@ -142,20 +142,36 @@ jobs:
                   
                   # Remove old status labels and add done label
                   try:
-                      # Remove "status: todo" and "status: in progress" labels
-                      for old_label in ['status: todo', 'status: in progress']:
-                          try:
-                              session.delete(
-                                  f'{base_url}/issues/{issue_num}/labels/{old_label}',
-                                  timeout=10
-                              )
-                          except:
-                              pass
+                      import urllib.parse
+                      
+                      # Get current labels
+                      labels_resp = session.get(
+                          f'{base_url}/issues/{issue_num}/labels?per_page=100',
+                          timeout=10
+                      )
+                      
+                      current_labels = []
+                      if labels_resp.ok:
+                          current_labels = [label['name'] for label in labels_resp.json()]
+                      
+                      # Remove any existing status labels (URL-encode the label names)
+                      status_labels_to_remove = [label for label in current_labels if label.startswith('status:')]
+                      
+                      for old_label in status_labels_to_remove:
+                          encoded_label = urllib.parse.quote(old_label)
+                          delete_resp = session.delete(
+                              f'{base_url}/issues/{issue_num}/labels/{encoded_label}',
+                              timeout=10
+                          )
+                          if delete_resp.ok:
+                              print(f"      Removed label: {old_label}")
+                          else:
+                              print(f"      Warning: Could not remove '{old_label}': {delete_resp.status_code}")
                       
                       # Add "status: done" label
                       add_label_resp = session.post(
                           f'{base_url}/issues/{issue_num}/labels',
-                          json=['status: done'],
+                          json={'labels': ['status: done']},
                           timeout=10
                       )
                       
