@@ -155,7 +155,7 @@ jobs:
                       # Add "status: done" label
                       add_label_resp = session.post(
                           f'{base_url}/issues/{issue_num}/labels',
-                          json={'labels': ['status: done']},
+                          json=['status: done'],
                           timeout=10
                       )
                       
