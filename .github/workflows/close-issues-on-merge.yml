@@ -140,6 +140,46 @@ jobs:
                       timeout=10
                   )
                   
+                  # Manage status labels - remove all status labels and add "status: done"
+                  try:
+                      import urllib.parse
+                      
+                      # Get current labels
+                      labels_resp = session.get(
+                          f'{base_url}/issues/{issue_num}/labels?per_page=100',
+                          timeout=10
+                      )
+                      
+                      current_labels = []
+                      if labels_resp.ok:
+                          current_labels = [label['name'] for label in labels_resp.json()]
+                      
+                      # Find and remove all existing status labels
+                      status_labels_to_remove = [label for label in current_labels if label.startswith('status:')]
+                      
+                      if status_labels_to_remove:
+                          print(f"  Updating status labels...")
+                          for old_label in status_labels_to_remove:
+                              encoded_label = urllib.parse.quote(old_label)
+                              delete_resp = session.delete(
+                                  f'{base_url}/issues/{issue_num}/labels/{encoded_label}',
+                                  timeout=10
+                              )
+                              if delete_resp.ok:
+                                  print(f"    ✓ Removed: {old_label}")
+                      
+                      # Add "status: done" label
+                      add_label_resp = session.post(
+                          f'{base_url}/issues/{issue_num}/labels',
+                          json={'labels': ['status: done']},
+                          timeout=10
+                      )
+                      
+                      if add_label_resp.ok:
+                          print(f"    ✓ Added: status: done")
+                  except Exception as label_error:
+                      print(f"    ⚠ Label management failed: {str(label_error)}")
+                  
                   print(f"    ✓ Issue #{issue_num} closed successfully")
                   closed_count += 1
               else:
