@@ -15,183 +15,140 @@ jobs:
     if: github.event.pull_request.merged == true
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Close linked issues and update labels
+        uses: actions/github-script@v7
         with:
-          python-version: '3.9'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests python-dotenv
-      
-      - name: Close linked issues
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPO: ${{ github.repository }}
-        run: |
-          cat > close_pr_issues.py << 'EOF'
-          import os
-          import re
-          import requests
-          import sys
-          
-          token = os.getenv('GITHUB_TOKEN')
-          repo = os.getenv('GITHUB_REPO')
-          pr_number = ${{ github.event.pull_request.number }}
-          pr_title = """${{ github.event.pull_request.title }}"""
-          pr_body = """${{ github.event.pull_request.body }}"""
-          pr_url = """${{ github.event.pull_request.html_url }}"""
-          
-          session = requests.Session()
-          session.headers.update({
-              'Authorization': f'Bearer {token}',
-              'Accept': 'application/vnd.github+json',
-          })
-          
-          # Extract PEZY issue references from PR description and title
-          text = pr_body + ' ' + pr_title
-          pezy_issues = set()
-          gh_issues = set()
-          
-          # Keywords-based patterns (closes, fixes, resolves)
-          keyword_patterns_pezy = [
-              r'[Cc]loses\s+PEZY-(\d+)',
-              r'[Ff]ixes\s+PEZY-(\d+)',
-              r'[Rr]esolves\s+PEZY-(\d+)',
-          ]
-          
-          keyword_patterns_gh = [
-              r'[Cc]loses\s+#(\d+)',
-              r'[Ff]ixes\s+#(\d+)',
-              r'[Rr]esolves\s+#(\d+)',
-          ]
-          
-          # Extract from keyword patterns
-          for pattern in keyword_patterns_pezy:
-              matches = re.findall(pattern, text)
-              pezy_issues.update(matches)
-          
-          for pattern in keyword_patterns_gh:
-              matches = re.findall(pattern, text)
-              gh_issues.update(matches)
-          
-          # Also match direct PEZY-XXX format (commit message style)
-          direct_pezy = re.findall(r'PEZY-(\d+)', text)
-          pezy_issues.update(direct_pezy)
-          
-          if not pezy_issues and not gh_issues:
-              print(f"❌ No linked issues found in PR #{pr_number}")
-              sys.exit(0)
-          
-          # Convert PEZY-XXX to GitHub issue numbers by searching
-          base_url = f'https://api.github.com/repos/{repo}'
-          issue_numbers = set(gh_issues)
-          
-          if pezy_issues:
-              print(f"🔍 Found PEZY issues: {', '.join(f'PEZY-{i}' for i in pezy_issues)}")
-              print(f"🔍 Searching for corresponding GitHub issues...")
+          script: |
+            const pr = context.payload.pull_request;
+            const prNumber = pr.number;
+            const prTitle = pr.title;
+            const prBody = pr.body || '';
+            const prUrl = pr.html_url;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            console.log(`🔍 Processing PR #${prNumber}: "${prTitle}"`);
+
+            // Extract PEZY issue references
+            const text = `${prTitle} ${prBody}`;
+            const pezyPattern = /PEZY-(\d+)/g;
+            const githubPattern = /(closes|fixes|resolves)\s+#(\d+)/gi;
+
+            let pezyIssues = new Set();
+            let githubIssues = new Set();
+
+            // Find all PEZY-XXX references
+            let match;
+            while ((match = pezyPattern.exec(text)) !== null) {
+              pezyIssues.add(match[1]);
+            }
+
+            // Find all GitHub issue references with keywords
+            while ((match = githubPattern.exec(text)) !== null) {
+              githubIssues.add(match[2]);
+            }
+
+            console.log(`Found PEZY issues: ${pezyIssues.size > 0 ? [...pezyIssues].map(id => `PEZY-${id}`).join(', ') : 'none'}`);
+            console.log(`Found GitHub issues: ${githubIssues.size > 0 ? [...githubIssues].map(id => `#${id}`).join(', ') : 'none'}`);
+
+            let issueNumbers = new Set(githubIssues);
+
+            // Convert PEZY-XXX to GitHub issue numbers by searching
+            if (pezyIssues.size > 0) {
+              console.log(`🔍 Searching for GitHub issues linked to PEZY issues...`);
               
-              for pezy_id in pezy_issues:
-                  # Search for GitHub issue with PEZY-XXX in title
-                  search_url = f'https://api.github.com/search/issues'
-                  search_params = {
-                      'q': f'repo:{repo} PEZY-{pezy_id} in:title',
-                      'per_page': 1
+              for (const pezyId of pezyIssues) {
+                try {
+                  const searchQuery = `repo:${owner}/${repo} PEZY-${pezyId} in:title`;
+                  const searchResult = await github.rest.search.issuesAndPullRequests({
+                    q: searchQuery,
+                    per_page: 1
+                  });
+
+                  if (searchResult.data.items && searchResult.data.items.length > 0) {
+                    const issueNum = searchResult.data.items[0].number;
+                    issueNumbers.add(String(issueNum));
+                    console.log(`  ✓ PEZY-${pezyId} → GitHub issue #${issueNum}`);
+                  } else {
+                    console.log(`  ✗ GitHub issue not found for PEZY-${pezyId}`);
                   }
-                  
-                  search_resp = session.get(search_url, params=search_params, timeout=10)
-                  if search_resp.ok:
-                      results = search_resp.json()
-                      if results.get('items'):
-                          gh_num = results['items'][0]['number']
-                          issue_numbers.add(str(gh_num))
-                          print(f"  ✓ PEZY-{pezy_id} → GitHub issue #{gh_num}")
-                      else:
-                          print(f"  ✗ GitHub issue not found for PEZY-{pezy_id}")
-          
-          if not issue_numbers:
-              print(f"❌ No GitHub issues to close")
-              sys.exit(0)
-          
-          print(f"\n✅ Found {len(issue_numbers)} GitHub issue(s) to close: {', '.join(f'#{i}' for i in issue_numbers)}\n")
-          
-          # Close each issue
-          closed_count = 0
-          for issue_num in issue_numbers:
-              print(f"  Closing issue #{issue_num}...")
-              
-              # Close issue
-              close_resp = session.patch(
-                  f'{base_url}/issues/{issue_num}',
-                  json={'state': 'closed'},
-                  timeout=10
-              )
-              
-              if close_resp.ok:
-                  # Add comment
-                  comment_body = f'✅ **Closed by PR #{pr_number}**\n\n[View PR]({pr_url})'
-                  session.post(
-                      f'{base_url}/issues/{issue_num}/comments',
-                      json={'body': comment_body},
-                      timeout=10
-                  )
-                  
-                  # Manage status labels - remove all status labels and add "status: done"
-                  try:
-                      import urllib.parse
-                      
-                      # Get current labels
-                      labels_resp = session.get(
-                          f'{base_url}/issues/{issue_num}/labels?per_page=100',
-                          timeout=10
-                      )
-                      
-                      current_labels = []
-                      if labels_resp.ok:
-                          current_labels = [label['name'] for label in labels_resp.json()]
-                      
-                      # Find and remove all existing status labels
-                      status_labels_to_remove = [label for label in current_labels if label.startswith('status:')]
-                      
-                      if status_labels_to_remove:
-                          print(f"  Updating status labels...")
-                          for old_label in status_labels_to_remove:
-                              encoded_label = urllib.parse.quote(old_label)
-                              delete_resp = session.delete(
-                                  f'{base_url}/issues/{issue_num}/labels/{encoded_label}',
-                                  timeout=10
-                              )
-                              if delete_resp.ok:
-                                  print(f"    ✓ Removed: {old_label}")
-                      
-                      # Add "status: done" label
-                      add_label_resp = session.post(
-                          f'{base_url}/issues/{issue_num}/labels',
-                          json={'labels': ['status: done']},
-                          timeout=10
-                      )
-                      
-                      if add_label_resp.ok:
-                          print(f"    ✓ Added: status: done")
-                  except Exception as label_error:
-                      print(f"    ⚠ Label management failed: {str(label_error)}")
-                  
-                  print(f"    ✓ Issue #{issue_num} closed successfully")
-                  closed_count += 1
-              else:
-                  print(f"    ✗ Failed to close issue #{issue_num}: {close_resp.status_code}")
-          
-          print(f"\n📊 Summary: {closed_count}/{len(issue_numbers)} issues closed")
-          
-          EOF
-          
-          python close_pr_issues.py
-      
-      - name: Log completion
-        run: |
-          echo "✅ Workflow completed"
-          echo "Issues linked to PR #${{ github.event.pull_request.number }} have been closed"
+                } catch (error) {
+                  console.log(`  ⚠ Error searching for PEZY-${pezyId}: ${error.message}`);
+                }
+              }
+            }
+
+            if (issueNumbers.size === 0) {
+              console.log(`❌ No linked GitHub issues found`);
+              return;
+            }
+
+            console.log(`\n✅ Found ${issueNumbers.size} GitHub issue(s) to close: ${[...issueNumbers].map(id => `#${id}`).join(', ')}\n`);
+
+            // Close each issue and update status labels
+            let closedCount = 0;
+            for (const issueNum of issueNumbers) {
+              try {
+                console.log(`  Closing issue #${issueNum}...`);
+
+                // Close the issue
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: parseInt(issueNum),
+                  state: 'closed'
+                });
+
+                // Add comment
+                const commentBody = `✅ **Closed by PR #${prNumber}**\n\n[View PR](${prUrl})`;
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: parseInt(issueNum),
+                  body: commentBody
+                });
+
+                // Get current labels
+                const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+                  owner,
+                  repo,
+                  issue_number: parseInt(issueNum),
+                  per_page: 100
+                });
+
+                const labelNames = currentLabels.map(l => l.name);
+                const statusLabels = labelNames.filter(l => l.startsWith('status:'));
+
+                // Remove all existing status labels
+                for (const statusLabel of statusLabels) {
+                  try {
+                    await github.rest.issues.removeLabel({
+                      owner,
+                      repo,
+                      issue_number: parseInt(issueNum),
+                      name: statusLabel
+                    });
+                    console.log(`    ✓ Removed: ${statusLabel}`);
+                  } catch (error) {
+                    console.log(`    ⚠ Could not remove ${statusLabel}: ${error.message}`);
+                  }
+                }
+
+                // Add "status: done" label
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: parseInt(issueNum),
+                  labels: ['status: done']
+                });
+
+                console.log(`    ✓ Added: status: done`);
+                console.log(`    ✓ Issue #${issueNum} closed successfully\n`);
+                closedCount++;
+
+              } catch (error) {
+                console.log(`    ✗ Error processing issue #${issueNum}: ${error.message}\n`);
+              }
+            }
+
+            console.log(`📊 Summary: ${closedCount}/${issueNumbers.size} issues closed`);
