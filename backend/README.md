@@ -7,6 +7,7 @@ A Node.js Express backend server for the System Development Project.
 ### Prerequisites
 - Node.js 16+ installed
 - npm or yarn package manager
+- Supabase account for database
 
 ### Installation
 
@@ -19,6 +20,11 @@ npm install
 ```bash
 cp .env.example .env
 ```
+
+3. Add your Supabase credentials to `.env`:
+   - SUPABASE_URL
+   - SUPABASE_ANON_KEY
+   - SUPABASE_SERVICE_ROLE_KEY
 
 3. Configure environment variables in `.env` as needed.
 
