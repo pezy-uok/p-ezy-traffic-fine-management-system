@@ -14,6 +14,6 @@ router.post('/create', createUserController);
 router.get('/all', getAllUsersController);
 router.get('/:id', getUserByIdController);
 router.patch('/:id', updateUserController);
-router.delete('/:id', deleteUserController);
+router.delete('/:id', );
 
 export default router;
