@@ -140,48 +140,7 @@ jobs:
                       timeout=10
                   )
                   
-                  # Remove old status labels and add done label
-                  try:
-                      import urllib.parse
-                      
-                      # Get current labels
-                      labels_resp = session.get(
-                          f'{base_url}/issues/{issue_num}/labels?per_page=100',
-                          timeout=10
-                      )
-                      
-                      current_labels = []
-                      if labels_resp.ok:
-                          current_labels = [label['name'] for label in labels_resp.json()]
-                      
-                      # Remove any existing status labels (URL-encode the label names)
-                      status_labels_to_remove = [label for label in current_labels if label.startswith('status:')]
-                      
-                      for old_label in status_labels_to_remove:
-                          encoded_label = urllib.parse.quote(old_label)
-                          delete_resp = session.delete(
-                              f'{base_url}/issues/{issue_num}/labels/{encoded_label}',
-                              timeout=10
-                          )
-                          if delete_resp.ok:
-                              print(f"      Removed label: {old_label}")
-                          else:
-                              print(f"      Warning: Could not remove '{old_label}': {delete_resp.status_code}")
-                      
-                      # Add "status: done" label
-                      add_label_resp = session.post(
-                          f'{base_url}/issues/{issue_num}/labels',
-                          json={'labels': ['status: done']},
-                          timeout=10
-                      )
-                      
-                      if add_label_resp.ok:
-                          print(f"    ✓ Issue #{issue_num} closed and labeled as 'status: done'")
-                      else:
-                          print(f"    ⚠ Issue #{issue_num} closed but failed to add label: {add_label_resp.status_code}")
-                  except Exception as label_error:
-                      print(f"    ⚠ Issue #{issue_num} closed but failed to update labels: {str(label_error)}")
-                  
+                  print(f"    ✓ Issue #{issue_num} closed successfully")
                   closed_count += 1
               else:
                   print(f"    ✗ Failed to close issue #{issue_num}: {close_resp.status_code}")
