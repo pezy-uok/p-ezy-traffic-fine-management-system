@@ -7,10 +7,10 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "test": "node tests/users.test.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "format": "prettier --write src/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format": "prettier --write src/"
   },
   "keywords": [
     "express",
@@ -20,6 +20,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.99.1",
+    "axios": "^1.13.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2"
