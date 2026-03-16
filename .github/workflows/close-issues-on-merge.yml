@@ -47,26 +47,36 @@ jobs:
               'Accept': 'application/vnd.github+json',
           })
           
-          # Extract PEZY issue references from PR description
+          # Extract PEZY issue references from PR description and title
           text = pr_body + ' ' + pr_title
-          patterns = [
+          pezy_issues = set()
+          gh_issues = set()
+          
+          # Keywords-based patterns (closes, fixes, resolves)
+          keyword_patterns_pezy = [
               r'[Cc]loses\s+PEZY-(\d+)',
               r'[Ff]ixes\s+PEZY-(\d+)',
               r'[Rr]esolves\s+PEZY-(\d+)',
+          ]
+          
+          keyword_patterns_gh = [
               r'[Cc]loses\s+#(\d+)',
               r'[Ff]ixes\s+#(\d+)',
               r'[Rr]esolves\s+#(\d+)',
           ]
           
-          pezy_issues = set()
-          gh_issues = set()
-          
-          for pattern in patterns:
+          # Extract from keyword patterns
+          for pattern in keyword_patterns_pezy:
               matches = re.findall(pattern, text)
-              if 'PEZY' in pattern:
-                  pezy_issues.update(matches)
-              else:
-                  gh_issues.update(matches)
+              pezy_issues.update(matches)
+          
+          for pattern in keyword_patterns_gh:
+              matches = re.findall(pattern, text)
+              gh_issues.update(matches)
+          
+          # Also match direct PEZY-XXX format (commit message style)
+          direct_pezy = re.findall(r'PEZY-(\d+)', text)
+          pezy_issues.update(direct_pezy)
           
           if not pezy_issues and not gh_issues:
               print(f"❌ No linked issues found in PR #{pr_number}")
