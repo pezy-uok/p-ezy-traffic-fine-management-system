@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { routes } from './config/routes'
+import Footer from './components/Footer'
 import './App.css'
 
 function App() {
@@ -37,11 +38,7 @@ function App() {
         </Routes>
       </main>
 
-      <footer className="bg-gray-100 dark:bg-gray-800 mt-12 py-6">
-        <div className="container mx-auto px-4 text-center text-gray-600 dark:text-gray-400">
-          <p>&copy; 2026 Your App. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </Router>
   )
 }
