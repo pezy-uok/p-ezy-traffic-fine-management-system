@@ -1,34 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { routes } from './config/routes'
 import './App.css'
 
 function App() {
   return (
     <Router>
-      <nav className="bg-white dark:bg-gray-900 shadow-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-2xl font-bold text-blue-600">
-              Logo
-            </Link>
-            <ul className="flex space-x-6">
-              {routes
-                .filter(route => route.name !== '404')
-                .map(route => (
-                  <li key={route.path}>
-                    <Link
-                      to={route.path}
-                      className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition"
-                    >
-                      {route.name}
-                    </Link>
-                  </li>
-                ))}
-            </ul>
-          </div>
-        </div>
-      </nav>
-
       <main>
         <Routes>
           {routes.map(route => (
@@ -36,12 +12,6 @@ function App() {
           ))}
         </Routes>
       </main>
-
-      <footer className="bg-gray-100 dark:bg-gray-800 mt-12 py-6">
-        <div className="container mx-auto px-4 text-center text-gray-600 dark:text-gray-400">
-          <p>&copy; 2026 Your App. All rights reserved.</p>
-        </div>
-      </footer>
     </Router>
   )
 }
