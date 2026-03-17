@@ -10,17 +10,20 @@ export interface FooterContactItem {
 
 export interface FooterConfig {
   organizationName: string
+  organizationTag: string
   description: string
   quickLinks: FooterLink[]
   relatedLinks: FooterLink[]
   addressLines: string[]
   emergencyNumbers: FooterContactItem[]
+  socialLinks: FooterLink[]
   legalLinks: FooterLink[]
   copyrightText: string
 }
 
 export const footerConfig: FooterConfig = {
   organizationName: 'Sri Lanka Police',
+  organizationTag: 'Protecting Life and Property',
   description: 'Trusted service for safety, law enforcement, and national traffic management.',
   quickLinks: [
     { label: 'E-Services', href: '#' },
@@ -56,6 +59,12 @@ export const footerConfig: FooterConfig = {
     { label: 'Police Emergency', value: '119' },
     { label: 'Traffic Emergency', value: '1919' },
     { label: 'Headquarters', value: '+94 11 2421111' },
+  ],
+  socialLinks: [
+    { label: 'Facebook', href: 'https://www.facebook.com/people/Sri-Lanka-Police/100064256130301/' },
+    { label: 'YouTube', href: 'https://www.youtube.com/@Sri_Lanka_police' },
+    { label: 'Instagram', href: 'https://www.instagram.com/sri_lanka_police/' },
+    { label: 'X', href: 'https://x.com/SL_PoliceMedia' },
   ],
   legalLinks: [
     { label: 'Privacy Policy', href: '#' },
