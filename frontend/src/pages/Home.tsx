@@ -1,79 +1,126 @@
-import heroImg from '../assets/hero.png'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
+import sriLankaFlag from '../assets/Flag_of_Sri_Lanka.png'
+import pLogo from '../assets/plogo.png'
+import slideOne from '../assets/slider/slide-1.png'
+import slideTwo from '../assets/slider/slide-2.png'
+import slideThree from '../assets/slider/slide-3.png'
+import './Home.css'
 
-const serviceCards = [
+const primaryMenu = ['Home', 'About Us', 'Fine Pay', 'Criminal Records', 'Division', 'Downloads', 'Library', 'Survey']
+
+const heroSlides = [
   {
-    title: 'E-Services',
-    description: 'Clearance reports, fine checks, and online support services.',
+    title: '191.673 kg of Narcotics and 3,482 Tablets Destroyed',
+    image: slideOne,
   },
   {
-    title: 'Media',
-    description: 'Latest traffic updates, public notices, and announcements.',
+    title: 'Iftar Ceremony for Islamic Officers',
+    image: slideTwo,
   },
   {
-    title: 'Contact Us',
-    description: 'Reach traffic control, station hotlines, and emergency lines.',
+    title: 'Suwanari Medical Clinic in Kurunegala Division',
+    image: slideThree,
   },
 ]
 
 export default function Home() {
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveIndex(previous => (previous + 1) % heroSlides.length)
+    }, 5000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [])
+
+  const goToPrevious = () => {
+    setActiveIndex(previous => (previous - 1 + heroSlides.length) % heroSlides.length)
+  }
+
+  const goToNext = () => {
+    setActiveIndex(previous => (previous + 1) % heroSlides.length)
+  }
+
   return (
-    <div className="w-full">
-      <section
-        className="relative isolate overflow-hidden"
-        style={{
-          backgroundImage: `linear-gradient(110deg, rgba(2, 6, 23, 0.88), rgba(15, 23, 42, 0.74)), url(${heroImg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(245,158,11,0.22),transparent_45%)]" />
+    <section className="home-police">
+      <div className="home-police__topbar">
+        <div className="home-police__container home-police__brand-row">
+          <div className="home-police__brand">
+            <img src={pLogo} alt="Sri Lanka Police logo" className="home-police__brand-logo" />
+            <h1>SRI LANKA POLICE</h1>
+            {/* <img src={sriLankaFlag} alt="Flag of Sri Lanka" className="home-police__brand-flag" /> */}
+          </div>
+          {/* <span className="home-police__lang">ENGLISH</span> */}
+        </div>
+      </div>
 
-        <div className="relative mx-auto grid min-h-[68svh] w-full max-w-7xl items-end gap-10 px-5 pb-10 pt-14 text-left sm:px-8 md:min-h-[72svh] md:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)] md:items-center md:pb-14 md:pt-20">
-          <div className="max-w-2xl">
-            <p className="inline-flex items-center rounded-sm border border-amber-300/60 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
-              Sri Lanka Traffic Police Services
-            </p>
+      <div className="home-police__container home-police__menu-row">
+        <nav className="home-police__menu" aria-label="Primary">
+          {primaryMenu.map(item => (
+            <button key={item} type="button" className={`home-police__menu-item${item === 'Home' ? ' is-active' : ''}`}>
+              {item}
+            </button>
+          ))}
+        </nav>
 
-            <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
-              Safer Roads Through
-              <span className="block text-amber-300">Digital Traffic Management</span>
-            </h1>
+        <div className="home-police__search">
+          <span aria-hidden="true">&#128269;</span>
+          <input type="text" value="" readOnly placeholder="Search" aria-label="Search" />
+        </div>
+      </div>
 
-            <p className="mt-5 max-w-xl text-base leading-7 text-slate-200/95 md:text-lg">
-              Access traffic fine services, public alerts, and police support from a modern platform built
-              for fast response and citizen convenience.
-            </p>
+      <div className="home-police__container home-police__news-row">
+        <span className="home-police__news-tag">News &#187;</span>
+        <p>{heroSlides[activeIndex].title}</p>
+      </div>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center justify-center rounded-sm bg-amber-400 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-amber-300"
-              >
-                Go to Dashboard
-              </Link>
-              <Link
-                to="/profile"
-                className="inline-flex items-center justify-center rounded-sm border border-slate-200/70 px-6 py-3 text-sm font-semibold text-slate-100 transition hover:border-amber-300 hover:text-amber-200"
-              >
-                View Profile
-              </Link>
+      <div className="home-police__container home-police__slider-wrap">
+        <article
+          className="home-police__slide"
+          key={heroSlides[activeIndex].title}
+          style={{ '--slide-image': `url(${heroSlides[activeIndex].image})` } as CSSProperties}
+          aria-live="polite"
+        >
+          <button type="button" className="home-police__slide-arrow is-left" onClick={goToPrevious} aria-label="Previous slide">
+            &#8249;
+          </button>
+          <button type="button" className="home-police__slide-arrow is-right" onClick={goToNext} aria-label="Next slide">
+            &#8250;
+          </button>
+          <span className="home-police__slide-count">
+            {String(activeIndex + 1).padStart(2, '0')} / {String(heroSlides.length).padStart(2, '0')}
+          </span>
+
+          <div className="home-police__hero-overlay">
+            <div className="home-police__hero-content">
+              <h1 className="home-police__hero-title">Committed to Protect<br />& Serve the Nation</h1>
+              <div className="home-police__hero-buttons">
+                <button type="button" className="home-police__hero-btn">Emergency Contacts</button>
+                <button type="button" className="home-police__hero-btn">Online Services</button>
+              </div>
             </div>
           </div>
+        </article>
 
-          <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
-            {serviceCards.map(card => (
-              <article
-                key={card.title}
-                className="rounded-md border border-white/25 bg-slate-900/45 p-4 backdrop-blur-sm"
-              >
-                <h2 className="text-base font-semibold text-amber-200">{card.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-200">{card.description}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
+      </div>
+
+      <div className="home-police__container home-police__dots" role="tablist" aria-label="Hero slide selector">
+        {heroSlides.map((slide, index) => (
+          <button
+            key={slide.title}
+            type="button"
+            className={`home-police__dot${index === activeIndex ? ' is-active' : ''}`}
+            onClick={() => setActiveIndex(index)}
+            aria-label={`Show slide ${index + 1}`}
+            aria-selected={index === activeIndex}
+            role="tab"
+          />
+        ))}
+      </div>
+    </section>
   )
 }

@@ -1,0 +1,371 @@
+.home-police {
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding-bottom: 1.5rem;
+  background: #f8fafc;
+}
+
+.home-police__container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.home-police__topbar {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #fff;
+}
+
+.home-police__brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 4.5rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.home-police__brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.home-police__brand-logo {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.home-police__brand h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.home-police__brand-flag {
+  width: 3rem;
+  height: 1.5rem;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.home-police__lang {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.home-police__menu-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12rem;
+  gap: 1rem;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 1.5rem;
+}
+
+.home-police__menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.home-police__menu-item {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.95);
+  min-height: 2rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+  border-radius: 3px;
+}
+
+.home-police__menu-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.home-police__menu-item.is-active {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.home-police__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.35rem 0.7rem;
+  border-radius: 3px;
+}
+
+.home-police__search input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  height: 1.8rem;
+  outline: none;
+  color: #4b5563;
+  font-size: 0.85rem;
+}
+
+.home-police__search input::placeholder {
+  color: #9ca3af;
+}
+
+.home-police__news-row {
+  display: none;
+}
+
+.home-police__news-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e11d21;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.home-police__news-row p {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  color: #4b5563;
+  font-size: 0.92rem;
+  padding-inline: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-police__slider-wrap {
+  padding: 0;
+}
+
+.home-police__slide {
+  position: relative;
+  min-height: clamp(14rem, 40vw, 26rem);
+  background-image: linear-gradient(180deg, rgba(10, 10, 10, 0.15), rgba(2, 132, 199, 0.5)), var(--slide-image);
+  background-size: cover;
+  background-position: center;
+  animation: police-slide-fade 360ms ease;
+}
+
+.home-police__slide-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 250ms ease;
+  border-radius: 2px;
+}
+
+.home-police__slide-arrow:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: #fff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.home-police__slide-arrow.is-left {
+  left: 1rem;
+}
+
+.home-police__slide-arrow.is-right {
+  right: 1rem;
+}
+
+.home-police__slide-count {
+  position: absolute;
+  right: 0.65rem;
+  top: 0.55rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.24rem 0.45rem;
+}
+
+.home-police__dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  padding-top: 1rem;
+}
+
+.home-police__dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 0;
+  border-radius: 50%;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: all 250ms ease;
+}
+
+.home-police__dot:hover {
+  background: #94a3b8;
+  transform: scale(1.15);
+}
+
+.home-police__dot.is-active {
+  background: #0284c7;
+  transform: scale(1.2);
+}
+
+.home-police__hero-overlay {
+  position: absolute;
+  left: 4rem;
+  bottom: 1rem;
+  width: 40%;
+  height: 50%;
+  background: linear-gradient(90deg, #0284c7 0%, #0284c7 75%, rgba(2, 132, 199, 0) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2.5rem 3rem;
+  box-sizing: border-box;
+  clip-path: none;
+  border-radius: 18px;
+}
+
+.home-police__hero-content {
+  max-width: 100%;
+  color: #fff;
+  z-index: 10;
+}
+
+.home-police__hero-title {
+  margin: 0 0 1.5rem 0;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.home-police__hero-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.home-police__hero-btn {
+  background: #fff;
+  color: #0284c7;
+  border: 0;
+  border-radius: 2.5rem;
+  padding: 0.75rem 1.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.home-police__hero-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.home-police__hero-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 980px) {
+  .home-police__menu-row {
+    grid-template-columns: 1fr;
+  }
+
+  .home-police__hero-overlay {
+    width: 50%;
+    padding: 2.5rem 3rem;
+  }
+
+  .home-police__service-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0;
+    padding-inline: 0.75rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .home-police__brand-logo {
+    width: 3.05rem;
+    height: 3.05rem;
+  }
+
+  .home-police__brand-flag {
+    width: 1.85rem;
+    height: 1.2rem;
+  }
+
+  .home-police__brand h1 {
+    letter-spacing: 0.03em;
+  }
+
+  .home-police__hero-overlay {
+    width: 100%;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .home-police__hero-title {
+    margin-bottom: 1rem;
+    font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+  }
+
+  .home-police__hero-buttons {
+    gap: 0.8rem;
+  }
+
+  .home-police__hero-btn {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .home-police__news-row {
+    grid-template-columns: 4.9rem minmax(0, 1fr);
+  }
+
+  .home-police__service-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes police-slide-fade {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
