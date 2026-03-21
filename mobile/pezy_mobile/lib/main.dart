@@ -31,8 +31,43 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  // Buttons state
   bool _isLoading = false;
   bool _isAnotherLoading = false;
+
+  // TextField controllers and state
+  late TextEditingController _fullNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+  late TextEditingController _phoneController;
+  late TextEditingController _bioController;
+  late TextEditingController _searchController;
+
+  String? _emailError;
+  String? _passwordError;
+  String? _phoneError;
+
+  @override
+  void initState() {
+    super.initState();
+    _fullNameController = TextEditingController();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    _phoneController = TextEditingController();
+    _bioController = TextEditingController();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _phoneController.dispose();
+    _bioController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _simulateLoading() {
     if (!_isLoading) {
@@ -52,6 +87,42 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void _validateEmail(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _emailError = 'Email is required';
+      } else if (!value.contains('@')) {
+        _emailError = 'Invalid email format';
+      } else {
+        _emailError = null;
+      }
+    });
+  }
+
+  void _validatePassword(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _passwordError = 'Password is required';
+      } else if (value.length < 8) {
+        _passwordError = 'Minimum 8 characters';
+      } else {
+        _passwordError = null;
+      }
+    });
+  }
+
+  void _validatePhone(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _phoneError = 'Phone is required';
+      } else if (value.length < 10) {
+        _phoneError = 'Invalid phone format';
+      } else {
+        _phoneError = null;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Filled Button Examples
+              // ============ BUTTONS DEMO ============
               Text(
                 'Filled Buttons',
                 style: AppTextStyles.headlineSmall,
@@ -94,7 +165,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () {},
               ),
 
-              // Outlined Button Examples
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'Outlined Buttons',
@@ -119,7 +189,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () {},
               ),
 
-              // Accent Button Examples
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'Accent Buttons',
@@ -136,7 +205,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
 
-              // Button Sizes
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'Button Sizes',
@@ -161,7 +229,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () {},
               ),
 
-              // Buttons with Icons
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'Buttons with Icons',
@@ -187,7 +254,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: _simulateAnotherLoading,
               ),
 
-              // Full Width Buttons
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'Full Width Buttons',
@@ -211,7 +277,141 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () {},
               ),
 
-              const SizedBox(height: AppSpacing.xxl),
+              // ============ TEXT FIELDS DEMO ============
+              const SizedBox(height: AppSpacing.xxxl),
+              Text(
+                'Text Fields - Basic',
+                style: AppTextStyles.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              PezyTextField(
+                label: 'Full Name',
+                hint: 'Enter your full name',
+                prefixIcon: Icons.person,
+                controller: _fullNameController,
+                isRequired: true,
+                onChanged: (value) {},
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PezyTextField(
+                label: 'Search Users',
+                hint: 'Search...',
+                prefixIcon: Icons.search,
+                suffixIcon: Icons.clear,
+                controller: _searchController,
+                onChanged: (value) {},
+                onSuffixIconPressed: () {
+                  _searchController.clear();
+                  setState(() {});
+                },
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                'Text Fields - Validation',
+                style: AppTextStyles.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              PezyTextField(
+                label: 'Email Address',
+                hint: 'your.email@example.com',
+                prefixIcon: Icons.email,
+                keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
+                errorText: _emailError,
+                isRequired: true,
+                onChanged: _validateEmail,
+                helperText: 'We\'ll never share your email',
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PezyTextField(
+                label: 'Password',
+                hint: 'Enter your password',
+                prefixIcon: Icons.lock,
+                obscureText: true,
+                controller: _passwordController,
+                errorText: _passwordError,
+                isRequired: true,
+                onChanged: _validatePassword,
+                helperText: 'At least 8 characters',
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PezyTextField(
+                label: 'Phone Number',
+                hint: '(123) 456-7890',
+                prefixIcon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                controller: _phoneController,
+                errorText: _phoneError,
+                onChanged: _validatePhone,
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                'Text Fields - Multi-line',
+                style: AppTextStyles.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              PezyTextField(
+                label: 'Bio',
+                hint: 'Tell us about yourself',
+                maxLines: 4,
+                maxLength: 500,
+                showCharacterCount: true,
+                controller: _bioController,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                onChanged: (value) {},
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                'Text Fields - States',
+                style: AppTextStyles.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              PezyTextField(
+                label: 'Enabled Field',
+                hint: 'This field is enabled',
+                prefixIcon: Icons.check_circle,
+                enabled: true,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PezyTextField(
+                label: 'Disabled Field',
+                hint: 'This field is disabled',
+                prefixIcon: Icons.lock,
+                enabled: false,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PezyTextField(
+                label: 'Error Field',
+                hint: 'This field has an error',
+                errorText: 'This field contains invalid data',
+                prefixIcon: Icons.error_outline,
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                'Text Fields - Variants',
+                style: AppTextStyles.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              PezyTextField(
+                label: 'Filled Variant',
+                hint: 'Default filled variant',
+                variant: PezyTextFieldVariant.filled,
+                prefixIcon: Icons.text_fields,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PezyTextField(
+                label: 'Outlined Variant',
+                hint: 'Outlined variant',
+                variant: PezyTextFieldVariant.outlined,
+                prefixIcon: Icons.text_fields,
+              ),
+
+              const SizedBox(height: AppSpacing.xxxl),
             ],
           ),
         ),
