@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/navigation_providers.dart';
 import '../../shared/widgets/index.dart';
 import '../../features/home/presentation/pages/home_screen.dart';
-import '../../features/criminal/presentation/pages/criminal_records_screen.dart';
+import '../../features/fine/presentation/pages/new_fine_screen.dart';
 import '../../features/profile/presentation/pages/profile_screen.dart';
 
 /// Main navigation screen with bottom navigation bar
@@ -20,10 +20,10 @@ class MainNavigationScreen extends ConsumerWidget {
     // Watch the selected tab from Riverpod provider
     final selectedTab = ref.watch(navigationProvider);
 
-    // List of screens in tab order (Home, Criminal, Profile)
+    // List of screens in tab order (Home, New Fine, Profile)
     const screens = [
       HomeScreen(),
-      CriminalRecordsScreen(),
+      NewFineScreen(),
       ProfileScreen(),
     ];
 
