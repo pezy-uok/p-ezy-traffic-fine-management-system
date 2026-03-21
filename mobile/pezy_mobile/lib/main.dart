@@ -126,8 +126,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
+      appBar: PezyAppBar(
+        title: 'Pezy Mobile',
+        subtitle: 'All Widgets Demo',
+        showLogo: true,
+        showBottomBorder: true,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -138,7 +141,116 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ============ APP BARS DEMO ============
+              Text(
+                'AppBar Variants',
+                style: AppTextStyles.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.dividerColor),
+                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                ),
+                child: PezyAppBar(
+                  title: 'Simple AppBar',
+                  showLogo: false,
+                  showBackButton: false,
+                  elevation: 0,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.dividerColor),
+                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                ),
+                child: PezyAppBar(
+                  title: 'With Back Button',
+                  subtitle: 'Profile Screen',
+                  showBackButton: true,
+                  showLogo: true,
+                  elevation: 0,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.dividerColor),
+                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                ),
+                child: PezyAppBar(
+                  title: 'With Search Action',
+                  showLogo: true,
+                  actions: [
+                    PezyAppBarAction(
+                      icon: Icons.search,
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Search pressed')),
+                        );
+                      },
+                    ),
+                  ],
+                  elevation: 0,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.dividerColor),
+                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                ),
+                child: PezyAppBar(
+                  title: 'With Multiple Actions',
+                  showLogo: true,
+                  actions: [
+                    PezyAppBarAction(
+                      icon: Icons.search,
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Search pressed')),
+                        );
+                      },
+                    ),
+                    PezyAppBarAction(
+                      icon: Icons.settings,
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Settings pressed')),
+                        );
+                      },
+                    ),
+                  ],
+                  elevation: 0,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.dividerColor),
+                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                ),
+                child: PezyAppBar(
+                  title: 'Gradient Background',
+                  useGradient: true,
+                  showLogo: true,
+                  actions: [
+                    PezyAppBarAction(
+                      icon: Icons.notifications,
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Notifications pressed')),
+                        );
+                      },
+                    ),
+                  ],
+                  elevation: 2,
+                ),
+              ),
+
               // ============ BUTTONS DEMO ============
+              const SizedBox(height: AppSpacing.xxxl),
               Text(
                 'Filled Buttons',
                 style: AppTextStyles.headlineSmall,
