@@ -1,0 +1,55 @@
+name: Sync Updated Jira Issues to GitHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      hours_back:
+        description: 'Sync issues updated in the last N hours (default: 24)'
+        required: false
+        default: '24'
+      force_keys:
+        description: 'Optional: Comma-separated Jira keys to force sync (e.g., PEZY-1,PEZY-5)'
+        required: false
+        default: ''
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync-updated-jira:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+
+      - name: Sync Updated Jira Issues
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_KEY }}
+          JIRA_BASE_URL: 'https://oshadadilshan.atlassian.net'
+          JIRA_EMAIL: 'gimansabandara2001@gmail.com'
+          JIRA_PROJECT: 'PEZY'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          HOURS_BACK: ${{ github.event.inputs.hours_back }}
+          FORCE_KEYS: ${{ github.event.inputs.force_keys }}
+        run: |
+          python script/jira_github_sync_updated.py
+
+      - name: Upload Sync Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jira-sync-log
+          path: jira_github_sync_updated.log
+          retention-days: 7
