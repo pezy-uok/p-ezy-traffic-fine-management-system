@@ -15,7 +15,7 @@ class OutdatedFinesScreen extends ConsumerWidget {
     final finesState = ref.watch(outdatedFinesProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -29,7 +29,7 @@ class OutdatedFinesScreen extends ConsumerWidget {
               child: Icon(
                 Icons.security,
                 size: 40,
-                color: AppColors.primaryBlue,
+                color: AppColors.primaryBlack,
               ),
             ),
           ),
@@ -41,7 +41,7 @@ class OutdatedFinesScreen extends ConsumerWidget {
               horizontal: AppSpacing.screenPaddingHorizontal,
               vertical: 12,
             ),
-            color: Colors.black,
+            color: AppColors.primaryBlack,
             child: Text(
               'OUTDATED FINES',
               style: AppTextStyles.titleMedium.copyWith(
@@ -144,16 +144,16 @@ class _FineCard extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey[200]!,
+            color: AppColors.borderColor,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),

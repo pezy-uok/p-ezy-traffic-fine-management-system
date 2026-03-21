@@ -145,7 +145,7 @@ class PezyAppBar extends StatelessWidget implements PreferredSizeWidget {
               subtitle!,
               style: subtitleStyle ??
                   AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textMuted,
+                    color: AppColors.textSecondary,
                   ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -235,16 +235,16 @@ class PezyAppBar extends StatelessWidget implements PreferredSizeWidget {
       width: AppSpacing.buttonHeightSmall,
       height: AppSpacing.buttonHeightSmall,
       decoration: BoxDecoration(
-        color: AppColors.accentAmber.withValues(alpha: 0.1),
+        color: AppColors.accentRed.withValues(alpha: 0.1),
         border: Border.all(
-          color: AppColors.accentAmber,
+          color: AppColors.accentRed,
           width: 2,
         ),
         borderRadius: BorderRadius.circular(AppSpacing.cornerRadius / 2),
       ),
       child: Icon(
         Icons.shield,
-        color: AppColors.accentAmber,
+        color: AppColors.accentRed,
         size: AppSpacing.iconSizeMedium,
       ),
     );
@@ -283,7 +283,7 @@ class PezyAppBar extends StatelessWidget implements PreferredSizeWidget {
     if (backgroundColor != null) {
       return backgroundColor;
     }
-    return AppColors.backgroundDarkNavy;
+    return AppColors.primaryWhite;
   }
 
   /// Build gradient background
@@ -294,8 +294,8 @@ class PezyAppBar extends StatelessWidget implements PreferredSizeWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.backgroundDarkNavy,
-            AppColors.backgroundDarkerNavy,
+            AppColors.lightGray,
+            AppColors.mediumGray,
           ],
         ),
       ),

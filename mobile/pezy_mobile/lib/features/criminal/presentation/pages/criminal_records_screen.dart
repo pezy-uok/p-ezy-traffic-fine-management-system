@@ -77,7 +77,7 @@ class CriminalRecordsScreen extends StatelessWidget {
                     Text(
                       'No active criminal records found in your profile.',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -142,7 +142,7 @@ class CriminalRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.backgroundDarkerNavy,
+        color: AppColors.lightGray,
         borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
       ),
       child: Column(
@@ -152,7 +152,7 @@ class CriminalRecordsScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             content,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -167,7 +167,7 @@ class CriminalRecordsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.backgroundDarkerNavy,
+        color: AppColors.lightGray,
         borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
       ),
       child: Row(
@@ -175,12 +175,12 @@ class CriminalRecordsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: AppColors.accentAmber.withValues(alpha: 0.2),
+              color: AppColors.accentRed.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(AppSpacing.cornerRadius / 2),
             ),
             child: Icon(
               Icons.description,
-              color: AppColors.accentAmber,
+              color: AppColors.accentRed,
               size: AppSpacing.iconSizeMedium,
             ),
           ),
@@ -193,14 +193,14 @@ class CriminalRecordsScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   '$type • $date',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                 ),
               ],
             ),
           ),
           Icon(
             Icons.download_rounded,
-            color: AppColors.accentAmber,
+            color: AppColors.accentRed,
             size: AppSpacing.iconSizeMedium,
           ),
         ],

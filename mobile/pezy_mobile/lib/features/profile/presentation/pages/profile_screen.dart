@@ -40,9 +40,9 @@ class ProfileScreen extends StatelessWidget {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                        color: AppColors.accentRed.withValues(alpha: 0.1),
                         border: Border.all(
-                          color: AppColors.primaryBlue,
+                          color: AppColors.accentRed,
                           width: 2,
                         ),
                       ),
@@ -50,7 +50,7 @@ class ProfileScreen extends StatelessWidget {
                         child: Icon(
                           Icons.person,
                           size: 60,
-                          color: AppColors.primaryBlue,
+                          color: AppColors.accentRed,
                         ),
                       ),
                     ),
@@ -208,7 +208,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Text(
             value,
-            style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryBlue, fontWeight: FontWeight.w700, fontSize: 20),
+            style: AppTextStyles.titleLarge.copyWith(color: AppColors.accentRed, fontWeight: FontWeight.w700, fontSize: 20),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -244,10 +244,10 @@ class ProfileScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primaryBlue.withValues(alpha: 0.1),
+              color: AppColors.accentRed.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AppColors.primaryBlue, size: 24),
+            child: Icon(icon, color: AppColors.accentRed, size: 24),
           ),
           const SizedBox(width: AppSpacing.lg),
           Expanded(
@@ -290,10 +290,10 @@ class ProfileScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                color: AppColors.accentRed.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: AppColors.primaryBlue, size: 24),
+              child: Icon(icon, color: AppColors.accentRed, size: 24),
             ),
             const SizedBox(width: AppSpacing.lg),
             Expanded(

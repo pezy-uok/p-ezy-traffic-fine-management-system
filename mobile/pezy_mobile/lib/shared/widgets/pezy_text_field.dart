@@ -232,7 +232,7 @@ class _PezyTextFieldState extends State<PezyTextField> {
                         color: widget.labelColor ??
                             (hasError
                                 ? AppColors.error
-                                : AppColors.textLight),
+                                : AppColors.textPrimary),
                       ),
                 ),
                 if (widget.isRequired)
@@ -266,40 +266,40 @@ class _PezyTextFieldState extends State<PezyTextField> {
           textCapitalization: widget.textCapitalization,
           style: widget.textStyle ??
               AppTextStyles.bodyMedium.copyWith(
-                color: widget.textColor ?? AppColors.textLight,
+                color: widget.textColor ?? AppColors.textPrimary,
               ),
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: widget.hintStyle ??
                 AppTextStyles.bodyMedium.copyWith(
-                  color: widget.hintTextColor ?? AppColors.textMutedLight,
+                  color: widget.hintTextColor ?? AppColors.textTertiary,
                 ),
             helperText: hasError ? null : widget.helperText,
             helperStyle: AppTextStyles.bodySmall.copyWith(
               color:
-                  widget.helperTextColor ?? AppColors.textMuted,
+                  widget.helperTextColor ?? AppColors.textSecondary,
             ),
             errorText: null, // Handled manually below
             counterText: widget.showCharacterCount ? null : '',
             counterStyle: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textMuted,
+              color: AppColors.textSecondary,
             ),
             filled: widget.variant == PezyTextFieldVariant.filled,
             fillColor: widget.backgroundColor ??
                 (widget.enabled
-                    ? AppColors.surfaceDark
-                    : AppColors.dividerColor),
+                    ? AppColors.lightGray
+                    : AppColors.mediumGray),
             contentPadding: widget.contentPadding ??
                 const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg,
                   vertical: AppSpacing.md,
                 ),
-            border: _buildBorder(AppColors.dividerColor),
+            border: _buildBorder(AppColors.mediumGray),
             enabledBorder: _buildBorder(
-              widget.borderColor ?? AppColors.dividerColor,
+              widget.borderColor ?? AppColors.mediumGray,
             ),
             focusedBorder: _buildBorder(
-              widget.focusedBorderColor ?? AppColors.primaryBlue,
+              widget.focusedBorderColor ?? AppColors.primaryBlack,
               width: 2,
             ),
             errorBorder: _buildBorder(
@@ -309,7 +309,7 @@ class _PezyTextFieldState extends State<PezyTextField> {
               widget.errorBorderColor ?? AppColors.error,
               width: 2,
             ),
-            disabledBorder: _buildBorder(AppColors.dividerColor),
+            disabledBorder: _buildBorder(AppColors.mediumGray),
             prefixIcon: _buildPrefixIcon(),
             suffixIcon: _buildSuffixIcon(hasError),
             prefixIconConstraints: const BoxConstraints(
@@ -350,7 +350,7 @@ class _PezyTextFieldState extends State<PezyTextField> {
           Text(
             widget.helperText ?? '',
             style: AppTextStyles.bodySmall.copyWith(
-              color: widget.helperTextColor ?? AppColors.textMuted,
+              color: widget.helperTextColor ?? AppColors.textSecondary,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -384,7 +384,7 @@ class _PezyTextFieldState extends State<PezyTextField> {
     if (widget.prefixIcon != null) {
       return Icon(
         widget.prefixIcon,
-        color: _isFocused ? AppColors.primaryBlue : AppColors.textMuted,
+        color: _isFocused ? AppColors.primaryBlack : AppColors.textSecondary,
         size: AppSpacing.iconSizeMedium,
       );
     }
@@ -408,7 +408,7 @@ class _PezyTextFieldState extends State<PezyTextField> {
         onTap: () => setState(() => _showPassword = !_showPassword),
         child: Icon(
           _showPassword ? Icons.visibility : Icons.visibility_off,
-          color: AppColors.textMuted,
+          color: AppColors.textSecondary,
           size: AppSpacing.iconSizeMedium,
         ),
       );
@@ -424,7 +424,7 @@ class _PezyTextFieldState extends State<PezyTextField> {
         onTap: widget.onSuffixIconPressed,
         child: Icon(
           widget.suffixIcon,
-          color: _isFocused ? AppColors.primaryBlue : AppColors.textMuted,
+          color: _isFocused ? AppColors.primaryBlack : AppColors.textSecondary,
           size: AppSpacing.iconSizeMedium,
         ),
       );
