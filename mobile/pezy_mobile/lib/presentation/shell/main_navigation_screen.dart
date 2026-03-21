@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/navigation/navigation_tab.dart';
 import '../../core/providers/navigation_providers.dart';
 import '../../shared/widgets/index.dart';
 import '../../features/home/presentation/pages/home_screen.dart';
@@ -10,7 +9,9 @@ import '../../features/profile/presentation/pages/profile_screen.dart';
 /// Main navigation screen with bottom navigation bar
 ///
 /// This screen acts as a shell that contains the bottom navigation bar
-/// and switches between different feature screens based on the selected tab.
+/// and uses IndexedStack to switch between different feature screens.
+/// IndexedStack keeps all screens in memory, preserving their state,
+/// scroll positions, and loaded data when switching tabs.
 class MainNavigationScreen extends ConsumerWidget {
   const MainNavigationScreen({super.key});
 
@@ -19,9 +20,19 @@ class MainNavigationScreen extends ConsumerWidget {
     // Watch the selected tab from Riverpod provider
     final selectedTab = ref.watch(navigationProvider);
 
+    // List of screens in tab order (Home, Criminal, Profile)
+    const screens = [
+      HomeScreen(),
+      CriminalRecordsScreen(),
+      ProfileScreen(),
+    ];
+
     return Scaffold(
-      // Show the appropriate screen based on selected tab
-      body: _buildScreen(selectedTab),
+      // Use IndexedStack to preserve tab state and scroll position
+      body: IndexedStack(
+        index: selectedTab.index,
+        children: screens,
+      ),
 
       // Bottom navigation bar
       bottomNavigationBar: PezyBottomNavigationBar(
@@ -35,17 +46,5 @@ class MainNavigationScreen extends ConsumerWidget {
         elevation: 0,
       ),
     );
-  }
-
-  /// Build the appropriate screen based on selected tab
-  Widget _buildScreen(NavigationTab tab) {
-    switch (tab) {
-      case NavigationTab.home:
-        return const HomeScreen();
-      case NavigationTab.criminal:
-        return const CriminalRecordsScreen();
-      case NavigationTab.profile:
-        return const ProfileScreen();
-    }
   }
 }
