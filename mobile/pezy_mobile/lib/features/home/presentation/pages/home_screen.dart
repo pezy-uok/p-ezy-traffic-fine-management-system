@@ -151,12 +151,12 @@ class HomeScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primaryBlue.withValues(alpha: 0.1),
+              color: AppColors.accentRed.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               Icons.receipt_long,
-              color: AppColors.primaryBlue,
+              color: AppColors.accentRed,
               size: 24,
             ),
           ),

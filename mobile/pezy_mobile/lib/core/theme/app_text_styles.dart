@@ -84,7 +84,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     height: 24 / 16,
     letterSpacing: 0.5,
-    color: AppColors.textMuted,
+    color: AppColors.textSecondary,
   );
 
   static const TextStyle bodyMedium = TextStyle(
@@ -92,7 +92,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     height: 20 / 14,
     letterSpacing: 0.25,
-    color: AppColors.textMuted,
+    color: AppColors.textSecondary,
   );
 
   static const TextStyle bodySmall = TextStyle(
@@ -100,7 +100,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     height: 16 / 12,
     letterSpacing: 0.4,
-    color: AppColors.textMuted,
+    color: AppColors.textTertiary,
   );
 
   // Label styles
@@ -109,7 +109,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     height: 20 / 14,
     letterSpacing: 0.1,
-    color: AppColors.textLight,
+    color: AppColors.white,
   );
 
   static const TextStyle labelMedium = TextStyle(
@@ -117,7 +117,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     height: 16 / 12,
     letterSpacing: 0.5,
-    color: AppColors.textMuted,
+    color: AppColors.textSecondary,
   );
 
   static const TextStyle labelSmall = TextStyle(
@@ -125,7 +125,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     height: 16 / 11,
     letterSpacing: 0.5,
-    color: AppColors.textMuted,
+    color: AppColors.textTertiary,
   );
 
   // Special styles
@@ -142,7 +142,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     height: 20 / 14,
     letterSpacing: 0.1,
-    color: AppColors.accentAmber,
+    color: AppColors.accentRed,
   );
 
   static const TextStyle link = TextStyle(
@@ -150,7 +150,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     height: 20 / 14,
     letterSpacing: 0.1,
-    color: AppColors.textLink,
+    color: AppColors.info,
     decoration: TextDecoration.underline,
   );
 }

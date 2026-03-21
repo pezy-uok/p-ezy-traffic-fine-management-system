@@ -17,7 +17,7 @@ class CriminalProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -40,19 +40,19 @@ class CriminalProfileScreen extends StatelessWidget {
                         color: Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.grey[300]!,
+                          color: AppColors.borderColor,
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 4,
                           ),
                         ],
                       ),
                       child: Icon(
                         Icons.arrow_back,
-                        color: Colors.black87,
+                        color: AppColors.textPrimary,
                         size: 20,
                       ),
                     ),
@@ -105,7 +105,7 @@ class CriminalProfileScreen extends StatelessWidget {
                     vertical: AppSpacing.sm,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB91C1C), // Red color
+                    color: AppColors.accentRed,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -137,16 +137,16 @@ class CriminalProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.grey[200]!,
+                      color: AppColors.borderColor,
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 2,
-                        offset: const Offset(0, 1),
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -154,7 +154,7 @@ class CriminalProfileScreen extends StatelessWidget {
                     criminal.description,
                     textAlign: TextAlign.justify,
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.black87,
+                      color: AppColors.textSecondary,
                       height: 1.6,
                       fontSize: 15,
                     ),
@@ -167,8 +167,15 @@ class CriminalProfileScreen extends StatelessWidget {
                   width: double.infinity,
                   height: AppSpacing.buttonHeight,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB91C1C), // Red matching badge
+                    color: AppColors.accentRed,
                     borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accentRed.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Material(
                     color: Colors.transparent,
@@ -177,7 +184,7 @@ class CriminalProfileScreen extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Text('Sighting reported'),
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppColors.success,
                             duration: const Duration(seconds: 2),
                           ),
                         );

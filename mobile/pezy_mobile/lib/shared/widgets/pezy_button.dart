@@ -111,9 +111,9 @@ class PezyButton extends StatelessWidget {
   _ButtonColors get _colors {
     if (isDisabled) {
       return _ButtonColors(
-        backgroundColor: AppColors.dividerColor,
-        textColor: AppColors.textMuted,
-        borderColor: AppColors.dividerColor,
+        backgroundColor: AppColors.mediumGray,
+        textColor: AppColors.textSecondary,
+        borderColor: AppColors.mediumGray,
       );
     }
 
@@ -121,22 +121,22 @@ class PezyButton extends StatelessWidget {
       case PezyButtonVariant.filled:
         return _ButtonColors(
           backgroundColor:
-              backgroundColor ?? AppColors.primaryBlue,
+              backgroundColor ?? AppColors.accentRed,
           textColor: textColor ?? AppColors.white,
-          borderColor: backgroundColor ?? AppColors.primaryBlue,
+          borderColor: backgroundColor ?? AppColors.accentRed,
         );
       case PezyButtonVariant.outlined:
         return _ButtonColors(
           backgroundColor: Colors.transparent,
-          textColor: textColor ?? AppColors.primaryBlue,
-          borderColor: borderColor ?? AppColors.primaryBlue,
+          textColor: textColor ?? AppColors.accentRed,
+          borderColor: borderColor ?? AppColors.accentRed,
         );
       case PezyButtonVariant.accent:
         return _ButtonColors(
           backgroundColor:
-              backgroundColor ?? AppColors.accentAmber,
-          textColor: textColor ?? AppColors.black,
-          borderColor: backgroundColor ?? AppColors.accentAmber,
+              backgroundColor ?? AppColors.accentRed,
+          textColor: textColor ?? AppColors.white,
+          borderColor: backgroundColor ?? AppColors.accentRed,
         );
     }
   }

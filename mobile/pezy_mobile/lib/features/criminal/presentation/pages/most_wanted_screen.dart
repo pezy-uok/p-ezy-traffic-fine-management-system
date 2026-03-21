@@ -16,7 +16,7 @@ class MostWantedScreen extends ConsumerWidget {
     final criminalsState = ref.watch(mostWantedProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -30,7 +30,7 @@ class MostWantedScreen extends ConsumerWidget {
               child: Icon(
                 Icons.security,
                 size: 40,
-                color: AppColors.primaryBlue,
+                color: AppColors.primaryBlack,
               ),
             ),
           ),
@@ -42,7 +42,7 @@ class MostWantedScreen extends ConsumerWidget {
               horizontal: AppSpacing.screenPaddingHorizontal,
               vertical: 12,
             ),
-            color: const Color(0xFFB91C1C), // Red color matching design
+            color: AppColors.accentRed,
             child: Text(
               'MOST WANTED',
               style: AppTextStyles.titleMedium.copyWith(
@@ -123,16 +123,16 @@ class _CriminalCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey[200]!,
+            color: AppColors.borderColor,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),

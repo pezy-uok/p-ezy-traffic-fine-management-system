@@ -64,7 +64,7 @@ class NewFineScreen extends ConsumerWidget {
                 child: Icon(
                   Icons.security,
                   size: 40,
-                  color: AppColors.primaryBlue,
+                  color: AppColors.primaryBlack,
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),

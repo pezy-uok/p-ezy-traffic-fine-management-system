@@ -115,7 +115,7 @@ class PezyBottomNavigationBar extends StatelessWidget {
                 padding: EdgeInsets.all(isActive ? 10 : 8),
                 decoration: isActive
                     ? BoxDecoration(
-                        color: (activeIconColor ?? AppColors.primaryBlue)
+                        color: (activeIconColor ?? AppColors.accentRed)
                             .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       )
@@ -124,7 +124,7 @@ class PezyBottomNavigationBar extends StatelessWidget {
                   tab.icon,
                   size: 28,
                   color: isActive
-                      ? (activeIconColor ?? AppColors.primaryBlue)
+                      ? (activeIconColor ?? AppColors.accentRed)
                       : (inactiveIconColor ?? Color(0xFF64748B)),
                 ),
               ),
