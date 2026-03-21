@@ -340,6 +340,47 @@ class NewFineScreen extends ConsumerWidget {
                 ),
               ],
 
+              // Amount mismatch error
+              if (formState.isSubmitted &&
+                  !formState.isOverdue &&
+                  formState.amount.isNotEmpty &&
+                  formState.amountConfirm.isNotEmpty &&
+                  !formState.amountsMatch) ...[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.error,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          'Amounts do not match',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               // Overdue warning
               if (formState.isSubmitted && formState.isOverdue) ...[
                 const SizedBox(height: AppSpacing.sectionGap),
@@ -382,7 +423,11 @@ class NewFineScreen extends ConsumerWidget {
               Align(
                 alignment: Alignment.bottomRight,
                 child: PezyButton(
-                  onPressed: formState.isLoading
+                  onPressed: (formState.isLoading ||
+                          (!formState.isSubmitted
+                              ? false
+                              : formState.isOverdue ||
+                                  !formState.isFormValid))
                       ? null
                       : () {
                           if (!formState.isSubmitted) {
@@ -400,7 +445,9 @@ class NewFineScreen extends ConsumerWidget {
                           : 'Back',
                   variant: PezyButtonVariant.outlined,
                   isLoading: formState.isLoading,
-                  isDisabled: formState.isOverdue && formState.isSubmitted,
+                  isDisabled: formState.isSubmitted &&
+                      !formState.isOverdue &&
+                      !formState.isFormValid,
                   textStyle: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
