@@ -4,6 +4,7 @@ import '../../core/providers/navigation_providers.dart';
 import '../../shared/widgets/index.dart';
 import '../../features/home/presentation/pages/home_screen.dart';
 import '../../features/fine/presentation/pages/new_fine_screen.dart';
+import '../../features/criminal/presentation/pages/most_wanted_screen.dart';
 import '../../features/fine/presentation/pages/outdated_fines_screen.dart';
 import '../../features/profile/presentation/pages/profile_screen.dart';
 
@@ -21,10 +22,11 @@ class MainNavigationScreen extends ConsumerWidget {
     // Watch the selected tab from Riverpod provider
     final selectedTab = ref.watch(navigationProvider);
 
-    // List of screens in tab order (Home, New Fine, Outdated Fines, Profile)
+    // List of screens in tab order (Home, New Fine, Most Wanted, Outdated Fines, Profile)
     const screens = [
       HomeScreen(),
       NewFineScreen(),
+      MostWantedScreen(),
       OutdatedFinesScreen(),
       ProfileScreen(),
     ];
