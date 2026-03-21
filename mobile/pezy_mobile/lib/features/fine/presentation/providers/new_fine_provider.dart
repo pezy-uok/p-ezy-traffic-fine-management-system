@@ -8,6 +8,12 @@ class NewFineFormState {
   final bool isSubmitted;
   final bool isLoading;
   final String? errorMessage;
+  final String date;
+  final String amount;
+  final String amountConfirm;
+  final String fineType;
+  final String reason;
+  final String extraAmount;
 
   const NewFineFormState({
     this.licenseNo = '',
@@ -16,6 +22,12 @@ class NewFineFormState {
     this.isSubmitted = false,
     this.isLoading = false,
     this.errorMessage,
+    this.date = '',
+    this.amount = '',
+    this.amountConfirm = '',
+    this.fineType = '',
+    this.reason = '',
+    this.extraAmount = '',
   });
 
   /// Create a copy with modified fields
@@ -26,6 +38,12 @@ class NewFineFormState {
     bool? isSubmitted,
     bool? isLoading,
     String? errorMessage,
+    String? date,
+    String? amount,
+    String? amountConfirm,
+    String? fineType,
+    String? reason,
+    String? extraAmount,
   }) {
     return NewFineFormState(
       licenseNo: licenseNo ?? this.licenseNo,
@@ -34,6 +52,12 @@ class NewFineFormState {
       isSubmitted: isSubmitted ?? this.isSubmitted,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
+      date: date ?? this.date,
+      amount: amount ?? this.amount,
+      amountConfirm: amountConfirm ?? this.amountConfirm,
+      fineType: fineType ?? this.fineType,
+      reason: reason ?? this.reason,
+      extraAmount: extraAmount ?? this.extraAmount,
     );
   }
 }
@@ -88,6 +112,94 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
   /// Reset the form to initial state
   void reset() {
     state = const NewFineFormState();
+  }
+
+  /// Update fine date (DD/MM/YYYY format)
+  void setDate(String date) {
+    state = state.copyWith(date: date);
+  }
+
+  /// Update fine amount
+  void setAmount(String amount) {
+    state = state.copyWith(amount: amount);
+  }
+
+  /// Update amount confirmation
+  void setAmountConfirm(String amountConfirm) {
+    state = state.copyWith(amountConfirm: amountConfirm);
+  }
+
+  /// Update fine type dropdown
+  void setFineType(String fineType) {
+    state = state.copyWith(fineType: fineType);
+  }
+
+  /// Update fine reason
+  void setReason(String reason) {
+    state = state.copyWith(reason: reason);
+  }
+
+  /// Update extra amount
+  void setExtraAmount(String extraAmount) {
+    state = state.copyWith(extraAmount: extraAmount);
+  }
+
+  /// Validate amounts match and submit fine
+  Future<void> submitFine() async {
+    if (state.date.isEmpty) {
+      state = state.copyWith(errorMessage: 'Please select a date');
+      return;
+    }
+
+    if (state.fineType.isEmpty) {
+      state = state.copyWith(errorMessage: 'Please select fine type');
+      return;
+    }
+
+    if (state.reason.isEmpty) {
+      state = state.copyWith(errorMessage: 'Please enter reason');
+      return;
+    }
+
+    if (state.amount.isEmpty) {
+      state = state.copyWith(errorMessage: 'Please enter amount');
+      return;
+    }
+
+    if (state.amountConfirm.isEmpty) {
+      state = state.copyWith(errorMessage: 'Please confirm amount');
+      return;
+    }
+
+    // Validate amounts match
+    if (state.amount != state.amountConfirm) {
+      state = state.copyWith(
+        errorMessage: 'Amounts do not match. Please re-enter.',
+      );
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // Simulate API call to submit fine
+      await Future.delayed(const Duration(seconds: 1));
+
+      // Success - in production, this would save to backend
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Fine submitted successfully!',
+      );
+
+      // Reset after 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
+      reset();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error submitting fine: ${e.toString()}',
+      );
+    }
   }
 
   /// Mock data for testing - replace with actual API call
