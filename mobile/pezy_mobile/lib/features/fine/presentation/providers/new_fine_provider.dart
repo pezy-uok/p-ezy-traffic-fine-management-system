@@ -14,6 +14,7 @@ class NewFineFormState {
   final String fineType;
   final String reason;
   final String extraAmount;
+  final bool isSuccess;
 
   const NewFineFormState({
     this.licenseNo = '',
@@ -28,6 +29,7 @@ class NewFineFormState {
     this.fineType = '',
     this.reason = '',
     this.extraAmount = '',
+    this.isSuccess = false,
   });
 
   /// Create a copy with modified fields
@@ -44,6 +46,7 @@ class NewFineFormState {
     String? fineType,
     String? reason,
     String? extraAmount,
+    bool? isSuccess,
   }) {
     return NewFineFormState(
       licenseNo: licenseNo ?? this.licenseNo,
@@ -58,6 +61,7 @@ class NewFineFormState {
       fineType: fineType ?? this.fineType,
       reason: reason ?? this.reason,
       extraAmount: extraAmount ?? this.extraAmount,
+      isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 
@@ -224,11 +228,11 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
       // Success - in production, this would save to backend
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Fine submitted successfully!',
+        isSuccess: true,
       );
 
-      // Reset after 2 seconds
-      await Future.delayed(const Duration(seconds: 2));
+      // Reset after 2.5 seconds to allow toast to be seen
+      await Future.delayed(const Duration(milliseconds: 2500));
       reset();
     } catch (e) {
       state = state.copyWith(

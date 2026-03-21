@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
+import '../../../../core/navigation/navigation_tab.dart';
+import '../../../../core/providers/navigation_providers.dart';
 import '../../../../shared/widgets/index.dart';
 import '../providers/new_fine_provider.dart';
 
@@ -16,6 +18,35 @@ class NewFineScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formState = ref.watch(newFineProvider);
     final notifier = ref.read(newFineProvider.notifier);
+
+    // Handle success - show toast and navigate
+    ref.listen(newFineProvider, (previous, next) {
+      if (next.isSuccess && (previous?.isSuccess ?? false) == false) {
+        // Show success toast
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Fine submitted successfully!',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+
+        // Ensure form resets after 2.5 seconds and navigate to home
+        Future.delayed(const Duration(milliseconds: 2500), () {
+          // Navigate to home tab (form reset happens automatically in provider)
+          ref.read(navigationProvider.notifier).state = NavigationTab.home;
+        });
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
