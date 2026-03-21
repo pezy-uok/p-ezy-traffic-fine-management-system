@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
 import '../providers/most_wanted_provider.dart';
+import 'criminal_profile_screen.dart';
 
 /// Most Wanted criminals grid screen
 ///
@@ -85,8 +86,16 @@ class MostWantedScreen extends ConsumerWidget {
                           final criminal = criminalsState.criminals[index];
 
                           return _CriminalCard(
-                            name: criminal.name,
-                            avatarUrl: criminal.avatarUrl,
+                            criminal: criminal,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      CriminalProfileScreen(criminal: criminal),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -99,86 +108,89 @@ class MostWantedScreen extends ConsumerWidget {
 
 /// Criminal card widget with avatar and name
 class _CriminalCard extends StatelessWidget {
-  final String name;
-  final String avatarUrl;
+  final MostWantedCriminal criminal;
+  final VoidCallback onTap;
 
   const _CriminalCard({
-    required this.name,
-    required this.avatarUrl,
+    required this.criminal,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+          border: Border.all(
+            color: Colors.grey[200]!,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Circular avatar
-          Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey[300],
-              border: Border.all(
-                color: Colors.grey[400]!,
-                width: 2,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Circular avatar
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[300],
+                border: Border.all(
+                  color: Colors.grey[400]!,
+                  width: 2,
+                ),
+              ),
+              child: ClipOval(
+                child: Image.network(
+                  criminal.avatarUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Fallback to avatar icon with dark background
+                    return Container(
+                      color: Colors.grey[700],
+                      child: Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-            child: ClipOval(
-              child: Image.network(
-                avatarUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  // Fallback to avatar icon with dark background
-                  return Container(
-                    color: Colors.grey[700],
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 48,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-          // Criminal name
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-            ),
-            child: Text(
-              name,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                height: 1.3,
+            // Criminal name
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+              ),
+              child: Text(
+                criminal.name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  height: 1.3,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

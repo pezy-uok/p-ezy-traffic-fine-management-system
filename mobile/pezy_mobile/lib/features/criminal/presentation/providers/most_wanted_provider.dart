@@ -5,11 +5,13 @@ class MostWantedCriminal {
   final String id;
   final String name;
   final String avatarUrl;
+  final String description;
 
   MostWantedCriminal({
     required this.id,
     required this.name,
     required this.avatarUrl,
+    required this.description,
   });
 }
 
@@ -76,31 +78,43 @@ class MostWantedNotifier extends StateNotifier<MostWantedState> {
         id: '1',
         name: 'Kehelbaddara Padme',
         avatarUrl: 'https://via.placeholder.com/150',
+        description:
+            'Wanted for multiple counts of theft and robbery. Last seen in the downtown area. Considered dangerous. Approach with caution.',
       ),
       MostWantedCriminal(
         id: '2',
         name: 'Kehelbaddara Padme',
         avatarUrl: 'https://via.placeholder.com/150',
+        description:
+            'Wanted for fraud and identity theft. Known to operate in financial districts. Multiple aliases in use.',
       ),
       MostWantedCriminal(
         id: '3',
         name: 'Kehelbaddara Padme',
         avatarUrl: 'https://via.placeholder.com/150',
+        description:
+            'Wanted for assault and battery. Frequent offender with violent history. Report any sightings immediately.',
       ),
       MostWantedCriminal(
         id: '4',
         name: 'Kehelbaddara Padme',
         avatarUrl: 'https://via.placeholder.com/150',
+        description:
+            'Wanted for drug trafficking and possession. Known associates identified. High priority case.',
       ),
       MostWantedCriminal(
         id: '5',
         name: 'Kehelbaddara Padme',
         avatarUrl: 'https://via.placeholder.com/150',
+        description:
+            'Wanted for burglary and trespassing. Operates at night. Known methods of entry documented.',
       ),
       MostWantedCriminal(
         id: '6',
         name: 'Kehelbaddara Padme',
         avatarUrl: 'https://via.placeholder.com/150',
+        description:
+            'Wanted for vehicle theft and hit-and-run. Highly mobile suspect. Multiple reports filed.',
       ),
     ];
   }
