@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 enum NavigationTab {
   home,
   newFine,
+  mostWanted,
   outdatedFines,
   profile,
 }
@@ -17,6 +18,8 @@ extension NavigationTabExtension on NavigationTab {
         return Icons.home_rounded;
       case NavigationTab.newFine:
         return Icons.assignment_outlined;
+      case NavigationTab.mostWanted:
+        return Icons.people_alt_outlined;
       case NavigationTab.outdatedFines:
         return Icons.history_outlined;
       case NavigationTab.profile:
@@ -31,6 +34,8 @@ extension NavigationTabExtension on NavigationTab {
         return 'Fines';
       case NavigationTab.newFine:
         return 'New Fine';
+      case NavigationTab.mostWanted:
+        return 'Most Wanted';
       case NavigationTab.outdatedFines:
         return 'Outdated';
       case NavigationTab.profile:
@@ -45,6 +50,8 @@ extension NavigationTabExtension on NavigationTab {
         return '/home';
       case NavigationTab.newFine:
         return '/new-fine';
+      case NavigationTab.mostWanted:
+        return '/most-wanted';
       case NavigationTab.outdatedFines:
         return '/outdated-fines';
       case NavigationTab.profile:
@@ -59,10 +66,12 @@ extension NavigationTabExtension on NavigationTab {
         return 0;
       case NavigationTab.newFine:
         return 1;
-      case NavigationTab.outdatedFines:
+      case NavigationTab.mostWanted:
         return 2;
-      case NavigationTab.profile:
+      case NavigationTab.outdatedFines:
         return 3;
+      case NavigationTab.profile:
+        return 4;
     }
   }
 }
