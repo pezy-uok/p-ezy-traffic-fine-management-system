@@ -60,6 +60,26 @@ class NewFineFormState {
       extraAmount: extraAmount ?? this.extraAmount,
     );
   }
+
+  /// Check if amounts match
+  bool get amountsMatch {
+    if (amount.isEmpty || amountConfirm.isEmpty) {
+      return true; // Don't show error if either is empty
+    }
+    return amount == amountConfirm;
+  }
+
+  /// Check if form is valid for submission
+  bool get isFormValid {
+    return isSubmitted &&
+        !isOverdue &&
+        date.isNotEmpty &&
+        fineType.isNotEmpty &&
+        reason.isNotEmpty &&
+        amount.isNotEmpty &&
+        amountConfirm.isNotEmpty &&
+        amountsMatch;
+  }
 }
 
 /// Notifier for managing new fine form state
@@ -122,11 +142,27 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
   /// Update fine amount
   void setAmount(String amount) {
     state = state.copyWith(amount: amount);
+    // Check if confirmation exists and doesn't match
+    if (state.amountConfirm.isNotEmpty && amount != state.amountConfirm) {
+      state = state.copyWith(
+        errorMessage: 'Amounts do not match',
+      );
+    } else if (state.amountConfirm.isNotEmpty && amount == state.amountConfirm) {
+      state = state.copyWith(errorMessage: null);
+    }
   }
 
   /// Update amount confirmation
   void setAmountConfirm(String amountConfirm) {
     state = state.copyWith(amountConfirm: amountConfirm);
+    // Check if confirmation doesn't match amount
+    if (state.amount.isNotEmpty && amountConfirm != state.amount) {
+      state = state.copyWith(
+        errorMessage: 'Amounts do not match',
+      );
+    } else if (state.amount.isNotEmpty && amountConfirm == state.amount) {
+      state = state.copyWith(errorMessage: null);
+    }
   }
 
   /// Update fine type dropdown
