@@ -66,7 +66,7 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
       if (mockUserData == null) {
         state = state.copyWith(
           isLoading: false,
-          errorMessage: 'License number not found',
+          errorMessage: 'Driver not found for this license number',
         );
         return;
       }
@@ -91,15 +91,23 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
   }
 
   /// Mock data for testing - replace with actual API call
+  /// Simulates 404 error for certain license number patterns
   Map<String, dynamic>? _getMockUserData(String licenseNo) {
-    // Simulate successful lookup for common formats
-    if (licenseNo.isNotEmpty) {
-      return {
-        'name': 'John Doe',
-        'isOverdue': licenseNo.length > 10, // Mock: longer license numbers are overdue
-      };
+    if (licenseNo.isEmpty) {
+      return null;
     }
-    return null;
+
+    // Simulate 404 (driver not found) for specific test patterns
+    // License numbers starting with '000' or '999' will return not found
+    if (licenseNo.startsWith('000') || licenseNo.startsWith('999')) {
+      return null; // Simulates 404 - driver not found
+    }
+
+    // Valid lookup - return mock user data
+    return {
+      'name': 'John Doe',
+      'isOverdue': licenseNo.length > 10, // Mock: longer license numbers are overdue
+    };
   }
 }
 

@@ -100,10 +100,36 @@ class NewFineScreen extends ConsumerWidget {
               // Error message
               if (formState.errorMessage != null) ...[
                 const SizedBox(height: AppSpacing.md),
-                Text(
-                  formState.errorMessage!,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.error,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.error,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          formState.errorMessage!,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
