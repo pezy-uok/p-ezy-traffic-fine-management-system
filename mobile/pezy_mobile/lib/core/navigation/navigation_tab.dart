@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Navigation tab definition
 enum NavigationTab {
   home,
-  criminal,
+  newFine,
   profile,
 }
 
@@ -14,7 +14,7 @@ extension NavigationTabExtension on NavigationTab {
     switch (this) {
       case NavigationTab.home:
         return Icons.home_rounded;
-      case NavigationTab.criminal:
+      case NavigationTab.newFine:
         return Icons.assignment_outlined;
       case NavigationTab.profile:
         return Icons.info_outlined;
@@ -26,8 +26,8 @@ extension NavigationTabExtension on NavigationTab {
     switch (this) {
       case NavigationTab.home:
         return 'Fines';
-      case NavigationTab.criminal:
-        return 'Criminal';
+      case NavigationTab.newFine:
+        return 'New Fine';
       case NavigationTab.profile:
         return 'Profile';
     }
@@ -38,8 +38,8 @@ extension NavigationTabExtension on NavigationTab {
     switch (this) {
       case NavigationTab.home:
         return '/home';
-      case NavigationTab.criminal:
-        return '/criminal';
+      case NavigationTab.newFine:
+        return '/new-fine';
       case NavigationTab.profile:
         return '/profile';
     }
@@ -50,7 +50,7 @@ extension NavigationTabExtension on NavigationTab {
     switch (this) {
       case NavigationTab.home:
         return 0;
-      case NavigationTab.criminal:
+      case NavigationTab.newFine:
         return 1;
       case NavigationTab.profile:
         return 2;
