@@ -3,6 +3,9 @@ import Home from '../pages/Home'
 import Dashboard from '../pages/Dashboard'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
+import NewsAwareness from '../pages/NewsAwareness'
+import CriminalRecords from '../pages/CriminalRecords'
+import CriminalRecordProfile from '../pages/CriminalRecordProfile'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -31,6 +34,21 @@ export const routes: RouteConfig[] = [
     path: '/settings',
     element: <Settings />,
     name: 'Settings',
+  },
+  {
+    path: '/criminal-records',
+    element: <CriminalRecords />,
+    name: 'Criminal Records',
+  },
+  {
+    path: '/criminal-records/:recordId',
+    element: <CriminalRecordProfile />,
+    name: 'Criminal Record Profile',
+  },
+  {
+    path: '/news',
+    element: <NewsAwareness />,
+    name: 'News & Awareness',
   },
   {
     path: '/*',
