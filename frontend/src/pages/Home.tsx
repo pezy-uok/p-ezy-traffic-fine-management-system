@@ -28,7 +28,7 @@ const heroSlides = [
 const servicesData = [
   {
     id: 'clearance',
-    name: 'Police Clearance Certificatess',
+    name: 'Police Clearance Certificates',
     description: 'Apply for and track your police clearance certificates required for visas, employment, or other official purposes.',
   },
   {
