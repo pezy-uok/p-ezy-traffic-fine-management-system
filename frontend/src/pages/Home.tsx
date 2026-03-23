@@ -11,7 +11,7 @@ import './Home.css'
 const primaryMenu: { label: string; path?: string }[] = [
   { label: 'Home', path: '/' },
   { label: 'About Us' },
-  { label: 'Fine Pay' },
+  { label: 'Fine Pay', path: '/fine-pay' },
   { label: 'Criminal Records', path: '/criminal-records' },
   { label: 'Division' },
   { label: 'Downloads' },

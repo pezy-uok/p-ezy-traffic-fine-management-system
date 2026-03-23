@@ -4,6 +4,7 @@ import Dashboard from '../pages/Dashboard'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
 import NewsAwareness from '../pages/NewsAwareness'
+import FinePay from '../pages/FinePay'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
 import NotFound from '../pages/NotFound'
@@ -49,6 +50,11 @@ export const routes: RouteConfig[] = [
     path: '/news',
     element: <NewsAwareness />,
     name: 'News & Awareness',
+  },
+  {
+    path: '/fine-pay',
+    element: <FinePay />,
+    name: 'Fine Pay',
   },
   {
     path: '/*',
