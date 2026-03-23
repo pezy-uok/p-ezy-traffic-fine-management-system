@@ -59,6 +59,7 @@ const servicesData = [
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -126,6 +127,7 @@ export default function Home() {
                 if (item.path) {
                   navigate(item.path)
                 }
+                closeMenu()
               }}
             >
               {item.label}
