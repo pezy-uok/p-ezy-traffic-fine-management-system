@@ -514,45 +514,30 @@
   }
 
   .home-police__services-grid {
-    display: flex;
-    gap: 0.75rem;
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .home-police__services-grid::-webkit-scrollbar {
-    height: 0.35rem;
-  }
-
-  .home-police__services-grid::-webkit-scrollbar-thumb {
-    background: rgba(14, 116, 144, 0.35);
-    border-radius: 999px;
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
   }
 
   .home-police__service-card {
-    flex: 0 0 11rem;
-    min-height: 11.5rem;
-    padding: 1rem 0.9rem;
-    scroll-snap-align: start;
+    min-height: 9.75rem;
+    padding: 0.9rem 0.85rem;
   }
 
   .home-police__service-name {
-    font-size: 0.92rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.82rem;
+    margin-bottom: 0.35rem;
   }
 
   .home-police__service-desc {
-    font-size: 0.78rem;
-    margin-bottom: 0.85rem;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    margin-bottom: 0.65rem;
   }
 
   .home-police__service-btn {
     width: 100%;
-    padding: 0.55rem 0.8rem;
-    font-size: 0.78rem;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.72rem;
   }
 }
 
@@ -674,23 +659,43 @@
 
 @media (max-width: 768px) {
   .home-police__services-title {
-    font-size: 1.9rem;
-    margin-bottom: 0.75rem;
+    font-size: 1.45rem;
+    margin-bottom: 0.6rem;
   }
 
   .home-police__services-subtitle {
-    font-size: 0.98rem;
-    margin-bottom: 1.75rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.1rem;
   }
 
   .home-police__services-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
 
   .home-police__service-card {
-    min-height: 16rem;
-    padding: 1.25rem 1rem;
+    min-height: 10rem;
+    padding: 1rem 0.9rem;
+    align-items: center;
+    text-align: center;
+  }
+
+  .home-police__service-name {
+    font-size: 0.88rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .home-police__service-desc {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    margin-bottom: 0.7rem;
+  }
+
+  .home-police__service-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.74rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
