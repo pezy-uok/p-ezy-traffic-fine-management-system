@@ -5,6 +5,7 @@ import pLogo from '../assets/plogo.png'
 import slideOne from '../assets/slider/slide-1.png'
 import slideTwo from '../assets/slider/slide-2.png'
 import slideThree from '../assets/slider/slide-3.png'
+import serviceBg from '../assets/service-bg.jpg'
 import './Home.css'
 
 const primaryMenu: { label: string; path?: string }[] = [
@@ -33,6 +34,29 @@ const heroSlides = [
   },
 ]
 
+const servicesData = [
+  {
+    id: 'clearance',
+    name: 'Police Clearance Certificates',
+    description: 'Apply for and track your police clearance certificates required for visas, employment, or other official purposes.',
+  },
+  {
+    id: 'lost-found',
+    name: 'Lost & Found Property',
+    description: 'Report lost items or search the database for items that have been found and turned in to the police.',
+  },
+  {
+    id: 'traffic',
+    name: 'Real-time Traffic Info',
+    description: 'Get the latest updates on road conditions, closures, and traffic flow to plan your journey safely.',
+  },
+  {
+    id: 'emergency',
+    name: 'Rapid emergency response services',
+    description: 'Quick and efficient assistance during critical situations',
+  },
+]
+
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
   const navigate = useNavigate()
@@ -55,6 +79,14 @@ export default function Home() {
     setActiveIndex(previous => (previous + 1) % heroSlides.length)
   }
 
+  const toggleMenu = () => {
+    setMenuOpen(previous => !previous)
+  }
+
+  const closeMenu = () => {
+    setMenuOpen(false)
+  }
+
   return (
     <section className="home-police">
       <div className="home-police__topbar">
@@ -69,7 +101,22 @@ export default function Home() {
       </div>
 
       <div className="home-police__container home-police__menu-row">
-        <nav className="home-police__menu" aria-label="Primary">
+        <button
+          type="button"
+          className="home-police__menu-toggle"
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+          aria-expanded={menuOpen}
+        >
+          <span className="home-police__menu-toggle-icon" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className="home-police__menu-toggle-text">MENU</span>
+        </button>
+
+        <nav className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
           {primaryMenu.map(item => (
             <button
               key={item.label}
@@ -140,6 +187,27 @@ export default function Home() {
           />
         ))}
       </div>
+
+      {/* Services Section */}
+      <div
+        className="home-police__services-wrapper"
+        style={{ '--services-bg': `url(${serviceBg})` } as CSSProperties}
+      >
+        <div className="home-police__container">
+          <h2 className="home-police__services-title">Services</h2>
+          <p className="home-police__services-subtitle">Comprehensive support for community safety and law enforcement</p>
+
+          <div className="home-police__services-grid">
+            {servicesData.map(service => (
+              <div key={service.id} className="home-police__service-card">
+                <h3 className="home-police__service-name">{service.name}</h3>
+                <p className="home-police__service-desc">{service.description}</p>
+                <button type="button" className="home-police__service-btn">Learn &gt;</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>      
     </section>
   )
 }
