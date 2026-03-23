@@ -3,9 +3,9 @@ import { routes } from './config/routes'
 import Footer from './components/Footer'
 import './App.css'
 
-function App() {
+function AppContent() {
   return (
-    <Router>
+    <>
       <main>
         <Routes>
           {routes.map(route => (
@@ -14,8 +14,15 @@ function App() {
         </Routes>
       </main>
 
-
       <Footer />
+    </>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   )
 }

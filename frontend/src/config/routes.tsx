@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import Home from '../pages/Home'
+import FinePay from '../pages/FinePay'
 import Dashboard from '../pages/Dashboard'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
@@ -16,6 +17,11 @@ export const routes: RouteConfig[] = [
     path: '/',
     element: <Home />,
     name: 'Home',
+  },
+  {
+    path: '/fine-pay',
+    element: <FinePay />,
+    name: 'Fine Pay',
   },
   {
     path: '/dashboard',

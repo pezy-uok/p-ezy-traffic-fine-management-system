@@ -96,6 +96,9 @@
   cursor: pointer;
   transition: all 200ms ease;
   border-radius: 3px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 .home-police__menu-item:hover {
