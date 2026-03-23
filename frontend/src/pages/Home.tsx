@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
-import sriLankaFlag from '../assets/Flag_of_Sri_Lanka.png'
 import pLogo from '../assets/plogo.png'
 import slideOne from '../assets/slider/slide-1.png'
 import slideTwo from '../assets/slider/slide-2.png'
@@ -50,6 +49,7 @@ const servicesData = [
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -69,6 +69,14 @@ export default function Home() {
     setActiveIndex(previous => (previous + 1) % heroSlides.length)
   }
 
+  const toggleMenu = () => {
+    setMenuOpen(previous => !previous)
+  }
+
+  const closeMenu = () => {
+    setMenuOpen(false)
+  }
+
   return (
     <section className="home-police">
       <div className="home-police__topbar">
@@ -83,9 +91,29 @@ export default function Home() {
       </div>
 
       <div className="home-police__container home-police__menu-row">
-        <nav className="home-police__menu" aria-label="Primary">
+        <button
+          type="button"
+          className="home-police__menu-toggle"
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+          aria-expanded={menuOpen}
+        >
+          <span className="home-police__menu-toggle-icon" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className="home-police__menu-toggle-text">MENU</span>
+        </button>
+
+        <nav className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
           {primaryMenu.map(item => (
-            <button key={item} type="button" className={`home-police__menu-item${item === 'Home' ? ' is-active' : ''}`}>
+            <button
+              key={item}
+              type="button"
+              className={`home-police__menu-item${item === 'Home' ? ' is-active' : ''}`}
+              onClick={closeMenu}
+            >
               {item}
             </button>
           ))}
