@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { useNavigate } from 'react-router-dom'
 import pLogo from '../assets/plogo.png'
 import slideOne from '../assets/slider/slide-1.png'
 import slideTwo from '../assets/slider/slide-2.png'
@@ -7,7 +8,16 @@ import slideThree from '../assets/slider/slide-3.png'
 import serviceBg from '../assets/service-bg.jpg'
 import './Home.css'
 
-const primaryMenu = ['Home', 'About Us', 'Fine Pay', 'Criminal Records', 'Division', 'Downloads', 'Library', 'Survey']
+const primaryMenu: { label: string; path?: string }[] = [
+  { label: 'Home', path: '/' },
+  { label: 'About Us' },
+  { label: 'Fine Pay' },
+  { label: 'Criminal Records', path: '/criminal-records' },
+  { label: 'Division' },
+  { label: 'Downloads' },
+  { label: 'Library' },
+  { label: 'Survey' },
+]
 
 const heroSlides = [
   {
@@ -49,7 +59,7 @@ const servicesData = [
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -109,12 +119,16 @@ export default function Home() {
         <nav className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
           {primaryMenu.map(item => (
             <button
-              key={item}
+              key={item.label}
               type="button"
-              className={`home-police__menu-item${item === 'Home' ? ' is-active' : ''}`}
-              onClick={closeMenu}
+              className={`home-police__menu-item${item.label === 'Home' ? ' is-active' : ''}`}
+              onClick={() => {
+                if (item.path) {
+                  navigate(item.path)
+                }
+              }}
             >
-              {item}
+              {item.label}
             </button>
           ))}
         </nav>
