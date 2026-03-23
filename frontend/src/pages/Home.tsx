@@ -59,6 +59,7 @@ const servicesData = [
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -78,6 +79,14 @@ export default function Home() {
     setActiveIndex(previous => (previous + 1) % heroSlides.length)
   }
 
+  const toggleMenu = () => {
+    setMenuOpen(previous => !previous)
+  }
+
+  const closeMenu = () => {
+    setMenuOpen(false)
+  }
+
   return (
     <section className="home-police">
       <div className="home-police__topbar">
@@ -92,7 +101,22 @@ export default function Home() {
       </div>
 
       <div className="home-police__container home-police__menu-row">
-        <nav className="home-police__menu" aria-label="Primary">
+        <button
+          type="button"
+          className="home-police__menu-toggle"
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+          aria-expanded={menuOpen}
+        >
+          <span className="home-police__menu-toggle-icon" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className="home-police__menu-toggle-text">MENU</span>
+        </button>
+
+        <nav className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
           {primaryMenu.map(item => (
             item.path ? (
               <NavLink
