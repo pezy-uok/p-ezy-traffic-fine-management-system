@@ -59,6 +59,7 @@ const servicesData = [
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -83,8 +84,11 @@ export default function Home() {
     setMenuOpen(previous => !previous)
   }
 
-  const closeMenu = () => {
+  const handleMenuItemClick = (path?: string) => {
     setMenuOpen(false)
+    if (path) {
+      navigate(path)
+    }
   }
 
   return (
@@ -122,11 +126,7 @@ export default function Home() {
               key={item.label}
               type="button"
               className={`home-police__menu-item${item.label === 'Home' ? ' is-active' : ''}`}
-              onClick={() => {
-                if (item.path) {
-                  navigate(item.path)
-                }
-              }}
+              onClick={() => handleMenuItemClick(item.path)}
             >
               {item.label}
             </button>
