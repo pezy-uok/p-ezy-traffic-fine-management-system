@@ -85,6 +85,18 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
+.admin-login__form input[aria-invalid='true'] {
+  border-color: #dc2626;
+  background: #fff5f5;
+}
+
+.admin-login__error {
+  margin: -2px 0 2px;
+  color: #dc2626;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
 .admin-login__form button {
   margin-top: 6px;
   height: 44px;
