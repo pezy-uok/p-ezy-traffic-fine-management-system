@@ -1,7 +1,8 @@
 {
   "env": {
     "node": true,
-    "es2021": true
+    "es2021": true,
+    "commonjs": true
   },
   "extends": "eslint:recommended",
   "parserOptions": {
@@ -9,11 +10,31 @@
     "sourceType": "module"
   },
   "rules": {
-    "indent": ["error", 2],
+    "indent": ["error", 2, { "SwitchCase": 1 }],
     "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "single"],
+    "quotes": ["error", "single", { "avoidEscape": true }],
     "semi": ["error", "always"],
-    "no-unused-vars": ["warn"],
-    "no-console": "off"
-  }
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": "off",
+    "no-multiple-empty-lines": ["error", { "max": 2, "maxEOF": 0 }],
+    "eqeqeq": ["error", "always"],
+    "no-var": "error",
+    "prefer-const": ["error", { "destructuring": "any" }],
+    "prefer-arrow-callback": ["error", { "allowNamedFunctions": false }],
+    "no-trailing-spaces": "error",
+    "comma-dangle": ["error", "always-multiline"],
+    "arrow-spacing": ["error", { "before": true, "after": true }],
+    "object-shorthand": ["error", "always"],
+    "no-mixed-spaces-and-tabs": "error",
+    "keyword-spacing": ["error", { "before": true, "after": true }]
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.js"],
+      "env": {
+        "mocha": true,
+        "jest": true
+      }
+    }
+  ]
 }

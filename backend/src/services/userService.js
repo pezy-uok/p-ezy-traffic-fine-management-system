@@ -1,13 +1,16 @@
-import { getSupabaseClient } from "../config/database.js";
+import { getSupabaseClient } from '../config/database.js';
 
 const createUser = async (userData) => {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.from("users").insert([userData]).select();
+    const { data, error } = await supabase
+      .from('users')
+      .insert([userData])
+      .select();
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error creating user:", error.message);
+    console.error('Error creating user:', error.message);
     throw error;
   }
 };
@@ -15,11 +18,11 @@ const createUser = async (userData) => {
 const getAllUsers = async () => {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.from("users").select("*");
+    const { data, error } = await supabase.from('users').select('*');
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error fetching users:", error.message);
+    console.error('Error fetching users:', error.message);
     throw error;
   }
 };
@@ -27,11 +30,15 @@ const getAllUsers = async () => {
 const getUserById = async (userId) => {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.from("users").select("*").eq("id", userId).single();
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error fetching user:", error.message);
+    console.error('Error fetching user:', error.message);
     throw error;
   }
 };
@@ -39,11 +46,15 @@ const getUserById = async (userId) => {
 const updateUser = async (userId, userData) => {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.from("users").update(userData).eq("id", userId).select();
+    const { data, error } = await supabase
+      .from('users')
+      .update(userData)
+      .eq('id', userId)
+      .select();
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error updating user:", error.message);
+    console.error('Error updating user:', error.message);
     throw error;
   }
 };
@@ -51,11 +62,11 @@ const updateUser = async (userId, userData) => {
 const deleteUser = async (userId) => {
   try {
     const supabase = getSupabaseClient();
-    const { error } = await supabase.from("users").delete().eq("id", userId);
+    const { error } = await supabase.from('users').delete().eq('id', userId);
     if (error) throw error;
-    return { success: true, message: "User deleted successfully" };
+    return { success: true, message: 'User deleted successfully' };
   } catch (error) {
-    console.error("Error deleting user:", error.message);
+    console.error('Error deleting user:', error.message);
     throw error;
   }
 };

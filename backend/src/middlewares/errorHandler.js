@@ -1,6 +1,6 @@
 /**
  * Global Error Handler Middleware
- * 
+ *
  * This middleware catches all errors thrown in the application
  * and returns a standardized error response
  */
@@ -32,7 +32,7 @@ const errorHandler = (err, req, res, next) => {
   });
 
   // Handle specific error types
-  
+
   // Supabase authentication errors
   if (err.message.includes('auth') || err.message.includes('Authentication')) {
     err.statusCode = 401;
