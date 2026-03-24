@@ -66,6 +66,13 @@
   box-sizing: border-box;
 }
 
+body.admin-mode #root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-inline: 0;
+}
+
 body {
   margin: 0;
 }

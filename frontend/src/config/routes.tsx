@@ -7,6 +7,7 @@ import NewsAwareness from '../pages/NewsAwareness'
 import FinePay from '../pages/FinePay'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
+import AdminLogin from '../pages/AdminLogin'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -55,6 +56,11 @@ export const routes: RouteConfig[] = [
     path: '/fine-pay',
     element: <FinePay />,
     name: 'Fine Pay',
+  },
+  {
+    path: '/admin',
+    element: <AdminLogin />,
+    name: 'Admin Login',
   },
   {
     path: '/*',
