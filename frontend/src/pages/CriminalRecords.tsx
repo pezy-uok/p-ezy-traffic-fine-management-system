@@ -18,6 +18,12 @@ const statusToVariant: Record<RecordStatus, 'danger' | 'info' | 'warning'> = {
   unidentified: 'warning',
 }
 
+const statusToCardClass: Record<RecordStatus, string> = {
+  wanted: 'records-card--danger',
+  arrested: 'records-card--info',
+  unidentified: 'records-card--warning',
+}
+
 const defaultTipState: TipFormState = {
   location: '',
   sightingTime: '',
@@ -114,7 +120,7 @@ export default function CriminalRecords() {
       <div className="records__content">
         <div className="records__grid" aria-live="polite">
           {filteredRecords.map(card => (
-            <article key={card.id} className="records-card">
+            <article key={card.id} className={`records-card ${statusToCardClass[card.status]}`}>
               <div className="records-card__badge-wrap">
                 <span className={`records-card__badge is-${statusToVariant[card.status]}`}>{card.badgeLabel}</span>
               </div>
