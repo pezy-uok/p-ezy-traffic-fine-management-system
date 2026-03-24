@@ -57,6 +57,7 @@
 }
 
 .admin-shell__nav-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -74,8 +75,20 @@
 }
 
 .admin-shell__nav-link.is-active {
-  background: #22a0ea;
-  color: #052345;
+  background: #2ea6ea;
+  color: #072743;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+}
+
+.admin-shell__nav-link.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: #f3fbff;
 }
 
 .admin-shell__nav-icon {

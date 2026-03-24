@@ -76,18 +76,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 `admin-shell__nav-link${isActive ? ' is-active' : ''}`
               }
             >
-              <span className="admin-shell__nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-              {item.label === 'Dashboard' ? (
-                <svg
-                  className="admin-shell__nav-arrow"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="m9 6 6 6-6 6-1.5-1.5 4.5-4.5-4.5-4.5L9 6Z" fill="currentColor" />
-                </svg>
-              ) : null}
+              {({ isActive }) => (
+                <>
+                  <span className="admin-shell__nav-icon">{item.icon}</span>
+                  <span>{item.label}</span>
+                  {isActive ? (
+                    <svg
+                      className="admin-shell__nav-arrow"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="m9 6 6 6-6 6-1.5-1.5 4.5-4.5-4.5-4.5L9 6Z" fill="currentColor" />
+                    </svg>
+                  ) : null}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
