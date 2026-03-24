@@ -23,3 +23,9 @@ yarn-error.log*
 # Build
 dist/
 build/
+
+# Documentation/README files
+README*.md
+*_GUIDE.md
+*_REFERENCE.md
+*_SCHEMA.sql
