@@ -1,23 +1,10 @@
 import type { ReactNode } from 'react'
-import AdminMainContent from '../layouts/AdminMainContent'
-import AdminStatCards from '../components/admin/AdminStatCards'
-import './AdminDashboard.css'
-
-interface AdminDashboardProps {
-  sectionName?: string
-}
 
 interface ActivityItem {
   title: string
   description: string
   time: string
   icon: ReactNode
-}
-
-interface QuickStat {
-  label: string
-  value: string
-  tone: 'blue' | 'red' | 'yellow' | 'green'
 }
 
 const activityItems: ActivityItem[] = [
@@ -63,39 +50,22 @@ const activityItems: ActivityItem[] = [
   },
 ]
 
-const quickStats: QuickStat[] = [
-  { label: 'Avg Fines/Week', value: '89', tone: 'blue' },
-  { label: 'Pending Cases', value: '24', tone: 'red' },
-  { label: 'New Records', value: '12', tone: 'yellow' },
-  { label: 'Published News', value: '47', tone: 'green' },
-]
-
-export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashboardProps) {
-  const topSection = <AdminStatCards />
-
-  const primarySection = <AdminRecentActivity />
-
-  const secondarySection = (
-    <>
-      <h3 className="admin-dashboard__panel-title">Quick Stats</h3>
-      <div className="admin-dashboard__quick-stats">
-        {quickStats.map(item => (
-          <article key={item.label} className={`admin-dashboard__quick-item is-${item.tone}`}>
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
+export default function AdminRecentActivity() {
+  return (
+    <section aria-label="Recent activity feed">
+      <h3 className="admin-dashboard__panel-title">Recent Activity</h3>
+      <div className="admin-dashboard__activity-list">
+        {activityItems.map(item => (
+          <article key={`${item.title}-${item.time}`} className="admin-dashboard__activity-item">
+            <span className="admin-dashboard__activity-icon">{item.icon}</span>
+            <div className="admin-dashboard__activity-content">
+              <h4>{item.title}</h4>
+              <p className="admin-dashboard__activity-description">{item.description}</p>
+              <span className="admin-dashboard__activity-time">{item.time}</span>
+            </div>
           </article>
         ))}
       </div>
-    </>
-  )
-
-  return (
-    <AdminMainContent
-      title={sectionName}
-      subtitle="Welcome back! Here&apos;s an overview of your police administration system."
-      topSection={topSection}
-      primarySection={primarySection}
-      secondarySection={secondarySection}
-    />
+    </section>
   )
 }
