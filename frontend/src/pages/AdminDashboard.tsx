@@ -63,12 +63,47 @@ const activityItems: ActivityItem[] = [
   },
 ]
 
+const quickStats: QuickStat[] = [
+  { label: 'Avg Fines/Week', value: '89', tone: 'blue' },
+  { label: 'Pending Cases', value: '24', tone: 'red' },
+  { label: 'New Records', value: '12', tone: 'yellow' },
+  { label: 'Published News', value: '47', tone: 'green' },
+]
+
 export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashboardProps) {
   const topSection = <AdminStatCards />
 
-  const primarySection = <AdminRecentActivity />
+  const primarySection = (
+    <>
+      <h3 className="admin-dashboard__panel-title">Recent Activity</h3>
+      <div className="admin-dashboard__activity-list">
+        {activityItems.map(item => (
+          <article key={`${item.title}-${item.time}`} className="admin-dashboard__activity-item">
+            <span className="admin-dashboard__activity-icon">{item.icon}</span>
+            <div className="admin-dashboard__activity-content">
+              <h4>{item.title}</h4>
+              <p className="admin-dashboard__activity-description">{item.description}</p>
+              <span className="admin-dashboard__activity-time">{item.time}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
+  )
 
-  const secondarySection = <AdminQuickStats />
+  const secondarySection = (
+    <>
+      <h3 className="admin-dashboard__panel-title">Quick Stats</h3>
+      <div className="admin-dashboard__quick-stats">
+        {quickStats.map(item => (
+          <article key={item.label} className={`admin-dashboard__quick-item is-${item.tone}`}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </article>
+        ))}
+      </div>
+    </>
+  )
 
   return (
     <AdminMainContent
