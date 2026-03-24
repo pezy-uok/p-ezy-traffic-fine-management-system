@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import AdminMainContent from '../layouts/AdminMainContent'
+import AdminQuickStats from '../components/admin/AdminQuickStats'
 import './AdminDashboard.css'
 
 interface AdminDashboardProps {
@@ -20,12 +21,6 @@ interface ActivityItem {
   description: string
   time: string
   icon: ReactNode
-}
-
-interface QuickStat {
-  label: string
-  value: string
-  tone: 'blue' | 'red' | 'yellow' | 'green'
 }
 
 const statCards: StatCard[] = [
@@ -122,13 +117,6 @@ const activityItems: ActivityItem[] = [
   },
 ]
 
-const quickStats: QuickStat[] = [
-  { label: 'Avg Fines/Week', value: '89', tone: 'blue' },
-  { label: 'Pending Cases', value: '24', tone: 'red' },
-  { label: 'New Records', value: '12', tone: 'yellow' },
-  { label: 'Published News', value: '47', tone: 'green' },
-]
-
 export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashboardProps) {
   const topSection = (
     <section className="admin-dashboard__stats-grid" aria-label="Summary statistics">
@@ -169,19 +157,7 @@ export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashb
     </>
   )
 
-  const secondarySection = (
-    <>
-      <h3 className="admin-dashboard__panel-title">Quick Stats</h3>
-      <div className="admin-dashboard__quick-stats">
-        {quickStats.map(item => (
-          <article key={item.label} className={`admin-dashboard__quick-item is-${item.tone}`}>
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
-          </article>
-        ))}
-      </div>
-    </>
-  )
+  const secondarySection = <AdminQuickStats />
 
   return (
     <AdminMainContent
