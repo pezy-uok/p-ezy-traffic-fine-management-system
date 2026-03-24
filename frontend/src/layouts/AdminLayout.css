@@ -124,6 +124,7 @@
 .admin-shell__content {
   padding: 34px 30px;
   overflow-x: auto;
+  text-align: left;
 }
 
 @media (max-width: 980px) {
