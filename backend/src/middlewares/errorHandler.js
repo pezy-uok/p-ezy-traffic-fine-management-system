@@ -5,13 +5,7 @@
  * and returns a standardized error response
  */
 
-class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
+import { AppError } from '../utils/errors.js';
 
 /**
  * Error handler middleware
@@ -114,4 +108,4 @@ const notFoundHandler = (req, res, next) => {
   next(error);
 };
 
-export { errorHandler, notFoundHandler, AppError };
+export { errorHandler, notFoundHandler };
