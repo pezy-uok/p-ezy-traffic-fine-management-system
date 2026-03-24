@@ -8,6 +8,8 @@ import FinePay from '../pages/FinePay'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
 import AdminLogin from '../pages/AdminLogin'
+import AdminLayout from '../layouts/AdminLayout'
+import AdminDashboard from '../pages/AdminDashboard'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -61,6 +63,42 @@ export const routes: RouteConfig[] = [
     path: '/admin',
     element: <AdminLogin />,
     name: 'Admin Login',
+  },
+  {
+    path: '/admin/dashboard',
+    element: (
+      <AdminLayout>
+        <AdminDashboard sectionName="Dashboard" />
+      </AdminLayout>
+    ),
+    name: 'Admin Dashboard',
+  },
+  {
+    path: '/admin/fines',
+    element: (
+      <AdminLayout>
+        <AdminDashboard sectionName="Fine Management" />
+      </AdminLayout>
+    ),
+    name: 'Admin Fines',
+  },
+  {
+    path: '/admin/criminal-records',
+    element: (
+      <AdminLayout>
+        <AdminDashboard sectionName="Criminal Records" />
+      </AdminLayout>
+    ),
+    name: 'Admin Criminal Records',
+  },
+  {
+    path: '/admin/news',
+    element: (
+      <AdminLayout>
+        <AdminDashboard sectionName="News Management" />
+      </AdminLayout>
+    ),
+    name: 'Admin News',
   },
   {
     path: '/*',

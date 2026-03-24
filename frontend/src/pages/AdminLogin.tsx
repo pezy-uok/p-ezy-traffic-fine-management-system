@@ -1,12 +1,15 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './AdminLogin.css'
 
 export default function AdminLogin() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
+  const navigate = useNavigate()
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    navigate('/admin/dashboard')
   }
 
   return (

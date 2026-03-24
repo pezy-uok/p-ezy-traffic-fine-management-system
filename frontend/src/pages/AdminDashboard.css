@@ -1,0 +1,10 @@
+.admin-dashboard h2 {
+  margin: 0 0 8px;
+  font-size: 1.9rem;
+  color: #2b313d;
+}
+
+.admin-dashboard p {
+  color: #6b7280;
+  font-size: 0.98rem;
+}
