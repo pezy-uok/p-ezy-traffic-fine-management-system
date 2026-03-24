@@ -2,14 +2,108 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './AdminLogin.css'
 
+interface LoginFormValues {
+  identifier: string
+  password: string
+}
+
+interface LoginFormErrors {
+  identifier?: string
+  password?: string
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,}$/
+
 export default function AdminLogin() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
-  const navigate = useNavigate()
+  const [errors, setErrors] = useState<LoginFormErrors>({})
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const validateField = (name: keyof LoginFormValues, value: string): string | undefined => {
+    const trimmedValue = value.trim()
+
+    if (!trimmedValue) {
+      return name === 'identifier' ? 'Username or email is required.' : 'Password is required.'
+    }
+
+    if (name === 'identifier') {
+      if (trimmedValue.includes('@')) {
+        if (!EMAIL_PATTERN.test(trimmedValue)) {
+          return 'Please enter a valid email address.'
+        }
+      } else if (!USERNAME_PATTERN.test(trimmedValue)) {
+        return 'Username must be at least 3 characters and use letters, numbers, ., _, or -.'
+      }
+    }
+
+    if (name === 'password' && trimmedValue.length < 6) {
+      return 'Password must be at least 6 characters long.'
+    }
+
+    return undefined
+  }
+
+  const validateForm = (values: LoginFormValues): LoginFormErrors => {
+    const nextErrors: LoginFormErrors = {}
+
+    const identifierError = validateField('identifier', values.identifier)
+    if (identifierError) {
+      nextErrors.identifier = identifierError
+    }
+
+    const passwordError = validateField('password', values.password)
+    if (passwordError) {
+      nextErrors.password = passwordError
+    }
+
+    return nextErrors
+  }
+
+  const handleIdentifierChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextValue = event.target.value
+    setIdentifier(nextValue)
+
+    if (errors.identifier || isSubmitted) {
+      setErrors(previous => ({
+        ...previous,
+        identifier: validateField('identifier', nextValue),
+      }))
+    }
+  }
+
+  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextValue = event.target.value
+    setPassword(nextValue)
+
+    if (errors.password || isSubmitted) {
+      setErrors(previous => ({
+        ...previous,
+        password: validateField('password', nextValue),
+      }))
+    }
+  }
+
+  const handleBlur = (name: keyof LoginFormValues, value: string) => {
+    setErrors(previous => ({
+      ...previous,
+      [name]: validateField(name, value),
+    }))
+  }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    navigate('/admin/dashboard')
+    setIsSubmitted(true)
+
+    const nextErrors = validateForm({ identifier, password })
+    setErrors(nextErrors)
+
+    if (Object.keys(nextErrors).length > 0) {
+      return
+    }
+
+    // Form is valid. API login integration can be added here.
   }
 
   return (
@@ -33,20 +127,36 @@ export default function AdminLogin() {
             id="admin-identifier"
             type="text"
             value={identifier}
-            onChange={event => setIdentifier(event.target.value)}
+            onChange={handleIdentifierChange}
+            onBlur={() => handleBlur('identifier', identifier)}
             placeholder="admin@police.gov"
             autoComplete="username"
+            aria-invalid={Boolean(errors.identifier)}
+            aria-describedby={errors.identifier ? 'admin-identifier-error' : undefined}
           />
+          {errors.identifier ? (
+            <p id="admin-identifier-error" className="admin-login__error" role="alert">
+              {errors.identifier}
+            </p>
+          ) : null}
 
           <label htmlFor="admin-password">Password</label>
           <input
             id="admin-password"
             type="password"
             value={password}
-            onChange={event => setPassword(event.target.value)}
+            onChange={handlePasswordChange}
+            onBlur={() => handleBlur('password', password)}
             placeholder="Password"
             autoComplete="current-password"
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? 'admin-password-error' : undefined}
           />
+          {errors.password ? (
+            <p id="admin-password-error" className="admin-login__error" role="alert">
+              {errors.password}
+            </p>
+          ) : null}
 
           <button type="submit">Sign in</button>
         </form>
