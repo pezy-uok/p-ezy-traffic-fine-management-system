@@ -59,9 +59,14 @@ const statusLabel: Record<FineRecord['status'], string> = {
   overdue: 'Overdue',
 }
 
+type StatusFilter = 'all' | FineRecord['status']
+
 export default function AdminFineManagement() {
   const [fineRecords, setFineRecords] = useState<FineRecord[]>(initialFineRecords)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
   const [formValues, setFormValues] = useState<FineRecord>({
     id: '',
     offender: '',
@@ -86,8 +91,28 @@ export default function AdminFineManagement() {
     [fineRecords],
   )
 
+  const filteredFineRecords = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+
+    return fineRecords.filter(record => {
+      const matchesStatus = statusFilter === 'all' ? true : record.status === statusFilter
+
+      if (!normalizedQuery) {
+        return matchesStatus
+      }
+
+      const matchesSearch =
+        record.id.toLowerCase().includes(normalizedQuery) ||
+        record.offender.toLowerCase().includes(normalizedQuery) ||
+        record.violation.toLowerCase().includes(normalizedQuery)
+
+      return matchesStatus && matchesSearch
+    })
+  }, [fineRecords, searchQuery, statusFilter])
+
   const openAddFineModal = () => {
     setIsModalOpen(true)
+    setIsFilterMenuOpen(false)
   }
 
   const closeAddFineModal = () => {
@@ -165,6 +190,11 @@ export default function AdminFineManagement() {
     closeAddFineModal()
   }
 
+  const handleStatusFilterChange = (value: StatusFilter) => {
+    setStatusFilter(value)
+    setIsFilterMenuOpen(false)
+  }
+
   return (
     <section className="admin-fines" aria-label="Fine management page">
       <header className="admin-fines__header">
@@ -190,16 +220,62 @@ export default function AdminFineManagement() {
             id="fine-search"
             type="text"
             placeholder="Search by offender, violation, or ID..."
-            readOnly
+            value={searchQuery}
+            onChange={event => setSearchQuery(event.target.value)}
           />
         </label>
 
-        <button type="button" className="admin-fines__filter-btn">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M3 5h18v2l-7 7v5l-4 2v-7L3 7V5Zm3 2 6 6.2V19l1-.5v-5.3L19 7H6Z" fill="currentColor" />
-          </svg>
-          <span>Filter</span>
-        </button>
+        <div className="admin-fines__filter-wrap">
+          <button
+            type="button"
+            className="admin-fines__filter-btn"
+            onClick={() => setIsFilterMenuOpen(previous => !previous)}
+            aria-expanded={isFilterMenuOpen}
+            aria-haspopup="menu"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M3 5h18v2l-7 7v5l-4 2v-7L3 7V5Zm3 2 6 6.2V19l1-.5v-5.3L19 7H6Z" fill="currentColor" />
+            </svg>
+            <span>{statusFilter === 'all' ? 'Filter' : statusLabel[statusFilter]}</span>
+          </button>
+
+          {isFilterMenuOpen ? (
+            <div className="admin-fines__filter-menu" role="menu" aria-label="Filter fines by status">
+              <button
+                type="button"
+                className={`admin-fines__filter-item${statusFilter === 'all' ? ' is-active' : ''}`}
+                onClick={() => handleStatusFilterChange('all')}
+                role="menuitem"
+              >
+                All Statuses
+              </button>
+              <button
+                type="button"
+                className={`admin-fines__filter-item${statusFilter === 'paid' ? ' is-active' : ''}`}
+                onClick={() => handleStatusFilterChange('paid')}
+                role="menuitem"
+              >
+                Paid
+              </button>
+              <button
+                type="button"
+                className={`admin-fines__filter-item${statusFilter === 'pending' ? ' is-active' : ''}`}
+                onClick={() => handleStatusFilterChange('pending')}
+                role="menuitem"
+              >
+                Pending
+              </button>
+              <button
+                type="button"
+                className={`admin-fines__filter-item${statusFilter === 'overdue' ? ' is-active' : ''}`}
+                onClick={() => handleStatusFilterChange('overdue')}
+                role="menuitem"
+              >
+                Overdue
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="admin-fines__table-wrap">
@@ -216,7 +292,7 @@ export default function AdminFineManagement() {
             </tr>
           </thead>
           <tbody>
-            {fineRecords.map(record => (
+            {filteredFineRecords.map(record => (
               <tr key={record.id}>
                 <td className="admin-fines__id">{record.id}</td>
                 <td>{record.offender}</td>
@@ -242,6 +318,13 @@ export default function AdminFineManagement() {
                 </td>
               </tr>
             ))}
+            {filteredFineRecords.length === 0 ? (
+              <tr>
+                <td className="admin-fines__empty" colSpan={7}>
+                  No fines found for the selected search and filter.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
