@@ -60,10 +60,13 @@ const statusLabel: Record<FineRecord['status'], string> = {
 }
 
 type StatusFilter = 'all' | FineRecord['status']
+type FineModalMode = 'add' | 'edit'
 
 export default function AdminFineManagement() {
   const [fineRecords, setFineRecords] = useState<FineRecord[]>(initialFineRecords)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<FineModalMode>('add')
+  const [editingFineId, setEditingFineId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
@@ -111,12 +114,28 @@ export default function AdminFineManagement() {
   }, [fineRecords, searchQuery, statusFilter])
 
   const openAddFineModal = () => {
+    setModalMode('add')
+    setEditingFineId(null)
     setIsModalOpen(true)
     setIsFilterMenuOpen(false)
   }
 
-  const closeAddFineModal = () => {
+  const openEditFineModal = (record: FineRecord) => {
+    setModalMode('edit')
+    setEditingFineId(record.id)
+    setIsModalOpen(true)
+    setIsFilterMenuOpen(false)
+    setFormErrors({})
+    setFormValues({
+      ...record,
+      amount: record.amount.replace(/[^0-9.]/g, ''),
+    })
+  }
+
+  const closeFineModal = () => {
     setIsModalOpen(false)
+    setModalMode('add')
+    setEditingFineId(null)
     setFormErrors({})
     setFormValues({
       id: '',
@@ -141,7 +160,13 @@ export default function AdminFineManagement() {
 
     if (!formValues.id.trim()) {
       nextErrors.id = 'Fine ID is required.'
-    } else if (fineRecords.some(record => record.id.toLowerCase() === formValues.id.trim().toLowerCase())) {
+    } else if (
+      fineRecords.some(
+        record =>
+          record.id.toLowerCase() === formValues.id.trim().toLowerCase() &&
+          record.id !== editingFineId,
+      )
+    ) {
       nextErrors.id = 'Fine ID already exists.'
     }
 
@@ -186,8 +211,15 @@ export default function AdminFineManagement() {
       amount: `LKR ${numericAmount.toLocaleString('en-LK')}`,
     }
 
-    setFineRecords(previous => [formattedRecord, ...previous])
-    closeAddFineModal()
+    if (modalMode === 'edit' && editingFineId) {
+      setFineRecords(previous =>
+        previous.map(record => (record.id === editingFineId ? formattedRecord : record)),
+      )
+    } else {
+      setFineRecords(previous => [formattedRecord, ...previous])
+    }
+
+    closeFineModal()
   }
 
   const handleStatusFilterChange = (value: StatusFilter) => {
@@ -304,7 +336,7 @@ export default function AdminFineManagement() {
                 </td>
                 <td>
                   <div className="admin-fines__actions">
-                    <button type="button" aria-label={`Edit ${record.id}`}>
+                    <button type="button" aria-label={`Edit ${record.id}`} onClick={() => openEditFineModal(record)}>
                       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                         <path d="M16.7 3.3a1 1 0 0 1 1.4 0l2.6 2.6a1 1 0 0 1 0 1.4l-9.8 9.8-4.4 1.1 1.1-4.4 9.1-9.1Zm1.1 2.1-8.7 8.7-.4 1.6 1.6-.4 8.7-8.7-1.2-1.2Z" fill="currentColor" />
                       </svg>
@@ -348,8 +380,8 @@ export default function AdminFineManagement() {
         <div className="admin-fines__modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-fine-title">
           <div className="admin-fines__modal">
             <div className="admin-fines__modal-header">
-              <h3 id="add-fine-title">Add Fine</h3>
-              <button type="button" className="admin-fines__modal-close" onClick={closeAddFineModal} aria-label="Close add fine form">
+              <h3 id="add-fine-title">{modalMode === 'edit' ? 'Edit Fine' : 'Add Fine'}</h3>
+              <button type="button" className="admin-fines__modal-close" onClick={closeFineModal} aria-label="Close fine form">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <path d="M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4 6.4 19 5 17.6 10.6 12 5 6.4 6.4 5Z" fill="currentColor" />
                 </svg>
@@ -431,8 +463,10 @@ export default function AdminFineManagement() {
               </label>
 
               <div className="admin-fines__modal-actions">
-                <button type="button" className="admin-fines__btn-secondary" onClick={closeAddFineModal}>Cancel</button>
-                <button type="submit" className="admin-fines__btn-primary">Save Fine</button>
+                <button type="button" className="admin-fines__btn-secondary" onClick={closeFineModal}>Cancel</button>
+                <button type="submit" className="admin-fines__btn-primary">
+                  {modalMode === 'edit' ? 'Update Fine' : 'Save Fine'}
+                </button>
               </div>
             </form>
           </div>
