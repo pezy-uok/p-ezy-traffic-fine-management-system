@@ -1,5 +1,14 @@
 node_modules/
 package-lock.json
+package.json
 dist/
 build/
 .env
+.env.local
+.env.*.local
+coverage/
+.DS_Store
+*.log
+.git/
+.gitignore
+README.md

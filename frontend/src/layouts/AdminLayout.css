@@ -1,0 +1,164 @@
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  background: #f3f6fb;
+}
+
+.admin-shell__sidebar {
+  background: #213864;
+  color: #dbe8ff;
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 20px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-shell__brand-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #25a7ef;
+  color: #051a35;
+  display: grid;
+  place-items: center;
+}
+
+.admin-shell__brand-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-shell__brand h1 {
+  margin: 0;
+  font-size: 1.62rem;
+  line-height: 1.15;
+  color: #f7fbff;
+}
+
+.admin-shell__brand p {
+  margin-top: 2px;
+  color: #b6c8eb;
+  font-size: 0.8rem;
+}
+
+.admin-shell__nav {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-shell__nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #dbe8ff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.admin-shell__nav-link:hover {
+  background: rgba(102, 163, 244, 0.24);
+}
+
+.admin-shell__nav-link.is-active {
+  background: #2ea6ea;
+  color: #072743;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+}
+
+.admin-shell__nav-link.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: #f3fbff;
+}
+
+.admin-shell__nav-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+}
+
+.admin-shell__nav-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-shell__nav-arrow {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+}
+
+.admin-shell__logout {
+  margin-top: auto;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #dbe8ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.admin-shell__logout:hover {
+  background: rgba(102, 163, 244, 0.24);
+}
+
+.admin-shell__logout svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-shell__content {
+  padding: 34px 30px;
+  overflow-x: auto;
+  text-align: left;
+}
+
+@media (max-width: 980px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-shell__sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .admin-shell__brand h1 {
+    font-size: 1.3rem;
+  }
+
+  .admin-shell__nav-link {
+    font-size: 0.9rem;
+  }
+
+  .admin-shell__content {
+    padding: 24px 18px;
+  }
+}

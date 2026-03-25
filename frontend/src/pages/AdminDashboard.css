@@ -1,0 +1,138 @@
+.admin-dashboard__panel-title {
+  margin: 0 0 14px;
+  color: #2f3642;
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+
+.admin-dashboard__activity-list {
+  display: grid;
+}
+
+.admin-dashboard__activity-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid #e4e9f0;
+}
+
+.admin-dashboard__activity-item:first-child {
+  border-top: 0;
+  padding-top: 6px;
+}
+
+.admin-dashboard__activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #d9eaf9;
+  color: #2a5b9a;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.admin-dashboard__activity-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-dashboard__activity-content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-dashboard__activity-item h4 {
+  margin: 0;
+  color: #2f3642;
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.admin-dashboard__activity-description {
+  margin: 0;
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.admin-dashboard__activity-time {
+  display: block;
+  margin-top: 2px;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.admin-dashboard__quick-stats {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-dashboard__quick-item {
+  border-radius: 10px;
+  padding: 14px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-dashboard__quick-item span {
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.admin-dashboard__quick-item strong {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.admin-dashboard__quick-item.is-blue {
+  background: #eaf2ff;
+}
+
+.admin-dashboard__quick-item.is-blue strong {
+  color: #2f6de1;
+}
+
+.admin-dashboard__quick-item.is-red {
+  background: #ffecec;
+}
+
+.admin-dashboard__quick-item.is-red strong {
+  color: #d7353b;
+}
+
+.admin-dashboard__quick-item.is-yellow {
+  background: #fff8e0;
+}
+
+.admin-dashboard__quick-item.is-yellow strong {
+  color: #be8a00;
+}
+
+.admin-dashboard__quick-item.is-green {
+  background: #e7f8ec;
+}
+
+.admin-dashboard__quick-item.is-green strong {
+  color: #1f9a52;
+}
+
+@media (max-width: 760px) {
+  .admin-dashboard__panel-title {
+    font-size: 1.45rem;
+  }
+
+  .admin-dashboard__activity-item h4 {
+    font-size: 1rem;
+  }
+
+  .admin-dashboard__activity-description {
+    font-size: 0.9rem;
+  }
+}
