@@ -228,14 +228,18 @@ const userModel = (sequelize, DataTypes) => {
    * Check if OTP is still valid (not expired)
    */
   User.prototype.isOtpValid = function () {
-    return this.otpSecret && this.otpExpiresAt && new Date() < this.otpExpiresAt;
+    return (
+      this.otpSecret && this.otpExpiresAt && new Date() < this.otpExpiresAt
+    );
   };
 
   /**
    * Check if OTP has expired
    */
   User.prototype.isOtpExpired = function () {
-    return !this.otpSecret || !this.otpExpiresAt || new Date() >= this.otpExpiresAt;
+    return (
+      !this.otpSecret || !this.otpExpiresAt || new Date() >= this.otpExpiresAt
+    );
   };
 
   /**

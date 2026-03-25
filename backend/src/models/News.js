@@ -33,7 +33,9 @@ module.exports = (sequelize) => {
         validate: {
           isSlug(value) {
             if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)) {
-              throw new Error('Slug must contain only lowercase letters, numbers, and hyphens');
+              throw new Error(
+                'Slug must contain only lowercase letters, numbers, and hyphens'
+              );
             }
           },
         },
@@ -152,7 +154,12 @@ module.exports = (sequelize) => {
       },
 
       visibility: {
-        type: DataTypes.ENUM('public', 'officers_only', 'drivers_only', 'all_users'),
+        type: DataTypes.ENUM(
+          'public',
+          'officers_only',
+          'drivers_only',
+          'all_users'
+        ),
         allowNull: false,
         defaultValue: 'public',
         comment: 'Who can view this news',
@@ -462,7 +469,13 @@ module.exports = (sequelize) => {
    * @returns {object} Updated news
    */
   News.prototype.edit = async function (updates, reason = '') {
-    const allowedFields = ['title', 'content', 'summary', 'thumbnailUrl', 'thumbnailAlt'];
+    const allowedFields = [
+      'title',
+      'content',
+      'summary',
+      'thumbnailUrl',
+      'thumbnailAlt',
+    ];
     allowedFields.forEach((field) => {
       if (updates[field]) {
         this[field] = updates[field];
@@ -547,8 +560,7 @@ module.exports = (sequelize) => {
   News.prototype.isActive = function () {
     const now = new Date();
     return (
-      this.status === 'published' &&
-      (!this.expiresAt || this.expiresAt > now)
+      this.status === 'published' && (!this.expiresAt || this.expiresAt > now)
     );
   };
 
@@ -691,7 +703,11 @@ module.exports = (sequelize) => {
   News.findPublished = async function (limit = 20, offset = 0) {
     return this.findAll({
       where: { status: 'published' },
-      order: [['pinned', 'DESC'], ['featureOrder', 'ASC'], ['publishedAt', 'DESC']],
+      order: [
+        ['pinned', 'DESC'],
+        ['featureOrder', 'ASC'],
+        ['publishedAt', 'DESC'],
+      ],
       limit,
       offset,
     });
@@ -760,7 +776,11 @@ module.exports = (sequelize) => {
   News.findByTag = async function (tag, limit = 20) {
     return this.findAll({
       where: sequelize.Sequelize.where(
-        sequelize.Sequelize.fn('jsonb_contains', sequelize.Sequelize.col('tags'), `"${tag}"`),
+        sequelize.Sequelize.fn(
+          'jsonb_contains',
+          sequelize.Sequelize.col('tags'),
+          `"${tag}"`
+        ),
         true
       ),
       order: [['publishedAt', 'DESC']],
@@ -874,10 +894,7 @@ module.exports = (sequelize) => {
     return this.findAll({
       where: { status: 'published' },
       order: [
-        [
-          sequelize.Sequelize.literal('(likes + shares + comments)'),
-          'DESC',
-        ],
+        [sequelize.Sequelize.literal('(likes + shares + comments)'), 'DESC'],
       ],
       limit,
     });
@@ -891,7 +908,11 @@ module.exports = (sequelize) => {
    */
   News.getRelated = async function (newsId, limit = 5) {
     const article = await this.findByPk(newsId);
-    if (!article || !article.relatedNewsIds || article.relatedNewsIds.length === 0) {
+    if (
+      !article ||
+      !article.relatedNewsIds ||
+      article.relatedNewsIds.length === 0
+    ) {
       return [];
     }
 
@@ -914,7 +935,10 @@ module.exports = (sequelize) => {
     const counts = await this.findAll({
       attributes: [
         'category',
-        [sequelize.Sequelize.fn('COUNT', sequelize.Sequelize.col('newsId')), 'count'],
+        [
+          sequelize.Sequelize.fn('COUNT', sequelize.Sequelize.col('newsId')),
+          'count',
+        ],
       ],
       where: { status: 'published' },
       group: ['category'],
@@ -939,9 +963,15 @@ module.exports = (sequelize) => {
     const scheduled = await this.count({ where: { status: 'scheduled' } });
     const archived = await this.count({ where: { status: 'archived' } });
 
-    const totalViews = await this.sum('views', { where: { status: 'published' } });
-    const totalLikes = await this.sum('likes', { where: { status: 'published' } });
-    const totalComments = await this.sum('comments', { where: { status: 'published' } });
+    const totalViews = await this.sum('views', {
+      where: { status: 'published' },
+    });
+    const totalLikes = await this.sum('likes', {
+      where: { status: 'published' },
+    });
+    const totalComments = await this.sum('comments', {
+      where: { status: 'published' },
+    });
 
     return {
       total,
@@ -952,7 +982,8 @@ module.exports = (sequelize) => {
       totalViews: totalViews || 0,
       totalLikes: totalLikes || 0,
       totalComments: totalComments || 0,
-      avgViewsPerArticle: published > 0 ? Math.round((totalViews || 0) / published) : 0,
+      avgViewsPerArticle:
+        published > 0 ? Math.round((totalViews || 0) / published) : 0,
     };
   };
 
