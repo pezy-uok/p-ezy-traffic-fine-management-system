@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../config/database.js';
+import { getSupabaseClient } from '../config/supabaseClient.js';
 
 const createUser = async (userData) => {
   try {

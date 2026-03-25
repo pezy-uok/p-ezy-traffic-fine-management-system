@@ -557,4 +557,4 @@ const warningModel = (sequelize, DataTypes) => {
   return Warning;
 };
 
-module.exports = warningModel;
+export default warningModel;

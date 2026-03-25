@@ -2,6 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeDatabase } from './config/database.js';
+import {
+  initializeSupabaseClient,
+  testSupabaseConnection,
+} from './config/supabaseClient.js';
 import userRoutes from './routes/userRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 dotenv.config();
@@ -23,7 +27,13 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 const startServer = async () => {
   try {
+    // Initialize Supabase REST API client (works over HTTP)
+    initializeSupabaseClient();
+    await testSupabaseConnection();
+
+    // Try to initialize Sequelize (may fail if DNS blocks it)
     await initializeDatabase();
+
     app.listen(PORT, () => {
       console.log(`✓ Server is running on http://localhost:${PORT}`);
     });

@@ -9,9 +9,7 @@
  * priority, submitter info, location, attachments, assigned officer, reward, notes
  */
 
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize) => {
+export default (sequelize, DataTypes) => {
   const Tip = sequelize.define(
     'Tip',
     {
@@ -25,7 +23,7 @@ module.exports = (sequelize) => {
 
       // ========== CORE CONTENT ==========
       title: {
-        type: DataTypes.VARCHAR(255),
+        type: DataTypes.STRING(255),
         allowNull: false,
         comment: 'Short title/subject of the tip',
         validate: {
@@ -72,7 +70,7 @@ module.exports = (sequelize) => {
       },
 
       subCategory: {
-        type: DataTypes.VARCHAR(100),
+        type: DataTypes.STRING(100),
         allowNull: true,
         comment:
           'More specific subcategory (e.g., "armed robbery" under theft)',
@@ -140,7 +138,7 @@ module.exports = (sequelize) => {
       },
 
       submitterName: {
-        type: DataTypes.VARCHAR(100),
+        type: DataTypes.STRING(100),
         allowNull: true,
         comment: 'Name provided by anonymous submitter',
       },
@@ -176,7 +174,7 @@ module.exports = (sequelize) => {
 
       // ========== LOCATION & GEOGRAPHY ==========
       location: {
-        type: DataTypes.VARCHAR(500),
+        type: DataTypes.STRING(500),
         allowNull: true,
         comment: 'Address/location where incident occurred',
         index: true,
@@ -201,7 +199,7 @@ module.exports = (sequelize) => {
       },
 
       jurisdiction: {
-        type: DataTypes.VARCHAR(100),
+        type: DataTypes.STRING(100),
         allowNull: true,
         comment: 'Police jurisdiction/precinct for the location',
       },
@@ -283,7 +281,7 @@ module.exports = (sequelize) => {
       },
 
       department: {
-        type: DataTypes.VARCHAR(100),
+        type: DataTypes.STRING(100),
         allowNull: true,
         comment: 'Department responsible for investigation',
       },
@@ -565,7 +563,7 @@ module.exports = (sequelize) => {
     Tip.belongsTo(models.User, {
       foreignKey: 'submittedBy',
       as: 'submitter',
-      targetKey: 'userId',
+      targetKey: 'id',
       onDelete: 'SET NULL',
       constraints: false,
     });
@@ -574,7 +572,7 @@ module.exports = (sequelize) => {
     Tip.belongsTo(models.User, {
       foreignKey: 'assignedOfficerId',
       as: 'assignedOfficer',
-      targetKey: 'userId',
+      targetKey: 'id',
       onDelete: 'SET NULL',
       constraints: false,
     });
@@ -583,7 +581,7 @@ module.exports = (sequelize) => {
     Tip.belongsTo(models.User, {
       foreignKey: 'verifiedBy',
       as: 'verifyingOfficer',
-      targetKey: 'userId',
+      targetKey: 'id',
       onDelete: 'SET NULL',
       constraints: false,
     });
@@ -592,7 +590,7 @@ module.exports = (sequelize) => {
     Tip.belongsTo(models.User, {
       foreignKey: 'rewardClaimedBy',
       as: 'rewardClaimant',
-      targetKey: 'userId',
+      targetKey: 'id',
       onDelete: 'SET NULL',
       constraints: false,
     });

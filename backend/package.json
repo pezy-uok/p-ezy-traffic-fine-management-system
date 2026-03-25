@@ -20,13 +20,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/postgrest-js": "^2.100.0",
     "@supabase/supabase-js": "^2.99.1",
     "axios": "^1.13.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "helmet": "^8.1.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "eslint": "^9.39.4",
