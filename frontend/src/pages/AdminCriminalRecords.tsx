@@ -466,7 +466,7 @@ export default function AdminCriminalRecords() {
                   type="text"
                   value={formValues.id}
                   onChange={event => updateFormValue('id', event.target.value)}
-                  placeholder="CR006"
+                  placeholder="e.g., CR006"
                   disabled={modalMode === 'view'}
                   aria-invalid={Boolean(formErrors.id)}
                 />
@@ -492,7 +492,7 @@ export default function AdminCriminalRecords() {
                   type="text"
                   value={formValues.caseNumber}
                   onChange={event => updateFormValue('caseNumber', event.target.value)}
-                  placeholder="CASE-2026-0001"
+                  placeholder="e.g., CASE-2026-0001"
                   disabled={modalMode === 'view'}
                   aria-invalid={Boolean(formErrors.caseNumber)}
                 />
