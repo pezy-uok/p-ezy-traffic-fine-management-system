@@ -243,7 +243,10 @@ const criminalModel = (sequelize, DataTypes) => {
     const today = new Date();
     let age = today.getFullYear() - this.dateOfBirth.getFullYear();
     const monthDiff = today.getMonth() - this.dateOfBirth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < this.dateOfBirth.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < this.dateOfBirth.getDate())
+    ) {
       age--;
     }
     return age;
@@ -253,7 +256,9 @@ const criminalModel = (sequelize, DataTypes) => {
    * Check if criminal is wanted
    */
   Criminal.prototype.isCurrentlyWanted = function () {
-    return this.isWanted && this.status !== 'arrested' && this.status !== 'deceased';
+    return (
+      this.isWanted && this.status !== 'arrested' && this.status !== 'deceased'
+    );
   };
 
   /**
@@ -506,10 +511,7 @@ const criminalModel = (sequelize, DataTypes) => {
     return Criminal.findAll({
       where: {
         latitude: {
-          [sequelize.Op.between]: [
-            latitude - latOffset,
-            latitude + latOffset,
-          ],
+          [sequelize.Op.between]: [latitude - latOffset, latitude + latOffset],
         },
         longitude: {
           [sequelize.Op.between]: [
