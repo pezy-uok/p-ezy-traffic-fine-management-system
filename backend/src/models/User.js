@@ -19,7 +19,7 @@ const userModel = (sequelize, DataTypes) => {
       },
       email: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
         unique: {
           msg: 'Email already exists',
         },
@@ -29,28 +29,48 @@ const userModel = (sequelize, DataTypes) => {
           },
         },
       },
-      password: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-        validate: {
-          len: {
-            args: [8, 255],
-            msg: 'Password must be at least 8 characters',
-          },
-        },
-      },
       name: {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
       phone: {
         type: DataTypes.STRING(20),
-        allowNull: true,
+        allowNull: false,
+        unique: {
+          msg: 'Phone number already exists',
+        },
       },
       role: {
         type: DataTypes.ENUM('admin', 'police_officer'),
         allowNull: false,
         defaultValue: 'police_officer',
+      },
+      // Authentication: Phone + OTP + PIN (no password)
+      phoneVerified: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      otpSecret: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: 'TOTP secret for OTP generation',
+      },
+      otpExpiresAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'When OTP expires',
+      },
+      otpAttempts: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Failed OTP verification attempts',
+      },
+      pinHash: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: 'Hashed PIN for mobile app login',
       },
       // Police Officer specific fields
       badgeNumber: {
@@ -112,6 +132,9 @@ const userModel = (sequelize, DataTypes) => {
       paranoid: true, // Soft delete: deletedAt column
       indexes: [
         {
+          fields: ['phone'],
+        },
+        {
           fields: ['email'],
         },
         {
@@ -122,6 +145,12 @@ const userModel = (sequelize, DataTypes) => {
         },
         {
           fields: ['badge_number'],
+        },
+        {
+          fields: ['phone_verified'],
+        },
+        {
+          fields: ['otp_expires_at'],
         },
       ],
     }
@@ -196,10 +225,56 @@ const userModel = (sequelize, DataTypes) => {
   };
 
   /**
-   * Get safe user object (without password)
+   * Check if OTP is still valid (not expired)
+   */
+  User.prototype.isOtpValid = function () {
+    return this.otpSecret && this.otpExpiresAt && new Date() < this.otpExpiresAt;
+  };
+
+  /**
+   * Check if OTP has expired
+   */
+  User.prototype.isOtpExpired = function () {
+    return !this.otpSecret || !this.otpExpiresAt || new Date() >= this.otpExpiresAt;
+  };
+
+  /**
+   * Get remaining time for OTP validity (in seconds)
+   */
+  User.prototype.getOtpTimeRemaining = function () {
+    if (!this.otpExpiresAt) return 0;
+    const remaining = Math.floor((this.otpExpiresAt - new Date()) / 1000);
+    return remaining > 0 ? remaining : 0;
+  };
+
+  /**
+   * Check if PIN is set
+   */
+  User.prototype.hasPinSet = function () {
+    return !!this.pinHash;
+  };
+
+  /**
+   * Increment OTP attempt counter
+   */
+  User.prototype.incrementOtpAttempts = function () {
+    this.otpAttempts = (this.otpAttempts || 0) + 1;
+    return this.save();
+  };
+
+  /**
+   * Reset OTP attempts
+   */
+  User.prototype.resetOtpAttempts = function () {
+    this.otpAttempts = 0;
+    return this.save();
+  };
+
+  /**
+   * Get safe user object (without sensitive auth data)
    */
   User.prototype.toSafeJSON = function () {
-    const { password, ...safeUser } = this.toJSON();
+    const { otpSecret, pinHash, otpAttempts, ...safeUser } = this.toJSON();
     return safeUser;
   };
 
