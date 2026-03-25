@@ -459,108 +459,138 @@ export default function AdminCriminalRecords() {
               </button>
             </div>
 
-            <form className="admin-criminals__modal-form" onSubmit={handleFormSubmit}>
-              <label>
-                Record ID
-                <input
-                  type="text"
-                  value={formValues.id}
-                  onChange={event => updateFormValue('id', event.target.value)}
-                  placeholder="e.g., CR006"
-                  disabled={modalMode === 'view'}
-                  aria-invalid={Boolean(formErrors.id)}
-                />
-                {formErrors.id ? <span className="admin-criminals__field-error">{formErrors.id}</span> : null}
-              </label>
+            {modalMode === 'view' ? (
+              <div className="admin-criminals__detail-grid" aria-label="Criminal record details">
+                <article className="admin-criminals__detail-item">
+                  <span>Record ID</span>
+                  <strong>{formValues.id}</strong>
+                </article>
+                <article className="admin-criminals__detail-item">
+                  <span>Name</span>
+                  <strong>{formValues.name}</strong>
+                </article>
+                <article className="admin-criminals__detail-item">
+                  <span>Case Number</span>
+                  <strong>{formValues.caseNumber}</strong>
+                </article>
+                <article className="admin-criminals__detail-item">
+                  <span>Offense</span>
+                  <strong>{formValues.offense}</strong>
+                </article>
+                <article className="admin-criminals__detail-item">
+                  <span>Severity</span>
+                  <strong>{severityLabel[formValues.severity]}</strong>
+                </article>
+                <article className="admin-criminals__detail-item">
+                  <span>Status</span>
+                  <strong>{statusLabel[formValues.status]}</strong>
+                </article>
+                <article className="admin-criminals__detail-item">
+                  <span>Date</span>
+                  <strong>{formValues.date}</strong>
+                </article>
 
-              <label>
-                Name
-                <input
-                  type="text"
-                  value={formValues.name}
-                  onChange={event => updateFormValue('name', event.target.value)}
-                  placeholder="Full name"
-                  disabled={modalMode === 'view'}
-                  aria-invalid={Boolean(formErrors.name)}
-                />
-                {formErrors.name ? <span className="admin-criminals__field-error">{formErrors.name}</span> : null}
-              </label>
+                <div className="admin-criminals__modal-actions admin-criminals__modal-actions--detail">
+                  <button type="button" className="admin-criminals__btn-secondary" onClick={closeRecordModal}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form className="admin-criminals__modal-form" onSubmit={handleFormSubmit}>
+                <label>
+                  Record ID
+                  <input
+                    type="text"
+                    value={formValues.id}
+                    onChange={event => updateFormValue('id', event.target.value)}
+                    placeholder="e.g., CR006"
+                    aria-invalid={Boolean(formErrors.id)}
+                  />
+                  {formErrors.id ? <span className="admin-criminals__field-error">{formErrors.id}</span> : null}
+                </label>
 
-              <label>
-                Case Number
-                <input
-                  type="text"
-                  value={formValues.caseNumber}
-                  onChange={event => updateFormValue('caseNumber', event.target.value)}
-                  placeholder="e.g., CASE-2026-0001"
-                  disabled={modalMode === 'view'}
-                  aria-invalid={Boolean(formErrors.caseNumber)}
-                />
-                {formErrors.caseNumber ? <span className="admin-criminals__field-error">{formErrors.caseNumber}</span> : null}
-              </label>
+                <label>
+                  Name
+                  <input
+                    type="text"
+                    value={formValues.name}
+                    onChange={event => updateFormValue('name', event.target.value)}
+                    placeholder="Full name"
+                    aria-invalid={Boolean(formErrors.name)}
+                  />
+                  {formErrors.name ? <span className="admin-criminals__field-error">{formErrors.name}</span> : null}
+                </label>
 
-              <label>
-                Offense
-                <input
-                  type="text"
-                  value={formValues.offense}
-                  onChange={event => updateFormValue('offense', event.target.value)}
-                  placeholder="Type of offense"
-                  disabled={modalMode === 'view'}
-                  aria-invalid={Boolean(formErrors.offense)}
-                />
-                {formErrors.offense ? <span className="admin-criminals__field-error">{formErrors.offense}</span> : null}
-              </label>
+                <label>
+                  Case Number
+                  <input
+                    type="text"
+                    value={formValues.caseNumber}
+                    onChange={event => updateFormValue('caseNumber', event.target.value)}
+                    placeholder="e.g., CASE-2026-0001"
+                    aria-invalid={Boolean(formErrors.caseNumber)}
+                  />
+                  {formErrors.caseNumber ? <span className="admin-criminals__field-error">{formErrors.caseNumber}</span> : null}
+                </label>
 
-              <label>
-                Severity
-                <select
-                  value={formValues.severity}
-                  onChange={event => updateFormValue('severity', event.target.value as CriminalRecordData['severity'])}
-                  disabled={modalMode === 'view'}
-                >
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
-              </label>
+                <label>
+                  Offense
+                  <input
+                    type="text"
+                    value={formValues.offense}
+                    onChange={event => updateFormValue('offense', event.target.value)}
+                    placeholder="Type of offense"
+                    aria-invalid={Boolean(formErrors.offense)}
+                  />
+                  {formErrors.offense ? <span className="admin-criminals__field-error">{formErrors.offense}</span> : null}
+                </label>
 
-              <label>
-                Status
-                <select
-                  value={formValues.status}
-                  onChange={event => updateFormValue('status', event.target.value as CriminalRecordData['status'])}
-                  disabled={modalMode === 'view'}
-                >
-                  <option value="open">Open</option>
-                  <option value="under-investigation">Under Investigation</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </label>
+                <label>
+                  Severity
+                  <select
+                    value={formValues.severity}
+                    onChange={event => updateFormValue('severity', event.target.value as CriminalRecordData['severity'])}
+                  >
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </label>
 
-              <label>
-                Date
-                <input
-                  type="date"
-                  value={formValues.date}
-                  onChange={event => updateFormValue('date', event.target.value)}
-                  disabled={modalMode === 'view'}
-                  aria-invalid={Boolean(formErrors.date)}
-                />
-                {formErrors.date ? <span className="admin-criminals__field-error">{formErrors.date}</span> : null}
-              </label>
+                <label>
+                  Status
+                  <select
+                    value={formValues.status}
+                    onChange={event => updateFormValue('status', event.target.value as CriminalRecordData['status'])}
+                  >
+                    <option value="open">Open</option>
+                    <option value="under-investigation">Under Investigation</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </label>
 
-              <div className="admin-criminals__modal-actions">
-                <button type="button" className="admin-criminals__btn-secondary" onClick={closeRecordModal}>
-                  {modalMode === 'view' ? 'Close' : 'Cancel'}
-                </button>
-                {modalMode !== 'view' ? (
+                <label>
+                  Date
+                  <input
+                    type="date"
+                    value={formValues.date}
+                    onChange={event => updateFormValue('date', event.target.value)}
+                    aria-invalid={Boolean(formErrors.date)}
+                  />
+                  {formErrors.date ? <span className="admin-criminals__field-error">{formErrors.date}</span> : null}
+                </label>
+
+                <div className="admin-criminals__modal-actions">
+                  <button type="button" className="admin-criminals__btn-secondary" onClick={closeRecordModal}>
+                    Cancel
+                  </button>
                   <button type="submit" className="admin-criminals__btn-primary">
                     {modalMode === 'edit' ? 'Update Record' : 'Save Record'}
                   </button>
-                ) : null}
-              </div>
-            </form>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       ) : null}
