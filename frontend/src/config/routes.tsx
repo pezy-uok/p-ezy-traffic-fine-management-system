@@ -11,6 +11,7 @@ import AdminLogin from '../pages/AdminLogin'
 import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboard from '../pages/AdminDashboard'
 import AdminFineManagement from '../pages/AdminFineManagement'
+import AdminCriminalRecords from '../pages/AdminCriminalRecords'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -87,7 +88,7 @@ export const routes: RouteConfig[] = [
     path: '/admin/criminal-records',
     element: (
       <AdminLayout>
-        <AdminDashboard sectionName="Criminal Records" />
+        <AdminCriminalRecords />
       </AdminLayout>
     ),
     name: 'Admin Criminal Records',
