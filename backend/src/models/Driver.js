@@ -187,10 +187,7 @@ const driverModel = (sequelize, DataTypes) => {
    */
   Driver.prototype.isLicenseValid = function () {
     if (this.licenseStatus !== 'valid') return false;
-    if (
-      this.licenseExpiryDate &&
-      this.licenseExpiryDate < new Date()
-    ) {
+    if (this.licenseExpiryDate && this.licenseExpiryDate < new Date()) {
       return false;
     }
     return true;
@@ -200,10 +197,7 @@ const driverModel = (sequelize, DataTypes) => {
    * Check if driver can access web portal
    */
   Driver.prototype.canAccessWebPortal = function () {
-    return (
-      this.status === 'active' &&
-      this.isLicenseValid()
-    );
+    return this.status === 'active' && this.isLicenseValid();
   };
 
   /**
@@ -224,7 +218,10 @@ const driverModel = (sequelize, DataTypes) => {
    * Update total outstanding fines
    */
   Driver.prototype.updateOutstandingFines = function (amount) {
-    this.totalOutstandingFines = Math.max(0, this.totalOutstandingFines + amount);
+    this.totalOutstandingFines = Math.max(
+      0,
+      this.totalOutstandingFines + amount
+    );
     return this.save();
   };
 
@@ -233,7 +230,10 @@ const driverModel = (sequelize, DataTypes) => {
    */
   Driver.prototype.updatePaidFines = function (amount) {
     this.totalFinesPaid += amount;
-    this.totalOutstandingFines = Math.max(0, this.totalOutstandingFines - amount);
+    this.totalOutstandingFines = Math.max(
+      0,
+      this.totalOutstandingFines - amount
+    );
     return this.save();
   };
 

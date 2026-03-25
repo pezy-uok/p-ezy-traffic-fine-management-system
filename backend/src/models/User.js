@@ -184,9 +184,7 @@ const userModel = (sequelize, DataTypes) => {
    */
   User.prototype.canAccessMobileApp = function () {
     return (
-      this.isPoliceOfficer() &&
-      this.status === 'active' &&
-      this.isVerified
+      this.isPoliceOfficer() && this.status === 'active' && this.isVerified
     );
   };
 
@@ -194,11 +192,7 @@ const userModel = (sequelize, DataTypes) => {
    * Check if user can access admin portal (admins only)
    */
   User.prototype.canAccessAdminPortal = function () {
-    return (
-      this.isAdmin() &&
-      this.status === 'active' &&
-      this.isVerified
-    );
+    return this.isAdmin() && this.status === 'active' && this.isVerified;
   };
 
   /**

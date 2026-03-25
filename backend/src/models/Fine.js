@@ -81,7 +81,8 @@ const fineModel = (sequelize, DataTypes) => {
         type: DataTypes.ENUM('unpaid', 'paid', 'outdated'),
         allowNull: false,
         defaultValue: 'unpaid',
-        comment: 'unpaid: Not yet paid | paid: Payment received | outdated: Overdue 14+ days',
+        comment:
+          'unpaid: Not yet paid | paid: Payment received | outdated: Overdue 14+ days',
       },
       paymentDate: {
         type: DataTypes.DATE,
@@ -166,7 +167,9 @@ const fineModel = (sequelize, DataTypes) => {
   Fine.prototype.getDaysOverdue = function () {
     if (!this.isOverdue()) return 0;
     const today = new Date();
-    const daysOverdue = Math.floor((today - this.dueDate) / (1000 * 60 * 60 * 24));
+    const daysOverdue = Math.floor(
+      (today - this.dueDate) / (1000 * 60 * 60 * 24)
+    );
     return Math.max(0, daysOverdue);
   };
 
@@ -191,7 +194,10 @@ const fineModel = (sequelize, DataTypes) => {
   /**
    * Mark fine as paid
    */
-  Fine.prototype.markAsPaid = function (paymentDate = null, paymentMethod = null) {
+  Fine.prototype.markAsPaid = function (
+    paymentDate = null,
+    paymentMethod = null
+  ) {
     this.status = 'paid';
     this.paymentDate = paymentDate || new Date();
     if (paymentMethod) {
@@ -206,7 +212,9 @@ const fineModel = (sequelize, DataTypes) => {
   Fine.prototype.getPaymentDaysRemaining = function () {
     if (this.status === 'paid') return 0;
     const today = new Date();
-    const daysRemaining = Math.ceil((this.dueDate - today) / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.ceil(
+      (this.dueDate - today) / (1000 * 60 * 60 * 24)
+    );
     return Math.max(0, daysRemaining);
   };
 
