@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import './AdminFineManagement.css'
 
 interface FineRecord {
@@ -9,7 +10,7 @@ interface FineRecord {
   status: 'paid' | 'pending' | 'overdue'
 }
 
-const fineRecords: FineRecord[] = [
+const initialFineRecords: FineRecord[] = [
   {
     id: 'F001',
     offender: 'Nimal Perera',
@@ -59,6 +60,111 @@ const statusLabel: Record<FineRecord['status'], string> = {
 }
 
 export default function AdminFineManagement() {
+  const [fineRecords, setFineRecords] = useState<FineRecord[]>(initialFineRecords)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [formValues, setFormValues] = useState<FineRecord>({
+    id: '',
+    offender: '',
+    violation: '',
+    amount: '',
+    date: '',
+    status: 'pending',
+  })
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof FineRecord, string>>>({})
+
+  const totalAmount = useMemo(
+    () =>
+      fineRecords.reduce((sum, record) => {
+        const numericValue = Number(record.amount.replace(/[^0-9.]/g, ''))
+        return sum + (Number.isFinite(numericValue) ? numericValue : 0)
+      }, 0),
+    [fineRecords],
+  )
+
+  const overdueCount = useMemo(
+    () => fineRecords.filter(record => record.status === 'overdue').length,
+    [fineRecords],
+  )
+
+  const openAddFineModal = () => {
+    setIsModalOpen(true)
+  }
+
+  const closeAddFineModal = () => {
+    setIsModalOpen(false)
+    setFormErrors({})
+    setFormValues({
+      id: '',
+      offender: '',
+      violation: '',
+      amount: '',
+      date: '',
+      status: 'pending',
+    })
+  }
+
+  const updateFormValue = <K extends keyof FineRecord>(field: K, value: FineRecord[K]) => {
+    setFormValues(previous => ({ ...previous, [field]: value }))
+
+    if (formErrors[field]) {
+      setFormErrors(previous => ({ ...previous, [field]: undefined }))
+    }
+  }
+
+  const validateForm = (): boolean => {
+    const nextErrors: Partial<Record<keyof FineRecord, string>> = {}
+
+    if (!formValues.id.trim()) {
+      nextErrors.id = 'Fine ID is required.'
+    } else if (fineRecords.some(record => record.id.toLowerCase() === formValues.id.trim().toLowerCase())) {
+      nextErrors.id = 'Fine ID already exists.'
+    }
+
+    if (!formValues.offender.trim()) {
+      nextErrors.offender = 'Offender name is required.'
+    }
+
+    if (!formValues.violation.trim()) {
+      nextErrors.violation = 'Violation is required.'
+    }
+
+    const rawAmount = formValues.amount.replace(/[^0-9.]/g, '')
+    const numericAmount = Number(rawAmount)
+
+    if (!rawAmount) {
+      nextErrors.amount = 'Amount is required.'
+    } else if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      nextErrors.amount = 'Amount must be a valid number greater than 0.'
+    }
+
+    if (!formValues.date) {
+      nextErrors.date = 'Date is required.'
+    }
+
+    setFormErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
+    const numericAmount = Number(formValues.amount.replace(/[^0-9.]/g, ''))
+    const formattedRecord: FineRecord = {
+      ...formValues,
+      id: formValues.id.trim().toUpperCase(),
+      offender: formValues.offender.trim(),
+      violation: formValues.violation.trim(),
+      amount: `LKR ${numericAmount.toLocaleString('en-LK')}`,
+    }
+
+    setFineRecords(previous => [formattedRecord, ...previous])
+    closeAddFineModal()
+  }
+
   return (
     <section className="admin-fines" aria-label="Fine management page">
       <header className="admin-fines__header">
@@ -67,7 +173,7 @@ export default function AdminFineManagement() {
           <p>Manage traffic fines and violations</p>
         </div>
 
-        <button type="button" className="admin-fines__add-btn">
+        <button type="button" className="admin-fines__add-btn" onClick={openAddFineModal}>
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M11 5h2v14h-2V5Zm-6 6h14v2H5v-2Z" fill="currentColor" />
           </svg>
@@ -143,17 +249,112 @@ export default function AdminFineManagement() {
       <section className="admin-fines__summary" aria-label="Fine summary statistics">
         <article className="admin-fines__summary-card">
           <p>Total Fines</p>
-          <strong>5</strong>
+          <strong>{fineRecords.length}</strong>
         </article>
         <article className="admin-fines__summary-card">
           <p>Total Amount Due</p>
-          <strong className="is-blue">LKR 1,350</strong>
+          <strong className="is-blue">LKR {totalAmount.toLocaleString('en-LK')}</strong>
         </article>
         <article className="admin-fines__summary-card">
           <p>Overdue Fines</p>
-          <strong className="is-red">1</strong>
+          <strong className="is-red">{overdueCount}</strong>
         </article>
       </section>
+
+      {isModalOpen ? (
+        <div className="admin-fines__modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-fine-title">
+          <div className="admin-fines__modal">
+            <div className="admin-fines__modal-header">
+              <h3 id="add-fine-title">Add Fine</h3>
+              <button type="button" className="admin-fines__modal-close" onClick={closeAddFineModal} aria-label="Close add fine form">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4 6.4 19 5 17.6 10.6 12 5 6.4 6.4 5Z" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
+
+            <form className="admin-fines__modal-form" onSubmit={handleFormSubmit}>
+              <label>
+                Fine ID
+                <input
+                  type="text"
+                  value={formValues.id}
+                  onChange={event => updateFormValue('id', event.target.value)}
+                  placeholder="F006"
+                  aria-invalid={Boolean(formErrors.id)}
+                />
+                {formErrors.id ? <span className="admin-fines__field-error">{formErrors.id}</span> : null}
+              </label>
+
+              <label>
+                Offender
+                <input
+                  type="text"
+                  value={formValues.offender}
+                  onChange={event => updateFormValue('offender', event.target.value)}
+                  placeholder="Offender name"
+                  aria-invalid={Boolean(formErrors.offender)}
+                />
+                {formErrors.offender ? <span className="admin-fines__field-error">{formErrors.offender}</span> : null}
+              </label>
+
+              <label>
+                Violation
+                <input
+                  type="text"
+                  value={formValues.violation}
+                  onChange={event => updateFormValue('violation', event.target.value)}
+                  placeholder="Violation type"
+                  aria-invalid={Boolean(formErrors.violation)}
+                />
+                {formErrors.violation ? <span className="admin-fines__field-error">{formErrors.violation}</span> : null}
+              </label>
+
+              <label>
+                Amount (LKR)
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={formValues.amount.replace(/[^0-9.]/g, '')}
+                  onChange={event => updateFormValue('amount', event.target.value)}
+                  placeholder="250"
+                  aria-invalid={Boolean(formErrors.amount)}
+                />
+                {formErrors.amount ? <span className="admin-fines__field-error">{formErrors.amount}</span> : null}
+              </label>
+
+              <label>
+                Date
+                <input
+                  type="date"
+                  value={formValues.date}
+                  onChange={event => updateFormValue('date', event.target.value)}
+                  aria-invalid={Boolean(formErrors.date)}
+                />
+                {formErrors.date ? <span className="admin-fines__field-error">{formErrors.date}</span> : null}
+              </label>
+
+              <label>
+                Status
+                <select
+                  value={formValues.status}
+                  onChange={event => updateFormValue('status', event.target.value as FineRecord['status'])}
+                >
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </label>
+
+              <div className="admin-fines__modal-actions">
+                <button type="button" className="admin-fines__btn-secondary" onClick={closeAddFineModal}>Cancel</button>
+                <button type="submit" className="admin-fines__btn-primary">Save Fine</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
