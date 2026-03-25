@@ -65,6 +65,7 @@ type FineModalMode = 'add' | 'edit'
 export default function AdminFineManagement() {
   const [fineRecords, setFineRecords] = useState<FineRecord[]>(initialFineRecords)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [fineToDelete, setFineToDelete] = useState<FineRecord | null>(null)
   const [modalMode, setModalMode] = useState<FineModalMode>('add')
   const [editingFineId, setEditingFineId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -227,6 +228,24 @@ export default function AdminFineManagement() {
     setIsFilterMenuOpen(false)
   }
 
+  const openDeleteDialog = (record: FineRecord) => {
+    setFineToDelete(record)
+    setIsFilterMenuOpen(false)
+  }
+
+  const closeDeleteDialog = () => {
+    setFineToDelete(null)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!fineToDelete) {
+      return
+    }
+
+    setFineRecords(previous => previous.filter(record => record.id !== fineToDelete.id))
+    setFineToDelete(null)
+  }
+
   return (
     <section className="admin-fines" aria-label="Fine management page">
       <header className="admin-fines__header">
@@ -341,7 +360,7 @@ export default function AdminFineManagement() {
                         <path d="M16.7 3.3a1 1 0 0 1 1.4 0l2.6 2.6a1 1 0 0 1 0 1.4l-9.8 9.8-4.4 1.1 1.1-4.4 9.1-9.1Zm1.1 2.1-8.7 8.7-.4 1.6 1.6-.4 8.7-8.7-1.2-1.2Z" fill="currentColor" />
                       </svg>
                     </button>
-                    <button type="button" aria-label={`Delete ${record.id}`}>
+                    <button type="button" aria-label={`Delete ${record.id}`} onClick={() => openDeleteDialog(record)}>
                       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                         <path d="M9 4h6l1 2h4v2H4V6h4l1-2Zm-2 6h2v8H7v-8Zm4 0h2v8h-2v-8Zm4 0h2v8h-2v-8ZM6 20V9h12v11H6Z" fill="currentColor" />
                       </svg>
@@ -469,6 +488,30 @@ export default function AdminFineManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {fineToDelete ? (
+        <div className="admin-fines__modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-fine-title">
+          <div className="admin-fines__modal admin-fines__modal--compact">
+            <div className="admin-fines__modal-header">
+              <h3 id="delete-fine-title">Delete Fine</h3>
+              <button type="button" className="admin-fines__modal-close" onClick={closeDeleteDialog} aria-label="Close delete confirmation">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4 6.4 19 5 17.6 10.6 12 5 6.4 6.4 5Z" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="admin-fines__confirm-text">
+              Are you sure you want to delete fine <strong>{fineToDelete.id}</strong> for <strong>{fineToDelete.offender}</strong>?
+            </p>
+
+            <div className="admin-fines__modal-actions">
+              <button type="button" className="admin-fines__btn-secondary" onClick={closeDeleteDialog}>Cancel</button>
+              <button type="button" className="admin-fines__btn-danger" onClick={handleConfirmDelete}>Delete Fine</button>
+            </div>
           </div>
         </div>
       ) : null}
