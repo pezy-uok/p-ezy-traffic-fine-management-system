@@ -81,20 +81,6 @@ export default function AdminFineManagement() {
   })
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof FineRecord, string>>>({})
 
-  const totalAmount = useMemo(
-    () =>
-      fineRecords.reduce((sum, record) => {
-        const numericValue = Number(record.amount.replace(/[^0-9.]/g, ''))
-        return sum + (Number.isFinite(numericValue) ? numericValue : 0)
-      }, 0),
-    [fineRecords],
-  )
-
-  const overdueCount = useMemo(
-    () => fineRecords.filter(record => record.status === 'overdue').length,
-    [fineRecords],
-  )
-
   const filteredFineRecords = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
 
@@ -113,6 +99,20 @@ export default function AdminFineManagement() {
       return matchesStatus && matchesSearch
     })
   }, [fineRecords, searchQuery, statusFilter])
+
+  const filteredTotalAmount = useMemo(
+    () =>
+      filteredFineRecords.reduce((sum, record) => {
+        const numericValue = Number(record.amount.replace(/[^0-9.]/g, ''))
+        return sum + (Number.isFinite(numericValue) ? numericValue : 0)
+      }, 0),
+    [filteredFineRecords],
+  )
+
+  const filteredOverdueCount = useMemo(
+    () => filteredFineRecords.filter(record => record.status === 'overdue').length,
+    [filteredFineRecords],
+  )
 
   const openAddFineModal = () => {
     setModalMode('add')
@@ -381,17 +381,18 @@ export default function AdminFineManagement() {
       </div>
 
       <section className="admin-fines__summary" aria-label="Fine summary statistics">
+        <p className="admin-fines__summary-note">Summary based on current table results</p>
         <article className="admin-fines__summary-card">
           <p>Total Fines</p>
-          <strong>{fineRecords.length}</strong>
+          <strong>{filteredFineRecords.length}</strong>
         </article>
         <article className="admin-fines__summary-card">
           <p>Total Amount Due</p>
-          <strong className="is-blue">LKR {totalAmount.toLocaleString('en-LK')}</strong>
+          <strong className="is-blue">LKR {filteredTotalAmount.toLocaleString('en-LK')}</strong>
         </article>
         <article className="admin-fines__summary-card">
           <p>Overdue Fines</p>
-          <strong className="is-red">{overdueCount}</strong>
+          <strong className="is-red">{filteredOverdueCount}</strong>
         </article>
       </section>
 
