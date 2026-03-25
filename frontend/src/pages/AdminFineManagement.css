@@ -38,6 +38,10 @@
   box-shadow: 0 8px 16px rgba(22, 40, 75, 0.22);
 }
 
+.admin-fines__add-btn:hover {
+  background: #172d55;
+}
+
 .admin-fines__add-btn svg {
   width: 20px;
   height: 20px;
@@ -228,6 +232,127 @@
 
 .admin-fines__summary-card strong.is-red {
   color: #d03434;
+}
+
+.admin-fines__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 18px;
+}
+
+.admin-fines__modal {
+  width: min(100%, 540px);
+  background: #ffffff;
+  border: 1px solid #d6dde7;
+  border-radius: 12px;
+  box-shadow: 0 24px 44px rgba(15, 23, 42, 0.24);
+  padding: 18px;
+}
+
+.admin-fines__modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.admin-fines__modal-header h3 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: #2f3642;
+}
+
+.admin-fines__modal-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: #eef2f7;
+  color: #334155;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.admin-fines__modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-fines__modal-form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-fines__modal-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.admin-fines__modal-form input,
+.admin-fines__modal-form select {
+  height: 42px;
+  border: 1px solid #ccd7e5;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #1f2937;
+  font-size: 0.95rem;
+  padding: 0 12px;
+  outline: none;
+}
+
+.admin-fines__modal-form input:focus,
+.admin-fines__modal-form select:focus {
+  border-color: #2290e8;
+  box-shadow: 0 0 0 3px rgba(34, 144, 232, 0.18);
+}
+
+.admin-fines__modal-form input[aria-invalid='true'] {
+  border-color: #d03434;
+  background: #fff5f5;
+}
+
+.admin-fines__field-error {
+  color: #d03434;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+.admin-fines__modal-actions {
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.admin-fines__btn-secondary,
+.admin-fines__btn-primary {
+  height: 40px;
+  border-radius: 9px;
+  padding: 0 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-fines__btn-secondary {
+  border: 1px solid #cad5e3;
+  background: #f8fafc;
+  color: #374151;
+}
+
+.admin-fines__btn-primary {
+  border: 0;
+  background: #203968;
+  color: #ffffff;
 }
 
 @media (max-width: 960px) {
