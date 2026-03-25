@@ -565,4 +565,4 @@ const criminalModel = (sequelize, DataTypes) => {
   return Criminal;
 };
 
-module.exports = criminalModel;
+export default criminalModel;
