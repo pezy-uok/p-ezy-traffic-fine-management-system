@@ -453,6 +453,31 @@
   background: #163f73;
 }
 
+.admin-news__modal-btn.is-danger {
+  border: 0;
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.admin-news__modal-btn.is-danger:hover {
+  background: #b91c1c;
+}
+
+.admin-news__modal--compact {
+  width: min(100%, 480px);
+}
+
+.admin-news__delete-content {
+  margin-bottom: 16px;
+}
+
+.admin-news__delete-content p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 980px) {
   .admin-news__header {
     flex-direction: column;

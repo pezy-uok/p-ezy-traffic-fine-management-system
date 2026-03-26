@@ -82,6 +82,9 @@ export default function AdminNewsManagement() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingArticleId, setEditingArticleId] = useState<string | null>(null)
+  const [articleToDelete, setArticleToDelete] = useState<NewsArticle | null>(null)
   const [formValues, setFormValues] = useState<NewsArticleFormValues>({
     title: '',
     summary: '',
@@ -141,6 +144,70 @@ export default function AdminNewsManagement() {
   const closeAddArticleModal = () => {
     setIsAddModalOpen(false)
     resetForm()
+  }
+
+  const openEditArticleModal = (article: NewsArticle) => {
+    closeFilterMenu()
+    setEditingArticleId(article.id)
+    setFormValues({
+      title: article.title,
+      summary: article.summary,
+      author: article.author,
+      date: article.date,
+      status: article.status,
+      views: article.views?.toString() ?? '',
+    })
+    setFormErrors({})
+    setIsEditModalOpen(true)
+  }
+
+  const closeEditArticleModal = () => {
+    setIsEditModalOpen(false)
+    setEditingArticleId(null)
+    resetForm()
+  }
+
+  const handleEditArticleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!validateForm() || !editingArticleId) {
+      return
+    }
+
+    const parsedViews = Number(formValues.views.trim())
+
+    const updatedArticle: NewsArticle = {
+      id: editingArticleId,
+      title: formValues.title.trim(),
+      summary: formValues.summary.trim(),
+      author: formValues.author.trim(),
+      date: formValues.date,
+      status: formValues.status,
+      views: Number.isFinite(parsedViews) ? parsedViews : undefined,
+    }
+
+    setArticles(previous =>
+      previous.map(article => (article.id === editingArticleId ? updatedArticle : article)),
+    )
+    closeEditArticleModal()
+  }
+
+  const openDeleteDialog = (article: NewsArticle) => {
+    closeFilterMenu()
+    setArticleToDelete(article)
+  }
+
+  const closeDeleteDialog = () => {
+    setArticleToDelete(null)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!articleToDelete) {
+      return
+    }
+
+    setArticles(previous => previous.filter(article => article.id !== articleToDelete.id))
+    closeDeleteDialog()
   }
 
   const updateFormValue = <K extends keyof NewsArticleFormValues>(
@@ -346,13 +413,23 @@ export default function AdminNewsManagement() {
                   </button>
                 ) : null}
 
-                <button type="button" className="admin-news__action-btn" aria-label={`Edit ${article.title}`}>
+                <button
+                  type="button"
+                  className="admin-news__action-btn"
+                  onClick={() => openEditArticleModal(article)}
+                  aria-label={`Edit ${article.title}`}
+                >
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M3 17.2V21h3.8L17.9 9.9 14.1 6 3 17.2Zm2 2.8v-2l9.1-9.1 2 2-9.1 9.1H5Zm14.7-11.3a1 1 0 0 0 0-1.4l-3-3a1 1 0 0 0-1.4 0l-1.2 1.2 4.4 4.4 1.2-1.2Z" fill="currentColor" />
                   </svg>
                 </button>
 
-                <button type="button" className="admin-news__action-btn" aria-label={`Delete ${article.title}`}>
+                <button
+                  type="button"
+                  className="admin-news__action-btn"
+                  onClick={() => openDeleteDialog(article)}
+                  aria-label={`Delete ${article.title}`}
+                >
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M7 4h10l1 2h4v2H2V6h4l1-2Zm1 6h2v8H8v-8Zm6 0h2v8h-2v-8ZM6 8h12l-1 12H7L6 8Z" fill="currentColor" />
                   </svg>
@@ -497,6 +574,162 @@ export default function AdminNewsManagement() {
                 </button>
               </footer>
             </form>
+          </article>
+        </div>
+      ) : null}
+
+      {isEditModalOpen ? (
+        <div className="admin-news__modal-overlay" role="presentation" onClick={closeEditArticleModal}>
+          <article
+            className="admin-news__modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit news article form"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className="admin-news__modal-header">
+              <h3>Edit Article</h3>
+              <button
+                type="button"
+                className="admin-news__modal-close"
+                onClick={closeEditArticleModal}
+                aria-label="Close edit article form"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6.7 5.3 5.3 5.3 5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z" fill="currentColor" />
+                </svg>
+              </button>
+            </header>
+
+            <form className="admin-news__modal-form" onSubmit={handleEditArticleSubmit} noValidate>
+              <label htmlFor="edit-article-title">
+                <span>Article Title</span>
+                <input
+                  id="edit-article-title"
+                  type="text"
+                  value={formValues.title}
+                  onChange={event => updateFormValue('title', event.target.value)}
+                  placeholder="Enter article title"
+                />
+                {formErrors.title ? <small>{formErrors.title}</small> : null}
+              </label>
+
+              <label htmlFor="edit-article-summary">
+                <span>Summary</span>
+                <textarea
+                  id="edit-article-summary"
+                  rows={4}
+                  value={formValues.summary}
+                  onChange={event => updateFormValue('summary', event.target.value)}
+                  placeholder="Write a short summary"
+                />
+                {formErrors.summary ? <small>{formErrors.summary}</small> : null}
+              </label>
+
+              <div className="admin-news__modal-grid">
+                <label htmlFor="edit-article-author">
+                  <span>Author</span>
+                  <input
+                    id="edit-article-author"
+                    type="text"
+                    value={formValues.author}
+                    onChange={event => updateFormValue('author', event.target.value)}
+                    placeholder="Author name"
+                  />
+                  {formErrors.author ? <small>{formErrors.author}</small> : null}
+                </label>
+
+                <label htmlFor="edit-article-date">
+                  <span>Publish Date</span>
+                  <input
+                    id="edit-article-date"
+                    type="date"
+                    value={formValues.date}
+                    onChange={event => updateFormValue('date', event.target.value)}
+                  />
+                  {formErrors.date ? <small>{formErrors.date}</small> : null}
+                </label>
+              </div>
+
+              <div className="admin-news__modal-grid">
+                <label htmlFor="edit-article-status">
+                  <span>Status</span>
+                  <select
+                    id="edit-article-status"
+                    value={formValues.status}
+                    onChange={event => updateFormValue('status', event.target.value as ArticleStatus)}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="scheduled">Scheduled</option>
+                  </select>
+                </label>
+
+                <label htmlFor="edit-article-views">
+                  <span>Views {formValues.status === 'published' ? '(required)' : '(optional)'}</span>
+                  <input
+                    id="edit-article-views"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formValues.views}
+                    onChange={event => updateFormValue('views', event.target.value)}
+                    placeholder="0"
+                  />
+                  {formErrors.views ? <small>{formErrors.views}</small> : null}
+                </label>
+              </div>
+
+              <footer className="admin-news__modal-actions">
+                <button type="button" className="admin-news__modal-btn is-muted" onClick={closeEditArticleModal}>
+                  Cancel
+                </button>
+                <button type="submit" className="admin-news__modal-btn is-primary">
+                  Save Changes
+                </button>
+              </footer>
+            </form>
+          </article>
+        </div>
+      ) : null}
+
+      {articleToDelete ? (
+        <div className="admin-news__modal-overlay" role="presentation" onClick={closeDeleteDialog}>
+          <article
+            className="admin-news__modal admin-news__modal--compact"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete article confirmation"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className="admin-news__modal-header">
+              <h3>Delete Article</h3>
+              <button
+                type="button"
+                className="admin-news__modal-close"
+                onClick={closeDeleteDialog}
+                aria-label="Close delete confirmation"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6.7 5.3 5.3 5.3 5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z" fill="currentColor" />
+                </svg>
+              </button>
+            </header>
+
+            <div className="admin-news__delete-content">
+              <p>
+                Are you sure you want to delete <strong>{articleToDelete.title}</strong>? This action cannot be undone.
+              </p>
+            </div>
+
+            <footer className="admin-news__modal-actions">
+              <button type="button" className="admin-news__modal-btn is-muted" onClick={closeDeleteDialog}>
+                Cancel
+              </button>
+              <button type="button" className="admin-news__modal-btn is-danger" onClick={handleConfirmDelete}>
+                Delete Article
+              </button>
+            </footer>
           </article>
         </div>
       ) : null}
