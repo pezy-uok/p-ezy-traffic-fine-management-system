@@ -1,6 +1,4 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize) => {
+export default (sequelize, DataTypes) => {
   const News = sequelize.define(
     'News',
     {
@@ -13,7 +11,7 @@ module.exports = (sequelize) => {
 
       // Content Fields
       title: {
-        type: DataTypes.VARCHAR(255),
+        type: DataTypes.STRING(255),
         allowNull: false,
         comment: 'News article title',
         validate: {
@@ -26,7 +24,7 @@ module.exports = (sequelize) => {
       },
 
       slug: {
-        type: DataTypes.VARCHAR(300),
+        type: DataTypes.STRING(300),
         allowNull: false,
         unique: true,
         comment: 'URL-friendly slug for the article',
@@ -49,7 +47,7 @@ module.exports = (sequelize) => {
       },
 
       summary: {
-        type: DataTypes.VARCHAR(500),
+        type: DataTypes.STRING(500),
         allowNull: true,
         comment: 'Short summary/excerpt of the article',
       },
@@ -84,7 +82,7 @@ module.exports = (sequelize) => {
       },
 
       thumbnailAlt: {
-        type: DataTypes.VARCHAR(255),
+        type: DataTypes.STRING(255),
         allowNull: true,
         comment: 'Alt text for thumbnail (accessibility)',
       },
@@ -109,13 +107,13 @@ module.exports = (sequelize) => {
       },
 
       authorName: {
-        type: DataTypes.VARCHAR(100),
+        type: DataTypes.STRING(100),
         allowNull: true,
         comment: 'Display name of author (denormalized)',
       },
 
       source: {
-        type: DataTypes.VARCHAR(255),
+        type: DataTypes.STRING(255),
         allowNull: true,
         comment: 'Source of news (if external)',
       },

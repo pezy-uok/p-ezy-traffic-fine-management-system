@@ -1,28 +1,28 @@
-.admin-fines {
+.admin-criminals {
   text-align: left;
 }
 
-.admin-fines__header {
+.admin-criminals__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.admin-fines__header h2 {
+.admin-criminals__header h2 {
   margin: 0;
   font-size: 2.05rem;
   line-height: 1.15;
   color: #2f3642;
 }
 
-.admin-fines__header p {
+.admin-criminals__header p {
   margin-top: 8px;
   color: #6b7280;
   font-size: 0.96rem;
 }
 
-.admin-fines__add-btn {
+.admin-criminals__add-btn {
   height: 46px;
   border: 0;
   border-radius: 10px;
@@ -38,23 +38,23 @@
   box-shadow: 0 8px 16px rgba(22, 40, 75, 0.22);
 }
 
-.admin-fines__add-btn:hover {
+.admin-criminals__add-btn:hover {
   background: #172d55;
 }
 
-.admin-fines__add-btn svg {
+.admin-criminals__add-btn svg {
   width: 20px;
   height: 20px;
 }
 
-.admin-fines__toolbar {
+.admin-criminals__toolbar {
   margin-top: 20px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
 }
 
-.admin-fines__search-wrap {
+.admin-criminals__search-wrap {
   height: 48px;
   border: 1px solid #cfd8e3;
   border-radius: 10px;
@@ -66,13 +66,13 @@
   padding: 0 12px;
 }
 
-.admin-fines__search-wrap svg {
+.admin-criminals__search-wrap svg {
   width: 20px;
   height: 20px;
   color: #111827;
 }
 
-.admin-fines__search-wrap input {
+.admin-criminals__search-wrap input {
   border: 0;
   outline: 0;
   background: transparent;
@@ -80,11 +80,11 @@
   font-size: 0.98rem;
 }
 
-.admin-fines__search-wrap input::placeholder {
+.admin-criminals__search-wrap input::placeholder {
   color: #9ca3af;
 }
 
-.admin-fines__filter-btn {
+.admin-criminals__filter-btn {
   height: 48px;
   border: 1px solid #cfd8e3;
   border-radius: 10px;
@@ -98,20 +98,20 @@
   cursor: pointer;
 }
 
-.admin-fines__filter-btn svg {
+.admin-criminals__filter-btn svg {
   width: 20px;
   height: 20px;
 }
 
-.admin-fines__filter-wrap {
+.admin-criminals__filter-wrap {
   position: relative;
 }
 
-.admin-fines__filter-menu {
+.admin-criminals__filter-menu {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  width: 180px;
+  width: 200px;
   background: #ffffff;
   border: 1px solid #d6dde7;
   border-radius: 10px;
@@ -120,7 +120,7 @@
   z-index: 5;
 }
 
-.admin-fines__filter-item {
+.admin-criminals__filter-item {
   width: 100%;
   height: 36px;
   border: 0;
@@ -133,17 +133,17 @@
   cursor: pointer;
 }
 
-.admin-fines__filter-item:hover {
+.admin-criminals__filter-item:hover {
   background: #f2f6fb;
 }
 
-.admin-fines__filter-item.is-active {
+.admin-criminals__filter-item.is-active {
   background: #e6f2ff;
   color: #1f6fd6;
   font-weight: 600;
 }
 
-.admin-fines__table-wrap {
+.admin-criminals__table-wrap {
   margin-top: 16px;
   background: #ffffff;
   border: 1px solid #d6dde7;
@@ -151,53 +151,48 @@
   overflow: auto;
 }
 
-.admin-fines__table {
+.admin-criminals__table {
   width: 100%;
-  min-width: 920px;
+  min-width: 1020px;
   border-collapse: collapse;
 }
 
-.admin-fines__table th,
-.admin-fines__table td {
+.admin-criminals__table th,
+.admin-criminals__table td {
   text-align: left;
   padding: 18px 22px;
   border-bottom: 1px solid #e4e9f0;
 }
 
-.admin-fines__table th {
+.admin-criminals__table th {
   color: #374151;
   font-size: 0.96rem;
   font-weight: 700;
 }
 
-.admin-fines__table td {
+.admin-criminals__table td {
   color: #4b5563;
   font-size: 0.96rem;
 }
 
-.admin-fines__table tbody tr:last-child td {
+.admin-criminals__table tbody tr:last-child td {
   border-bottom: 0;
 }
 
-.admin-fines__empty {
+.admin-criminals__empty {
   text-align: center !important;
   color: #9ca3af !important;
   font-size: 0.92rem;
   padding: 24px 18px !important;
 }
 
-.admin-fines__id {
+.admin-criminals__id {
   color: #238ee8 !important;
   font-weight: 700;
 }
 
-.admin-fines__amount {
-  color: #2f3642 !important;
-  font-weight: 700;
-}
-
-.admin-fines__status {
-  min-width: 74px;
+.admin-criminals__severity {
+  min-width: 90px;
   height: 30px;
   padding: 0 12px;
   border-radius: 999px;
@@ -208,71 +203,109 @@
   font-weight: 600;
 }
 
-.admin-fines__status.is-paid {
-  background: #d8f2e2;
-  color: #1d9150;
-}
-
-.admin-fines__status.is-pending {
-  background: #f7edbd;
-  color: #946200;
-}
-
-.admin-fines__status.is-overdue {
+.admin-criminals__severity.is-critical {
   background: #f8dbdb;
   color: #ba3333;
 }
 
-.admin-fines__actions {
+.admin-criminals__severity.is-high {
+  background: #fce0cc;
+  color: #c76400;
+}
+
+.admin-criminals__severity.is-medium {
+  background: #f7edbd;
+  color: #946200;
+}
+
+.admin-criminals__status {
+  min-width: 140px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-criminals__status.is-open {
+  background: #f8dbdb;
+  color: #ba3333;
+}
+
+.admin-criminals__status.is-closed {
+  background: #d8f2e2;
+  color: #1d9150;
+}
+
+.admin-criminals__status.is-under-investigation {
+  background: #c9e8ff;
+  color: #0c62c0;
+}
+
+.admin-criminals__actions {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.admin-fines__actions button {
-  width: 28px;
-  height: 28px;
+.admin-criminals__action-btn {
+  width: 32px;
+  height: 32px;
   border: 0;
+  border-radius: 6px;
   background: transparent;
   color: #111827;
   display: inline-grid;
   place-items: center;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.admin-fines__actions button svg {
+.admin-criminals__action-btn svg {
   width: 18px;
   height: 18px;
 }
 
-.admin-fines__summary {
+.admin-criminals__action-btn--view:hover {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.admin-criminals__action-btn--edit:hover {
+  background: #dbeafe;
+  color: #0284c7;
+}
+
+.admin-criminals__action-btn--delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.admin-criminals__summary {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
-.admin-fines__summary-note {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #64748b;
-  font-size: 0.88rem;
-}
-
-.admin-fines__summary-card {
+.admin-criminals__summary-card {
   background: #ffffff;
   border: 1px solid #d6dde7;
   border-radius: 10px;
   padding: 14px 16px;
 }
 
-.admin-fines__summary-card p {
+.admin-criminals__summary-card p {
   margin: 0;
   color: #6b7280;
   font-size: 0.94rem;
 }
 
-.admin-fines__summary-card strong {
+.admin-criminals__summary-card strong {
   display: inline-block;
   margin-top: 6px;
   color: #2f3642;
@@ -280,15 +313,23 @@
   line-height: 1.05;
 }
 
-.admin-fines__summary-card strong.is-blue {
+.admin-criminals__summary-card strong.is-blue {
   color: #2290e8;
 }
 
-.admin-fines__summary-card strong.is-red {
+.admin-criminals__summary-card strong.is-red {
   color: #d03434;
 }
 
-.admin-fines__modal-overlay {
+.admin-criminals__summary-card strong.is-orange {
+  color: #ff8533;
+}
+
+.admin-criminals__summary-card strong.is-green {
+  color: #16a34a;
+}
+
+.admin-criminals__modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
@@ -298,8 +339,8 @@
   padding: 18px;
 }
 
-.admin-fines__modal {
-  width: min(100%, 540px);
+.admin-criminals__modal {
+  width: min(100%, 560px);
   background: #ffffff;
   border: 1px solid #d6dde7;
   border-radius: 12px;
@@ -307,24 +348,24 @@
   padding: 18px;
 }
 
-.admin-fines__modal--compact {
+.admin-criminals__modal--compact {
   width: min(100%, 460px);
 }
 
-.admin-fines__modal-header {
+.admin-criminals__modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
 }
 
-.admin-fines__modal-header h3 {
+.admin-criminals__modal-header h3 {
   margin: 0;
   font-size: 1.45rem;
   color: #2f3642;
 }
 
-.admin-fines__modal-close {
+.admin-criminals__modal-close {
   width: 32px;
   height: 32px;
   border: 0;
@@ -336,17 +377,28 @@
   cursor: pointer;
 }
 
-.admin-fines__modal-close svg {
+.admin-criminals__modal-close svg {
   width: 18px;
   height: 18px;
 }
 
-.admin-fines__modal-form {
+.admin-criminals__modal-body {
+  padding: 12px 0;
+}
+
+.admin-criminals__modal-body p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.97rem;
+  line-height: 1.6;
+}
+
+.admin-criminals__modal-form {
   display: grid;
   gap: 12px;
 }
 
-.admin-fines__modal-form label {
+.admin-criminals__modal-form label {
   display: grid;
   gap: 6px;
   font-size: 0.92rem;
@@ -354,8 +406,8 @@
   font-weight: 600;
 }
 
-.admin-fines__modal-form input,
-.admin-fines__modal-form select {
+.admin-criminals__modal-form input,
+.admin-criminals__modal-form select {
   height: 42px;
   border: 1px solid #ccd7e5;
   border-radius: 9px;
@@ -366,44 +418,70 @@
   outline: none;
 }
 
-.admin-fines__modal-form input:focus,
-.admin-fines__modal-form select:focus {
+.admin-criminals__modal-form input:focus,
+.admin-criminals__modal-form select:focus {
   border-color: #2290e8;
   box-shadow: 0 0 0 3px rgba(34, 144, 232, 0.18);
 }
 
-.admin-fines__modal-form input[aria-invalid='true'] {
+.admin-criminals__modal-form input:disabled,
+.admin-criminals__modal-form select:disabled {
+  background: #f0f1f3;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.admin-criminals__modal-form input[aria-invalid='true'] {
   border-color: #d03434;
   background: #fff5f5;
 }
 
-.admin-fines__field-error {
+.admin-criminals__field-error {
   color: #d03434;
   font-size: 0.82rem;
   line-height: 1.25;
   font-weight: 500;
 }
 
-.admin-fines__confirm-text {
-  margin: 0;
-  color: #475569;
-  font-size: 0.97rem;
-  line-height: 1.5;
+.admin-criminals__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
 }
 
-.admin-fines__confirm-text strong {
+.admin-criminals__detail-item {
+  border: 1px solid #e4e9f0;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.admin-criminals__detail-item span {
+  display: block;
+  color: #64748b;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+.admin-criminals__detail-item strong {
   color: #1f2937;
+  font-size: 0.96rem;
 }
 
-.admin-fines__modal-actions {
+.admin-criminals__modal-actions--detail {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+
+.admin-criminals__modal-actions {
   margin-top: 6px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.admin-fines__btn-secondary,
-.admin-fines__btn-primary {
+.admin-criminals__btn-secondary,
+.admin-criminals__btn-primary {
   height: 40px;
   border-radius: 9px;
   padding: 0 14px;
@@ -412,19 +490,19 @@
   cursor: pointer;
 }
 
-.admin-fines__btn-secondary {
+.admin-criminals__btn-secondary {
   border: 1px solid #cad5e3;
   background: #f8fafc;
   color: #374151;
 }
 
-.admin-fines__btn-primary {
+.admin-criminals__btn-primary {
   border: 0;
   background: #203968;
   color: #ffffff;
 }
 
-.admin-fines__btn-danger {
+.admin-criminals__btn-danger {
   height: 40px;
   border: 0;
   border-radius: 9px;
@@ -436,27 +514,37 @@
   color: #ffffff;
 }
 
-.admin-fines__btn-danger:hover {
+.admin-criminals__btn-danger:hover {
   background: #b93333;
 }
 
+@media (max-width: 1024px) {
+  .admin-criminals__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 960px) {
-  .admin-fines__header {
+  .admin-criminals__header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .admin-fines__summary {
-    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .admin-fines__toolbar {
+  .admin-criminals__toolbar {
     grid-template-columns: 1fr;
   }
 
-  .admin-fines__filter-btn {
+  .admin-criminals__filter-btn {
     width: fit-content;
+  }
+
+  .admin-criminals__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-criminals__detail-grid {
+    grid-template-columns: 1fr;
   }
 }

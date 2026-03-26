@@ -1,6 +1,4 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize) => {
+export default (sequelize, DataTypes) => {
   const AuditLog = sequelize.define(
     'AuditLog',
     {
@@ -32,7 +30,7 @@ module.exports = (sequelize) => {
 
       // Driver Reference (Denormalized - as required)
       licenseNumber: {
-        type: DataTypes.VARCHAR(50),
+        type: DataTypes.STRING(50),
         allowNull: true,
         comment: 'Driver license number (denormalized for quick lookup)',
         index: true,
@@ -106,7 +104,7 @@ module.exports = (sequelize) => {
       },
 
       entityName: {
-        type: DataTypes.VARCHAR(255),
+        type: DataTypes.STRING(255),
         allowNull: true,
         comment:
           'Display name/identifier of entity (e.g., license number, fine ID)',
@@ -114,7 +112,7 @@ module.exports = (sequelize) => {
 
       // Change Details
       fieldName: {
-        type: DataTypes.VARCHAR(100),
+        type: DataTypes.STRING(100),
         allowNull: true,
         comment: 'Field that was changed (for updates)',
       },
@@ -139,7 +137,7 @@ module.exports = (sequelize) => {
 
       // Request Context
       ipAddress: {
-        type: DataTypes.VARCHAR(45),
+        type: DataTypes.STRING(45),
         allowNull: true,
         comment: 'IP address of request (supports IPv4 and IPv6)',
       },
@@ -151,13 +149,13 @@ module.exports = (sequelize) => {
       },
 
       requestMethod: {
-        type: DataTypes.VARCHAR(10),
+        type: DataTypes.STRING(10),
         allowNull: true,
         comment: 'HTTP method (GET, POST, PUT, DELETE, PATCH)',
       },
 
       requestPath: {
-        type: DataTypes.VARCHAR(500),
+        type: DataTypes.STRING(500),
         allowNull: true,
         comment: 'API endpoint that was called',
       },
