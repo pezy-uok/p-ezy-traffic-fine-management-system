@@ -116,6 +116,7 @@ export default function AdminCriminalRecords() {
 
   const totalRecords = filteredCriminalRecords.length
   const openCases = filteredCriminalRecords.filter(r => r.status === 'open').length
+  const closedCases = filteredCriminalRecords.filter(r => r.status === 'closed').length
   const underInvestigation = filteredCriminalRecords.filter(r => r.status === 'under-investigation').length
   const criticalCases = filteredCriminalRecords.filter(r => r.severity === 'critical').length
 
@@ -453,6 +454,10 @@ export default function AdminCriminalRecords() {
         <article className="admin-criminals__summary-card">
           <p>Critical Cases</p>
           <strong className="is-orange">{criticalCases}</strong>
+        </article>
+        <article className="admin-criminals__summary-card">
+          <p>Closed Cases</p>
+          <strong className="is-green">{closedCases}</strong>
         </article>
       </section>
 

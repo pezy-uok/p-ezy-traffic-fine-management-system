@@ -325,6 +325,10 @@
   color: #ff8533;
 }
 
+.admin-criminals__summary-card strong.is-green {
+  color: #16a34a;
+}
+
 .admin-criminals__modal-overlay {
   position: fixed;
   inset: 0;
