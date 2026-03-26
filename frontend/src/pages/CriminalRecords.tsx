@@ -1,4 +1,5 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import pLogo from '../assets/plogo.png'
 import { criminalRecords, type CriminalRecord, type RecordStatus } from '../data/criminalRecords'
 import './CriminalRecords.css'
@@ -10,7 +11,16 @@ interface TipFormState {
   anonymous: boolean
 }
 
-const menuLinks = ['Home', 'About Us', 'Fine Pay', 'Criminal Records', 'Division', 'Downloads', 'Library', 'Survey']
+const menuLinks: { label: string; path?: string }[] = [
+  { label: 'Home', path: '/' },
+  { label: 'About Us', path: '/about' },
+  { label: 'Fine Pay', path: '/fine-pay' },
+  { label: 'Criminal Records', path: '/criminal-records' },
+  { label: 'Division' },
+  { label: 'Downloads' },
+  { label: 'Library' },
+  { label: 'Survey' },
+]
 
 const statusToVariant: Record<RecordStatus, 'danger' | 'info' | 'warning'> = {
   wanted: 'danger',
@@ -82,15 +92,18 @@ export default function CriminalRecords() {
 
         <div className="records__container records__menu-row">
           <nav className="records__menu" aria-label="Primary">
-            {menuLinks.map(link => (
-              <button
-                key={link}
-                type="button"
-                className={`records__menu-item${link === 'Criminal Records' ? ' is-active' : ''}`}
-              >
-                {link}
-              </button>
-            ))}
+            {menuLinks.map(link => {
+              const className = `records__menu-item${link.path === '/criminal-records' ? ' is-active' : ''}`
+              return link.path ? (
+                <Link key={link.label} to={link.path} className={className}>
+                  {link.label}
+                </Link>
+              ) : (
+                <button key={link.label} type="button" className={className}>
+                  {link.label}
+                </button>
+              )
+            })}
           </nav>
 
           <label className="records__menu-search" aria-label="Search site wide">

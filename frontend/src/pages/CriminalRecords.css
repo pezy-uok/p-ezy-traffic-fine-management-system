@@ -89,6 +89,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 200ms ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .records__menu-item:hover {

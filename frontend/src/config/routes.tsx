@@ -3,6 +3,7 @@ import Home from '../pages/Home'
 import Dashboard from '../pages/Dashboard'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
+import AboutUs from '../pages/AboutUs'
 import NewsAwareness from '../pages/NewsAwareness'
 import FinePay from '../pages/FinePay'
 import CriminalRecords from '../pages/CriminalRecords'
@@ -41,6 +42,11 @@ export const routes: RouteConfig[] = [
     path: '/settings',
     element: <Settings />,
     name: 'Settings',
+  },
+  {
+    path: '/about',
+    element: <AboutUs />,
+    name: 'About Us',
   },
   {
     path: '/criminal-records',
