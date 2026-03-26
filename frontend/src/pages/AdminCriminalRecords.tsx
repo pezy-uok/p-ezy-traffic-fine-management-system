@@ -261,6 +261,17 @@ export default function AdminCriminalRecords() {
     setRecordToDelete(null)
   }
 
+  const handleDeleteFromViewModal = () => {
+    const targetRecord = criminalRecords.find(record => record.id === formValues.id)
+
+    if (!targetRecord) {
+      return
+    }
+
+    closeRecordModal()
+    openDeleteDialog(targetRecord)
+  }
+
   return (
     <section className="admin-criminals" aria-label="Criminal records management page">
       <header className="admin-criminals__header">
@@ -491,6 +502,20 @@ export default function AdminCriminalRecords() {
                 </article>
 
                 <div className="admin-criminals__modal-actions admin-criminals__modal-actions--detail">
+                  <button
+                    type="button"
+                    className="admin-criminals__btn-primary"
+                    onClick={() => openEditRecordModal(formValues)}
+                  >
+                    Edit Record
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-criminals__btn-danger"
+                    onClick={handleDeleteFromViewModal}
+                  >
+                    Delete Record
+                  </button>
                   <button type="button" className="admin-criminals__btn-secondary" onClick={closeRecordModal}>
                     Close
                   </button>
