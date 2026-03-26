@@ -10,10 +10,7 @@
     "test": "node tests/users.test.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "format": "prettier --write src/",
-    "seed": "node src/database/cli.js seed",
-    "seed:clear": "node src/database/cli.js clear",
-    "seed:reset": "node src/database/cli.js reset"
+    "format": "prettier --write src/"
   },
   "keywords": [
     "express",
