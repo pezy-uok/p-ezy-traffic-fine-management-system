@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { authAPI } from '@/api'
 import './AdminLayout.css'
 
 interface AdminLayoutProps {
@@ -52,6 +54,22 @@ const navItems: AdminNavItem[] = [
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const navigate = useNavigate()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await authAPI.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Clear local storage and redirect to login regardless of API response
+      localStorage.removeItem('authToken')
+      navigate('/admin')
+    }
+  }
+
   return (
     <section className="admin-shell" aria-label="Admin dashboard layout">
       <aside className="admin-shell__sidebar">
@@ -96,11 +114,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           ))}
         </nav>
 
-        <button type="button" className="admin-shell__logout">
+        <button 
+          type="button" 
+          className="admin-shell__logout"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          title="Logout from admin panel"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M10 4h7a2 2 0 0 1 2 2v4h-2V6h-7v12h7v-4h2v4a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm-6 7h9.2l-2.6-2.6L12 7l5 5-5 5-1.4-1.4 2.6-2.6H4v-2Z" fill="currentColor" />
           </svg>
-          <span>Logout</span>
+          <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
         </button>
       </aside>
 
