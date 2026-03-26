@@ -12,6 +12,7 @@ import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboard from '../pages/AdminDashboard'
 import AdminFineManagement from '../pages/AdminFineManagement'
 import AdminCriminalRecords from '../pages/AdminCriminalRecords'
+import AdminNewsManagement from '../pages/AdminNewsManagement'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -97,7 +98,7 @@ export const routes: RouteConfig[] = [
     path: '/admin/news',
     element: (
       <AdminLayout>
-        <AdminDashboard sectionName="News Management" />
+        <AdminNewsManagement />
       </AdminLayout>
     ),
     name: 'Admin News',
