@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import Swal from 'sweetalert2'
 import { authAPI } from '@/api'
 import './AdminLayout.css'
 
@@ -58,15 +59,47 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Logout',
+      text: 'Are you sure you want to logout?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, logout',
+      cancelButtonText: 'Cancel',
+    })
+
+    if (!result.isConfirmed) {
+      return
+    }
+
     try {
       setIsLoggingOut(true)
       await authAPI.logout()
+      
+      await Swal.fire({
+        title: 'Logged Out',
+        text: 'You have been successfully logged out.',
+        icon: 'success',
+        timer: 1500,
+        timerProgressBar: true,
+      })
     } catch (error) {
       console.error('Logout error:', error)
+      
+      await Swal.fire({
+        title: 'Logout Error',
+        text: 'An error occurred while logging out. You will be redirected.',
+        icon: 'error',
+        timer: 2000,
+        timerProgressBar: true,
+      })
     } finally {
       // Clear local storage and redirect to login regardless of API response
       localStorage.removeItem('authToken')
       navigate('/admin')
+      setIsLoggingOut(false)
     }
   }
 
