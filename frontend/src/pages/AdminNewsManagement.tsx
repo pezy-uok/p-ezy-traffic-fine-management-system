@@ -13,6 +13,15 @@ interface NewsArticle {
   views?: number
 }
 
+interface NewsArticleFormValues {
+  title: string
+  summary: string
+  author: string
+  date: string
+  status: ArticleStatus
+  views: string
+}
+
 const initialArticles: NewsArticle[] = [
   {
     id: 'N001',
@@ -68,10 +77,20 @@ const statusLabel: Record<ArticleStatus, string> = {
 type StatusFilter = 'all' | ArticleStatus
 
 export default function AdminNewsManagement() {
-  const [articles] = useState<NewsArticle[]>(initialArticles)
+  const [articles, setArticles] = useState<NewsArticle[]>(initialArticles)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [formValues, setFormValues] = useState<NewsArticleFormValues>({
+    title: '',
+    summary: '',
+    author: '',
+    date: '',
+    status: 'draft',
+    views: '',
+  })
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof NewsArticleFormValues, string>>>({})
 
   const filteredArticles = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -101,6 +120,104 @@ export default function AdminNewsManagement() {
     setIsFilterMenuOpen(false)
   }
 
+  const resetForm = () => {
+    setFormValues({
+      title: '',
+      summary: '',
+      author: '',
+      date: '',
+      status: 'draft',
+      views: '',
+    })
+    setFormErrors({})
+  }
+
+  const openAddArticleModal = () => {
+    closeFilterMenu()
+    resetForm()
+    setIsAddModalOpen(true)
+  }
+
+  const closeAddArticleModal = () => {
+    setIsAddModalOpen(false)
+    resetForm()
+  }
+
+  const updateFormValue = <K extends keyof NewsArticleFormValues>(
+    field: K,
+    value: NewsArticleFormValues[K],
+  ) => {
+    setFormValues(previous => ({ ...previous, [field]: value }))
+
+    if (formErrors[field]) {
+      setFormErrors(previous => ({ ...previous, [field]: undefined }))
+    }
+  }
+
+  const validateForm = () => {
+    const nextErrors: Partial<Record<keyof NewsArticleFormValues, string>> = {}
+
+    if (!formValues.title.trim()) {
+      nextErrors.title = 'Title is required.'
+    }
+
+    if (!formValues.summary.trim()) {
+      nextErrors.summary = 'Summary is required.'
+    }
+
+    if (!formValues.author.trim()) {
+      nextErrors.author = 'Author name is required.'
+    }
+
+    if (!formValues.date) {
+      nextErrors.date = 'Date is required.'
+    }
+
+    const rawViews = formValues.views.trim()
+    const parsedViews = Number(rawViews)
+
+    if (rawViews && (!Number.isFinite(parsedViews) || parsedViews < 0)) {
+      nextErrors.views = 'Views must be 0 or a positive number.'
+    }
+
+    if (formValues.status === 'published' && !rawViews) {
+      nextErrors.views = 'Views are required for published articles.'
+    }
+
+    setFormErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  const handleAddArticleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
+    const nextNumericId =
+      articles.reduce((maxId, article) => {
+        const numericPart = Number.parseInt(article.id.replace(/[^0-9]/g, ''), 10)
+        return Number.isFinite(numericPart) ? Math.max(maxId, numericPart) : maxId
+      }, 0) + 1
+
+    const parsedViews = Number(formValues.views.trim())
+    const normalizedDate = new Date(formValues.date).toLocaleDateString('en-US')
+
+    const newArticle: NewsArticle = {
+      id: `N${String(nextNumericId).padStart(3, '0')}`,
+      title: formValues.title.trim(),
+      summary: formValues.summary.trim(),
+      author: formValues.author.trim(),
+      date: normalizedDate,
+      status: formValues.status,
+      views: Number.isFinite(parsedViews) ? parsedViews : undefined,
+    }
+
+    setArticles(previous => [newArticle, ...previous])
+    closeAddArticleModal()
+  }
+
   const handleStatusFilterChange = (filter: StatusFilter) => {
     setStatusFilter(filter)
     closeFilterMenu()
@@ -114,7 +231,7 @@ export default function AdminNewsManagement() {
           <p>Publish and manage news articles for the public</p>
         </div>
 
-        <button type="button" className="admin-news__add-btn">
+        <button type="button" className="admin-news__add-btn" onClick={openAddArticleModal}>
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M11 5h2v14h-2V5Zm-6 6h14v2H5v-2Z" fill="currentColor" />
           </svg>
@@ -268,6 +385,121 @@ export default function AdminNewsManagement() {
           <strong className="is-blue">{totalViews.toLocaleString('en-US')}</strong>
         </article>
       </section>
+
+      {isAddModalOpen ? (
+        <div className="admin-news__modal-overlay" role="presentation" onClick={closeAddArticleModal}>
+          <article
+            className="admin-news__modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add news article form"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className="admin-news__modal-header">
+              <h3>Add New Article</h3>
+              <button
+                type="button"
+                className="admin-news__modal-close"
+                onClick={closeAddArticleModal}
+                aria-label="Close add article form"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6.7 5.3 5.3 5.3 5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z" fill="currentColor" />
+                </svg>
+              </button>
+            </header>
+
+            <form className="admin-news__modal-form" onSubmit={handleAddArticleSubmit} noValidate>
+              <label htmlFor="article-title">
+                <span>Article Title</span>
+                <input
+                  id="article-title"
+                  type="text"
+                  value={formValues.title}
+                  onChange={event => updateFormValue('title', event.target.value)}
+                  placeholder="Enter article title"
+                />
+                {formErrors.title ? <small>{formErrors.title}</small> : null}
+              </label>
+
+              <label htmlFor="article-summary">
+                <span>Summary</span>
+                <textarea
+                  id="article-summary"
+                  rows={4}
+                  value={formValues.summary}
+                  onChange={event => updateFormValue('summary', event.target.value)}
+                  placeholder="Write a short summary"
+                />
+                {formErrors.summary ? <small>{formErrors.summary}</small> : null}
+              </label>
+
+              <div className="admin-news__modal-grid">
+                <label htmlFor="article-author">
+                  <span>Author</span>
+                  <input
+                    id="article-author"
+                    type="text"
+                    value={formValues.author}
+                    onChange={event => updateFormValue('author', event.target.value)}
+                    placeholder="Author name"
+                  />
+                  {formErrors.author ? <small>{formErrors.author}</small> : null}
+                </label>
+
+                <label htmlFor="article-date">
+                  <span>Publish Date</span>
+                  <input
+                    id="article-date"
+                    type="date"
+                    value={formValues.date}
+                    onChange={event => updateFormValue('date', event.target.value)}
+                  />
+                  {formErrors.date ? <small>{formErrors.date}</small> : null}
+                </label>
+              </div>
+
+              <div className="admin-news__modal-grid">
+                <label htmlFor="article-status">
+                  <span>Status</span>
+                  <select
+                    id="article-status"
+                    value={formValues.status}
+                    onChange={event => updateFormValue('status', event.target.value as ArticleStatus)}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="scheduled">Scheduled</option>
+                  </select>
+                </label>
+
+                <label htmlFor="article-views">
+                  <span>Views {formValues.status === 'published' ? '(required)' : '(optional)'}</span>
+                  <input
+                    id="article-views"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formValues.views}
+                    onChange={event => updateFormValue('views', event.target.value)}
+                    placeholder="0"
+                  />
+                  {formErrors.views ? <small>{formErrors.views}</small> : null}
+                </label>
+              </div>
+
+              <footer className="admin-news__modal-actions">
+                <button type="button" className="admin-news__modal-btn is-muted" onClick={closeAddArticleModal}>
+                  Cancel
+                </button>
+                <button type="submit" className="admin-news__modal-btn is-primary">
+                  Add Article
+                </button>
+              </footer>
+            </form>
+          </article>
+        </div>
+      ) : null}
     </section>
   )
 }
