@@ -1,5 +1,5 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import pLogo from '../assets/plogo.png'
+import NavBar from '../components/NavBar'
 import { criminalRecords, type CriminalRecord, type RecordStatus } from '../data/criminalRecords'
 import './CriminalRecords.css'
 
@@ -9,8 +9,6 @@ interface TipFormState {
   description: string
   anonymous: boolean
 }
-
-const menuLinks = ['Home', 'About Us', 'Fine Pay', 'Criminal Records', 'Division', 'Downloads', 'Library', 'Survey']
 
 const statusToVariant: Record<RecordStatus, 'danger' | 'info' | 'warning'> = {
   wanted: 'danger',
@@ -68,37 +66,7 @@ export default function CriminalRecords() {
 
   return (
     <section className="records">
-      <header className="records__banner">
-        <div className="records__container records__brand-row">
-          <div className="records__brand">
-            <img src={pLogo} alt="Sri Lanka Police logo" className="records__logo" />
-            <div>
-              <p className="records__badge-label">Official Website</p>
-              <h1>SRI LANKA POLICE</h1>
-            </div>
-          </div>
-          <span className="records__lang">ENGLISH</span>
-        </div>
-
-        <div className="records__container records__menu-row">
-          <nav className="records__menu" aria-label="Primary">
-            {menuLinks.map(link => (
-              <button
-                key={link}
-                type="button"
-                className={`records__menu-item${link === 'Criminal Records' ? ' is-active' : ''}`}
-              >
-                {link}
-              </button>
-            ))}
-          </nav>
-
-          <label className="records__menu-search" aria-label="Search site wide">
-            <span aria-hidden="true">&#128269;</span>
-            <input type="text" placeholder="Search" readOnly />
-          </label>
-        </div>
-      </header>
+      <NavBar activeLabel="Criminal Records" />
 
       <div className="records__masthead">
         <p className="records__breadcrumb">Home / Criminal Records</p>
