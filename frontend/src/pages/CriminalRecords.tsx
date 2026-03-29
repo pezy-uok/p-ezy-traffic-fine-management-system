@@ -1,6 +1,5 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import pLogo from '../assets/plogo.png'
+import NavBar from '../components/NavBar'
 import { criminalRecords, type CriminalRecord, type RecordStatus } from '../data/criminalRecords'
 import './CriminalRecords.css'
 
@@ -10,18 +9,6 @@ interface TipFormState {
   description: string
   anonymous: boolean
 }
-
-const menuLinks: { label: string; path?: string }[] = [
-  { label: 'Home', path: '/' },
-  { label: 'About Us', path: '/about' },
-  { label: 'Fine Pay', path: '/fine-pay' },
-  { label: 'Criminal Records', path: '/criminal-records' },
-  { label: 'Division' },
-  { label: 'Downloads' },
-  { label: 'Library' },
-  { label: 'Survey' },
-]
-
 const statusToVariant: Record<RecordStatus, 'danger' | 'info' | 'warning'> = {
   wanted: 'danger',
   arrested: 'info',
@@ -78,40 +65,7 @@ export default function CriminalRecords() {
 
   return (
     <section className="records">
-      <header className="records__banner">
-        <div className="records__container records__brand-row">
-          <div className="records__brand">
-            <img src={pLogo} alt="Sri Lanka Police logo" className="records__logo" />
-            <div>
-              <p className="records__badge-label">Official Website</p>
-              <h1>SRI LANKA POLICE</h1>
-            </div>
-          </div>
-          <span className="records__lang">ENGLISH</span>
-        </div>
-
-        <div className="records__container records__menu-row">
-          <nav className="records__menu" aria-label="Primary">
-            {menuLinks.map(link => {
-              const className = `records__menu-item${link.path === '/criminal-records' ? ' is-active' : ''}`
-              return link.path ? (
-                <Link key={link.label} to={link.path} className={className}>
-                  {link.label}
-                </Link>
-              ) : (
-                <button key={link.label} type="button" className={className}>
-                  {link.label}
-                </button>
-              )
-            })}
-          </nav>
-
-          <label className="records__menu-search" aria-label="Search site wide">
-            <span aria-hidden="true">&#128269;</span>
-            <input type="text" placeholder="Search" readOnly />
-          </label>
-        </div>
-      </header>
+      <NavBar activeLabel="Criminal Records" />
 
       <div className="records__masthead">
         <p className="records__breadcrumb">Home / Criminal Records</p>
