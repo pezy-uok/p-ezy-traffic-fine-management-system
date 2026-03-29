@@ -1,0 +1,222 @@
+.mounted-page {
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
+  min-height: 100vh;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.mounted-page__hero {
+  min-height: clamp(18rem, 42vw, 29rem);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(1.2rem, 4vw, 2.9rem);
+}
+
+.mounted-page__hero-content {
+  max-width: 770px;
+  background: rgba(15, 23, 42, 0.33);
+  border: 1px solid rgba(248, 250, 252, 0.24);
+  border-radius: 1rem;
+  padding: clamp(1rem, 2.6vw, 1.6rem);
+  color: #f8fafc;
+  backdrop-filter: blur(2px);
+}
+
+.mounted-page__eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+  color: rgba(248, 250, 252, 0.85);
+}
+
+.mounted-page__hero-content h1 {
+  margin: 0.4rem 0 0.62rem;
+  color: #f8fafc;
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  line-height: 1.14;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  max-width: 16ch;
+}
+
+.mounted-page__hero-content p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.mounted-page__container {
+  width: min(1450px, 95vw);
+  margin: 0 auto;
+  padding: clamp(1.2rem, 3.8vw, 2.7rem) 0 clamp(2rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mounted-page__principles,
+.mounted-page__links-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.mounted-page__card,
+.mounted-page__history,
+.mounted-page__duties {
+  background: #fff;
+  border-radius: 1rem;
+  border: 1px solid #cbd5e1;
+  padding: 1rem;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.mounted-page__card h2,
+.mounted-page__card h3 {
+  margin: 0 0 0.45rem;
+  color: #0c4a6e;
+}
+
+.mounted-page__card p {
+  margin: 0.35rem 0;
+  line-height: 1.58;
+  color: #334155;
+}
+
+.mounted-page__section-head h3 {
+  margin: 0.35rem 0 0;
+  color: #0c4a6e;
+}
+
+.mounted-page__tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.6rem;
+  margin: 0.8rem 0;
+}
+
+.mounted-page__tab {
+  border: 1px solid #bfdbfe;
+  border-radius: 0.9rem;
+  background: #eff6ff;
+  text-align: left;
+  padding: 0.68rem 0.78rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.mounted-page__tab span {
+  display: block;
+  font-size: 0.74rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.mounted-page__tab strong {
+  display: block;
+  margin-top: 0.24rem;
+  color: #0f172a;
+  font-size: 0.93rem;
+}
+
+.mounted-page__tab.is-active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border-color: transparent;
+  box-shadow: 0 12px 22px rgba(2, 132, 199, 0.24);
+}
+
+.mounted-page__tab.is-active span,
+.mounted-page__tab.is-active strong {
+  color: #fff;
+}
+
+.mounted-page__panel {
+  border: 1px dashed #bfdbfe;
+  border-radius: 0.85rem;
+  background: #f8fafc;
+  padding: 0.85rem;
+}
+
+.mounted-page__panel h4 {
+  margin: 0 0 0.4rem;
+  color: #0c4a6e;
+}
+
+.mounted-page__panel p {
+  margin: 0.38rem 0;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.mounted-page__duties ul {
+  margin: 0.55rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.mounted-page__duties li {
+  margin: 0.35rem 0;
+  color: #334155;
+  line-height: 1.56;
+}
+
+.mounted-page__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.mounted-page__chips span {
+  display: inline-flex;
+  padding: 0.35rem 0.62rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.mounted-page__contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.45rem 0 0.35rem;
+}
+
+.mounted-page__contact-links a {
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border-radius: 999px;
+  padding: 0.45rem 0.74rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .mounted-page__container {
+    width: min(96vw, 860px);
+  }
+
+  .mounted-page__principles,
+  .mounted-page__links-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .mounted-page__tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .mounted-page__hero-content h1 {
+    line-height: 1.2;
+  }
+}
