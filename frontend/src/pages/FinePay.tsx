@@ -57,7 +57,7 @@ export default function FinePay() {
 
   return (
     <section className="home-police fine-pay-page">
-      <NavBar activeLabel="Fine Pay" />
+      <NavBar />
 
       <div className="fine-pay-page__content" style={{ '--fine-pay-bg-image': `url(${finePayBg})` } as CSSProperties}>
         <div className="fine-pay-page__overlay" />

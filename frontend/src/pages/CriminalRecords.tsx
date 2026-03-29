@@ -66,7 +66,7 @@ export default function CriminalRecords() {
 
   return (
     <section className="records">
-      <NavBar activeLabel="Criminal Records" />
+      <NavBar />
 
       <div className="records__masthead">
         <p className="records__breadcrumb">Home / Criminal Records</p>
