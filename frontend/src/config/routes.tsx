@@ -3,11 +3,11 @@ import Home from '../pages/Home'
 import Dashboard from '../pages/Dashboard'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
-import AboutUs from '../pages/AboutUs'
 import NewsAwareness from '../pages/NewsAwareness'
 import FinePay from '../pages/FinePay'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
+import PoliceHistory from '../pages/PoliceHistory'
 import AdminLogin from '../pages/AdminLogin'
 import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboard from '../pages/AdminDashboard'
@@ -45,7 +45,7 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/about',
-    element: <AboutUs />,
+    element: <PoliceHistory />,
     name: 'About Us',
   },
   {
