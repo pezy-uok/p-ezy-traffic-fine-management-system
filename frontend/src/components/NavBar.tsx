@@ -61,10 +61,11 @@ export default function NavBar() {
       <div className="home-police__container home-police__menu-row">
         <button
           type="button"
-          className="home-police__menu-toggle"
+          className={`home-police__menu-toggle${menuOpen ? ' is-open' : ''}`}
           onClick={toggleMenu}
-          aria-label="Toggle menu"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={menuOpen}
+          aria-controls="primary-navigation"
         >
           <span className="home-police__menu-toggle-icon" aria-hidden="true">
             <span />
@@ -74,7 +75,7 @@ export default function NavBar() {
           <span className="home-police__menu-toggle-text">MENU</span>
         </button>
 
-        <nav className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
+        <nav id="primary-navigation" className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
           {primaryMenu.map(item => (
             <button
               key={item.label}
