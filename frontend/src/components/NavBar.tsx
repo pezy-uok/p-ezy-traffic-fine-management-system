@@ -1,11 +1,23 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import pLogo from '../assets/plogo.png'
 import './NavBar.css'
 
 interface PrimaryMenuItem {
   label: string
   path?: string
+}
+
+const isActiveMenuItem = (pathname: string, item: PrimaryMenuItem) => {
+  if (!item.path) {
+    return false
+  }
+
+  if (item.path === '/') {
+    return pathname === '/'
+  }
+
+  return pathname === item.path || pathname.startsWith(`${item.path}/`)
 }
 
 const primaryMenu: PrimaryMenuItem[] = [
@@ -19,12 +31,9 @@ const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Survey' },
 ]
 
-interface NavBarProps {
-  activeLabel?: string
-}
-
-export default function NavBar({ activeLabel }: NavBarProps) {
+export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { pathname } = useLocation()
   const navigate = useNavigate()
 
   const toggleMenu = () => {
@@ -70,8 +79,9 @@ export default function NavBar({ activeLabel }: NavBarProps) {
             <button
               key={item.label}
               type="button"
-              className={`home-police__menu-item${item.label === activeLabel ? ' is-active' : ''}`}
+              className={`home-police__menu-item${isActiveMenuItem(pathname, item) ? ' is-active' : ''}`}
               onClick={() => handleMenuItemClick(item)}
+              aria-current={isActiveMenuItem(pathname, item) ? 'page' : undefined}
             >
               {item.label}
             </button>
