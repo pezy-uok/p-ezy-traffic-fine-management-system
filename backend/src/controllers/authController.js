@@ -1,8 +1,12 @@
 import { getSupabaseClient } from '../config/supabaseClient.js';
-import { generateAccessToken } from '../utils/jwtUtils.js';
+import { generateAccessToken, generateRefreshToken, decodeToken } from '../utils/jwtUtils.js';
+import jwt from 'jsonwebtoken';
 
 // In-memory OTP storage (In production, use Redis or database)
 const otpStorage = new Map();
+
+// In-memory refresh token storage (In production, use Redis or database)
+const refreshTokenStorage = new Map();
 
 /**
  * Generate random OTP
@@ -171,7 +175,7 @@ export const verifyOTP = async (req, res, next) => {
     // Clean up OTP from storage
     otpStorage.delete(temporary_id);
 
-    // Generate JWT token
+    // Generate JWT tokens (access and refresh)
     const tokenPayload = {
       id: user.id,
       email: user.email,
@@ -181,13 +185,23 @@ export const verifyOTP = async (req, res, next) => {
       badge: user.badge_number,
     };
 
-    const token = generateAccessToken(tokenPayload);
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
 
-    // Return success response
+    // Store refresh token in memory (with expiry tracking)
+    refreshTokenStorage.set(refreshToken, {
+      userId: user.id,
+      email: user.email,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Return success response with both tokens
     return res.status(200).json({
       success: true,
       message: 'Login successful',
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -197,6 +211,99 @@ export const verifyOTP = async (req, res, next) => {
         phone: user.phone,
         badge: user.badge_number,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Refresh Access Token - Generate new access token using refresh token
+ * POST /api/auth/refresh-token
+ * Body: { refreshToken }
+ * Returns: { success, accessToken, newRefreshToken }
+ */
+export const refreshAccessToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    // Validate input
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required',
+      });
+    }
+
+    // Check if refresh token exists in storage
+    const tokenData = refreshTokenStorage.get(refreshToken);
+
+    if (!tokenData) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token. Please login again.',
+      });
+    }
+
+    // Check if refresh token has expired
+    if (Date.now() > tokenData.expiresAt) {
+      refreshTokenStorage.delete(refreshToken);
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token expired. Please login again.',
+      });
+    }
+
+    // Verify refresh token signature
+    try {
+      jwt.verify(refreshToken, process.env.JWT_SECRET || 'your-super-secret-key-change-in-production', {
+        algorithms: ['HS256'],
+      });
+    } catch (error) {
+      refreshTokenStorage.delete(refreshToken);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token. Please login again.',
+      });
+    }
+
+    // Decode refresh token to get user data
+    const decoded = decodeToken(refreshToken);
+
+    // Generate new access token
+    const newAccessToken = generateAccessToken({
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+      department: decoded.department,
+      badge: decoded.badge,
+    });
+
+    // Optionally generate new refresh token (rotate refresh token)
+    const newRefreshToken = generateRefreshToken({
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+      department: decoded.department,
+      badge: decoded.badge,
+    });
+
+    // Update refresh token storage (delete old, add new)
+    refreshTokenStorage.delete(refreshToken);
+    refreshTokenStorage.set(newRefreshToken, {
+      userId: decoded.id,
+      email: decoded.email,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Access token refreshed successfully',
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
     next(error);

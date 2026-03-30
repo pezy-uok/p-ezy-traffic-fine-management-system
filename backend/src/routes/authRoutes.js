@@ -1,5 +1,5 @@
 import express from 'express';
-import { requestOTP, verifyOTP, logout } from '../controllers/authController.js';
+import { requestOTP, verifyOTP, refreshAccessToken, logout } from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -13,11 +13,19 @@ router.post('/request-otp', requestOTP);
 
 /**
  * POST /api/auth/verify-otp
- * Step 2: Officer enters OTP → System returns JWT token
+ * Step 2: Officer enters OTP → System returns JWT tokens (access + refresh)
  * Body: { temporary_id, otp }
- * Returns: { token, user }
+ * Returns: { accessToken, refreshToken, user }
  */
 router.post('/verify-otp', verifyOTP);
+
+/**
+ * POST /api/auth/refresh-token
+ * Refresh access token using refresh token
+ * Body: { refreshToken }
+ * Returns: { accessToken, refreshToken }
+ */
+router.post('/refresh-token', refreshAccessToken);
 
 /**
  * POST /api/auth/logout
