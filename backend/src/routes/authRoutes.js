@@ -28,6 +28,14 @@ router.post('/verify-otp', verifyOTP);
 router.post('/refresh-token', refreshAccessToken);
 
 /**
+ * POST /api/auth/refresh
+ * Alias for /refresh-token (shorter endpoint)
+ * Body: { refreshToken }
+ * Returns: { accessToken, refreshToken }
+ */
+router.post('/refresh', refreshAccessToken);
+
+/**
  * POST /api/auth/logout
  * Logout (frontend discards token)
  */
