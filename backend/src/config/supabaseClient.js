@@ -9,21 +9,24 @@ let supabaseClient = null;
 export const initializeSupabaseClient = () => {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+    // Use SERVICE_ROLE_KEY for backend operations (bypasses RLS)
+    // Falls back to ANON_KEY if SERVICE_ROLE_KEY not available
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseKey) {
       console.warn('⚠️  Supabase credentials not configured');
       return null;
     }
 
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseClient = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
       },
     });
 
-    console.log('✓ Supabase REST API client initialized');
+    const keyType = process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Service Role Key' : 'Anon Key';
+    console.log(`✓ Supabase REST API client initialized (${keyType})`);
     return supabaseClient;
   } catch (error) {
     console.error('❌ Failed to initialize Supabase client:', error.message);
