@@ -50,3 +50,25 @@ export const generateRefreshToken = (payload) => {
     throw new Error(`Failed to generate refresh token: ${error.message}`);
   }
 };
+
+/**
+ * Verify JWT Token
+ * Validates the token signature and expiration
+ * @param {string} token - Token to verify
+ * @returns {Object} - Decoded payload if valid
+ * @throws {Error} - If token is invalid or expired
+ */
+export const verifyToken = (token) => {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+    return decoded;
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      throw new Error('Token has expired');
+    } else if (error.name === 'JsonWebTokenError') {
+      throw new Error('Invalid token');
+    } else {
+      throw new Error(`Token verification failed: ${error.message}`);
+    }
+  }
+};
