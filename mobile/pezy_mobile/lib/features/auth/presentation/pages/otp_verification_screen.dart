@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/index.dart';
 import '../controllers/otp_controller.dart';
+import '../utils/form_validation.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   final String email;
@@ -134,53 +135,78 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
               const SizedBox(height: AppSpacing.sectionGap),
 
-              // OTP Input Field
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
-                  border: Border.all(
-                    color: otpState.error != null
-                        ? AppColors.error
-                        : AppColors.mediumGray,
-                    width: 1.5,
-                  ),
-                ),
-                child: TextField(
-                  onChanged: otpNotifier.setOtp,
-                  maxLength: 6,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.headlineSmall.copyWith(
-                    color: AppColors.textPrimary,
-                    letterSpacing: 12,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '000000',
-                    hintStyle: AppTextStyles.headlineSmall.copyWith(
-                      color: AppColors.textTertiary,
-                      letterSpacing: 12,
+              // OTP Input Field with Validation
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.cornerRadius),
+                      border: Border.all(
+                        color: otpState.otpTouched
+                            ? (otpState.otpValidationError != null
+                                ? AppColors.error
+                                : AppColors.success)
+                            : AppColors.mediumGray,
+                        width: 1.5,
+                      ),
+                      color: otpState.otpTouched &&
+                              otpState.otpValidationError == null
+                          ? AppColors.success.withValues(alpha: 0.05)
+                          : AppColors.primaryWhite,
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.md,
+                    child: TextField(
+                      onChanged: otpNotifier.setOtp,
+                      onTap: () => otpNotifier.markOtpTouched(),
+                      maxLength: 6,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        color: AppColors.textPrimary,
+                        letterSpacing: 12,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: '000000',
+                        hintStyle: AppTextStyles.headlineSmall.copyWith(
+                          color: AppColors.textTertiary,
+                          letterSpacing: 12,
+                        ),
+                        suffixIcon: otpState.otpTouched
+                            ? Icon(
+                                otpState.otpValidationError == null
+                                    ? Icons.check_circle
+                                    : Icons.error,
+                                color: otpState.otpValidationError == null
+                                    ? AppColors.success
+                                    : AppColors.error,
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.md,
+                        ),
+                        counterText: '', // Hide character counter
+                      ),
                     ),
-                    counterText: '', // Hide character counter
                   ),
-                ),
+                  // Inline validation error
+                  if (otpState.otpTouched && otpState.otpValidationError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.sm,
+                        left: AppSpacing.sm,
+                      ),
+                      child: Text(
+                        otpState.otpValidationError!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-
-              // Error Message
-              if (otpState.error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.sm),
-                  child: Text(
-                    otpState.error!,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.error,
-                    ),
-                  ),
-                ),
 
               const SizedBox(height: AppSpacing.sectionGap),
 
@@ -189,17 +215,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: otpState.isLoading || otpState.otp.length != 6
+                  onPressed: otpState.isLoading || !otpState.isFormValid
                       ? null
                       : () {
-                          if (otpState.otp.isEmpty) {
-                            otpNotifier.setError('Please enter OTP');
-                          } else if (otpState.otp.length != 6) {
-                            otpNotifier.setError('OTP must be 6 digits');
-                          } else {
-                            _handleVerifyOtp(context, ref, otpNotifier,
-                                widget.email, otpState.otp);
-                          }
+                          // Form is valid, verify OTP
+                          _handleVerifyOtp(context, ref, otpNotifier,
+                              widget.email, otpState.otp);
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accentRed,
