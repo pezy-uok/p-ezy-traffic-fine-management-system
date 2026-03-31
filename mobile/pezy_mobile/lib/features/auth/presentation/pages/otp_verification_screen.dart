@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/index.dart';
 import '../controllers/otp_controller.dart';
 import '../utils/form_validation.dart';
+import '../providers/auth_provider.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   final String email;
@@ -327,7 +328,29 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       // Call the controller's verifyOtp method
       await otpNotifier.verifyOtp();
 
-      // On success, navigate to home/dashboard
+      // Get the updated auth state (tokens and user data are now saved)
+      final tokenStorage = ref.read(tokenStorageServiceProvider);
+      final accessToken = await tokenStorage.getAccessToken();
+      final userId = await tokenStorage.getUserId();
+      final userEmail = await tokenStorage.getUserEmail();
+      final userName = await tokenStorage.getUserName();
+
+      // Update global auth state
+      if (accessToken != null &&
+          userId != null &&
+          userEmail != null &&
+          userName != null) {
+        final authNotifier = ref.read(authProvider.notifier);
+        authNotifier.setAuthenticatedUser(
+          id: userId,
+          email: userEmail,
+          name: userName,
+          role: 'police_officer', // Default - could store actual role
+          accessToken: accessToken,
+        );
+      }
+
+      // On success, show message and navigate to home/dashboard
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -336,13 +359,16 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           ),
         );
 
-        // TODO: Navigate to home screen
+        // TODO: Delay and navigate to home screen
         // Navigator.of(context).pushReplacementNamed('/home');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Home screen coming soon'),
-          ),
-        );
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Home screen coming soon'),
+            ),
+          );
+        }
       }
     } catch (e) {
       // Error is already set in the controller
