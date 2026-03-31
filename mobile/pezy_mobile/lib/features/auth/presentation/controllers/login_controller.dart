@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/services/auth_api_service.dart';
+import '../../data/services/token_storage_service.dart';
 import '../utils/form_validation.dart';
 
 /// Login state
@@ -44,7 +47,9 @@ class LoginState {
 
 /// Login state notifier
 class LoginNotifier extends StateNotifier<LoginState> {
-  LoginNotifier() : super(LoginState());
+  final AuthRepository _authRepository;
+
+  LoginNotifier(this._authRepository) : super(LoginState());
 
   void setEmail(String email) {
     // Validate email in real-time
@@ -64,6 +69,29 @@ class LoginNotifier extends StateNotifier<LoginState> {
       emailTouched: true,
       emailValidationError: validationError,
     );
+  }
+
+  /// Request OTP - Call backend API
+  /// Returns temporary_id if successful
+  Future<String> requestOtp() async {
+    setLoading(true);
+    clearError();
+
+    try {
+      // Step 1: Verify email exists
+      await _authRepository.verifyEmail(state.email);
+
+      // Step 2: Request OTP
+      final temporaryId = await _authRepository.requestOtp(state.email);
+
+      setLoading(false);
+      setOtpRequested(true);
+      return temporaryId;
+    } catch (e) {
+      setLoading(false);
+      setError(e.toString().replaceFirst('Exception: ', ''));
+      rethrow;
+    }
   }
 
   void setOtpRequested(bool requested) {
@@ -87,7 +115,16 @@ class LoginNotifier extends StateNotifier<LoginState> {
   }
 }
 
+/// Auth repository provider
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return AuthRepository(
+    apiService: AuthApiService(),
+    tokenStorage: TokenStorageService(),
+  );
+});
+
 /// Login state provider
 final loginProvider = StateNotifierProvider<LoginNotifier, LoginState>((ref) {
-  return LoginNotifier();
+  final authRepository = ref.watch(authRepositoryProvider);
+  return LoginNotifier(authRepository);
 });
