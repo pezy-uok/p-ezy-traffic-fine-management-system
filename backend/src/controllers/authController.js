@@ -345,3 +345,58 @@ export const logout = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get Current User - Fetch authenticated user's profile
+ * GET /api/auth/me
+ * Headers: { Authorization: Bearer <token> }
+ * Returns: { success, user }
+ */
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    // User info is already attached to request by authenticate middleware
+    const user = req.user;
+
+    if (!user || !user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
+
+    // Fetch fresh user data from database to get latest status (is_online, last_login_at)
+    const supabase = getSupabaseClient();
+    const { data: freshUserData, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error || !freshUserData) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Return user profile with fresh data
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: freshUserData.id,
+        email: freshUserData.email,
+        name: freshUserData.name,
+        role: freshUserData.role,
+        phone: freshUserData.phone,
+        department: freshUserData.department,
+        badge_number: freshUserData.badge_number,
+        is_active: freshUserData.is_active,
+        is_online: freshUserData.is_online,
+        last_login_at: freshUserData.last_login_at,
+        last_logout_at: freshUserData.last_logout_at,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
