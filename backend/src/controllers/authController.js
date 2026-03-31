@@ -425,3 +425,77 @@ export const getCurrentUser = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Verify Email - Check if email is registered and eligible for login
+ * POST /api/auth/verify
+ * Body: { email }
+ * Returns: { success, exists: true/false, message, user: {...} }
+ */
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // Validate input
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    const supabase = getSupabaseClient();
+
+    // Query user from database
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    // User doesn't exist
+    if (error || !user) {
+      return res.status(200).json({
+        success: true,
+        exists: false,
+        message: 'Email not registered in the system',
+      });
+    }
+
+    // Check if user has eligible role (police_officer or admin)
+    if (user.role !== 'admin' && user.role !== 'police_officer') {
+      return res.status(200).json({
+        success: true,
+        exists: false,
+        message: 'This email is not eligible for police officer login',
+      });
+    }
+
+    // Check if user is active
+    if (user.is_active === false) {
+      return res.status(200).json({
+        success: true,
+        exists: true,
+        active: false,
+        message: 'Account is inactive. Please contact administrator.',
+      });
+    }
+
+    // User exists, is active, and has correct role
+    return res.status(200).json({
+      success: true,
+      exists: true,
+      active: true,
+      message: 'Email found. Proceed to OTP verification.',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        department: user.department,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

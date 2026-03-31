@@ -1,8 +1,16 @@
 import express from 'express';
-import { requestOTP, verifyOTP, refreshAccessToken, logout, getCurrentUser } from '../controllers/authController.js';
+import { requestOTP, verifyOTP, refreshAccessToken, logout, getCurrentUser, verifyEmail } from '../controllers/authController.js';
 import { authenticate } from '../middlewares/authenticate.js';
 
 const router = express.Router();
+
+/**
+ * POST /api/auth/verify
+ * Check if email is registered and eligible for login
+ * Body: { email }
+ * Returns: { success, exists: true/false, message, user: {...} }
+ */
+router.post('/verify', verifyEmail);
 
 /**
  * POST /api/auth/request-otp
