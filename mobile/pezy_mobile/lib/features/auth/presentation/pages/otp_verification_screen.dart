@@ -7,10 +7,12 @@ import '../utils/form_validation.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   final String email;
+  final String temporaryId;
 
   const OtpVerificationScreen({
     super.key,
     required this.email,
+    required this.temporaryId,
   });
 
   @override
@@ -30,14 +32,14 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
   void _startResendTimer() {
     _resendCountdown = 60;
-    ref.read(otpProvider(widget.email).notifier).setResendCountdown(60);
+    ref.read(otpProvider((email: widget.email, temporaryId: widget.temporaryId)).notifier).setResendCountdown(60);
 
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _resendCountdown--;
       });
       ref
-          .read(otpProvider(widget.email).notifier)
+          .read(otpProvider((email: widget.email, temporaryId: widget.temporaryId)).notifier)
           .setResendCountdown(_resendCountdown);
 
       if (_resendCountdown <= 0) {
@@ -54,8 +56,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final otpState = ref.watch(otpProvider(widget.email));
-    final otpNotifier = ref.read(otpProvider(widget.email).notifier);
+    final otpState = ref.watch(otpProvider((email: widget.email, temporaryId: widget.temporaryId)));
+    final otpNotifier = ref.read(otpProvider((email: widget.email, temporaryId: widget.temporaryId)).notifier);
 
     return Scaffold(
       backgroundColor: AppColors.primaryWhite,
@@ -320,43 +322,74 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     OtpNotifier otpNotifier,
     String email,
     String otp,
-  ) {
-    // TODO: Implement OTP verification API call using the backend endpoint:
-    // POST /api/auth/verify-otp with { email, otp }
-    // On success:
-    // - Store JWT tokens (accessToken, refreshToken)
-    // - Navigate to home/dashboard screen
-    // On error:
-    // - Display error message
+  ) async {
+    try {
+      // Call the controller's verifyOtp method
+      await otpNotifier.verifyOtp();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('OTP verification functionality coming soon'),
-      ),
-    );
+      // On success, navigate to home/dashboard
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login successful! Redirecting...'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
+        // TODO: Navigate to home screen
+        // Navigator.of(context).pushReplacementNamed('/home');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Home screen coming soon'),
+          ),
+        );
+      }
+    } catch (e) {
+      // Error is already set in the controller
+      // Show error in snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _handleResendOtp(
     BuildContext context,
     WidgetRef ref,
     OtpNotifier otpNotifier,
-  ) {
-    // TODO: Implement resend OTP API call using the backend endpoint:
-    // POST /api/auth/request-otp with { email }
-    // On success:
-    // - Restart the 60-second countdown timer
-    // - Clear any previous error messages
-    // On error:
-    // - Display error message
+  ) async {
+    try {
+      // Call the controller's resendOtp method
+      await otpNotifier.resendOtp();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Resend OTP functionality coming soon'),
-      ),
-    );
+      // On success, restart the countdown timer
+      _resendTimer.cancel();
+      _startResendTimer();
 
-    // Restart the countdown timer
-    _resendTimer.cancel();
-    _startResendTimer();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('OTP sent again to your registered mobile number'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      // Error is already set in the controller
+      // Show error in snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }

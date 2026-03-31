@@ -252,21 +252,34 @@ class LoginScreen extends ConsumerWidget {
     WidgetRef ref,
     LoginNotifier loginNotifier,
     String email,
-  ) {
-    // TODO: Implement OTP request API call using the backend endpoint:
-    // POST /api/auth/request-otp with { email }
-    // On success:
-    // - Set otpRequested = true in controller
-    // - Navigate to OTP verification screen with email parameter
-    // On error:
-    // - Display error message in snackbar
+  ) async {
+    try {
+      // Call the controller's requestOtp method
+      final temporaryId = await loginNotifier.requestOtp();
 
-    // For now, navigate directly to OTP verification screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OtpVerificationScreen(email: email),
-      ),
-    );
+      // On success, navigate to OTP verification screen
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(
+              email: email,
+              temporaryId: temporaryId,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Error is already set in the controller
+      // Show error in snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
