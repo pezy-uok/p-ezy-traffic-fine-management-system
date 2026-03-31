@@ -43,10 +43,44 @@ class AuthError extends AppError {
   }
 }
 
+/**
+ * Token Expired Error - Specific auth error for expired JWT tokens
+ */
+class TokenExpiredError extends AppError {
+  constructor(message = 'Token has expired. Please refresh or login again.') {
+    super(message, 401);
+    this.name = 'TokenExpiredError';
+    this.errorType = 'TOKEN_EXPIRED';
+  }
+}
+
+/**
+ * Invalid Token Error - Specific auth error for malformed/invalid tokens
+ */
+class InvalidTokenError extends AppError {
+  constructor(message = 'Invalid or malformed token.') {
+    super(message, 401);
+    this.name = 'InvalidTokenError';
+    this.errorType = 'INVALID_TOKEN';
+  }
+}
+
+/**
+ * Unauthorized Error - Specific auth error for missing/invalid credentials
+ */
+class UnauthorizedError extends AppError {
+  constructor(message = 'Unauthorized. Please provide valid credentials.') {
+    super(message, 401);
+    this.name = 'UnauthorizedError';
+    this.errorType = 'UNAUTHORIZED';
+  }
+}
+
 class ForbiddenError extends AppError {
-  constructor(message = 'Access forbidden') {
+  constructor(message = 'Access forbidden. Insufficient permissions.') {
     super(message, 403);
     this.name = 'ForbiddenError';
+    this.errorType = 'FORBIDDEN';
   }
 }
 
@@ -61,6 +95,18 @@ class ConflictError extends AppError {
   constructor(message = 'Resource conflict') {
     super(message, 409);
     this.name = 'ConflictError';
+  }
+}
+
+/**
+ * Rate Limit Error - Too many requests
+ */
+class RateLimitError extends AppError {
+  constructor(message = 'Too many requests. Please try again later.', retryAfter = null) {
+    super(message, 429);
+    this.name = 'RateLimitError';
+    this.errorType = 'RATE_LIMIT';
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -82,9 +128,13 @@ export {
   AppError,
   ValidationError,
   AuthError,
+  TokenExpiredError,
+  InvalidTokenError,
+  UnauthorizedError,
   ForbiddenError,
   NotFoundError,
   ConflictError,
+  RateLimitError,
   InternalServerError,
   ServiceUnavailableError,
 };
