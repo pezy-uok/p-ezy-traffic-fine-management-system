@@ -8,6 +8,11 @@ const otpStorage = new Map();
 // In-memory refresh token storage (In production, use Redis or database)
 const refreshTokenStorage = new Map();
 
+// In-memory OTP request rate limiting (tracks last request time per email)
+const otpRequestLimiter = new Map(); // { email: timestamp }
+
+const OTP_COOLDOWN_SECONDS = 60; // 60 second cooldown between OTP requests
+
 /**
  * Generate random OTP
  */
@@ -66,6 +71,23 @@ export const requestOTP = async (req, res, next) => {
       });
     }
 
+    // Check OTP rate limiting - prevent spam
+    const lastRequestTime = otpRequestLimiter.get(email);
+    const now = Date.now();
+    
+    if (lastRequestTime) {
+      const secondsElapsed = Math.floor((now - lastRequestTime) / 1000);
+      const remainingSeconds = OTP_COOLDOWN_SECONDS - secondsElapsed;
+      
+      if (remainingSeconds > 0) {
+        return res.status(429).json({
+          success: false,
+          message: `Too many OTP requests. Please wait ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''} before requesting another OTP.`,
+          retryAfter: remainingSeconds,
+        });
+      }
+    }
+
     // Generate OTP
     const otp = generateOTP();
     const temporaryId = `otp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -80,6 +102,9 @@ export const requestOTP = async (req, res, next) => {
       expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
       attempts: 0,
     });
+
+    // Track OTP request time for rate limiting
+    otpRequestLimiter.set(email, Date.now());
 
     // TODO: Send OTP to phone number via SMS (integrate with SMS service)
     console.log(`📱 OTP sent to ${user.phone}: ${otp}`);
