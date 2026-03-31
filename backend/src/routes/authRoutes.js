@@ -1,5 +1,6 @@
 import express from 'express';
-import { requestOTP, verifyOTP, refreshAccessToken, logout } from '../controllers/authController.js';
+import { requestOTP, verifyOTP, refreshAccessToken, logout, getCurrentUser } from '../controllers/authController.js';
+import { authenticate } from '../middlewares/authenticate.js';
 
 const router = express.Router();
 
@@ -18,6 +19,14 @@ router.post('/request-otp', requestOTP);
  * Returns: { accessToken, refreshToken, user }
  */
 router.post('/verify-otp', verifyOTP);
+
+/**
+ * GET /api/auth/me
+ * Get current authenticated user's profile
+ * Headers: { Authorization: Bearer <token> }
+ * Returns: { success, user }
+ */
+router.get('/me', authenticate, getCurrentUser);
 
 /**
  * POST /api/auth/refresh-token
