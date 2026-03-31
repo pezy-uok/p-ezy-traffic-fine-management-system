@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/index.dart';
 import '../controllers/login_controller.dart';
+import '../utils/form_validation.dart';
 import 'otp_verification_screen.dart';
 
 class LoginScreen extends ConsumerWidget {
@@ -51,38 +52,82 @@ class LoginScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sectionGap),
 
               // Email/Username Input Field
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
-                  border: Border.all(
-                    color: loginState.error != null
-                        ? AppColors.error
-                        : AppColors.mediumGray,
-                    width: 1.5,
-                  ),
-                ),
-                child: TextField(
-                  onChanged: loginNotifier.setEmail,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Username/ID No',
-                    hintStyle: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textTertiary,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.cornerRadius),
+                      border: Border.all(
+                        color: loginState.emailTouched
+                            ? (loginState
+                                    .emailValidationError !=
+                                null
+                                ? AppColors.error
+                                : AppColors.success)
+                            : AppColors.mediumGray,
+                        width: 1.5,
+                      ),
+                      color: loginState.emailTouched &&
+                              loginState.emailValidationError == null
+                          ? AppColors.success.withValues(alpha: 0.05)
+                          : AppColors.primaryWhite,
                     ),
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: AppColors.textSecondary,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.md,
+                    child: TextField(
+                      onChanged: loginNotifier.setEmail,
+                      onTap: () => loginNotifier.markEmailTouched(),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Email or ID Number',
+                        hintStyle: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: loginState.emailTouched
+                              ? (loginState.emailValidationError != null
+                                  ? AppColors.error
+                                  : AppColors.success)
+                              : AppColors.textSecondary,
+                        ),
+                        suffixIcon: loginState.emailTouched
+                            ? Icon(
+                                loginState.emailValidationError == null
+                                    ? Icons.check_circle
+                                    : Icons.error,
+                                color: loginState.emailValidationError == null
+                                    ? AppColors.success
+                                    : AppColors.error,
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.md,
+                        ),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
                     ),
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
+                  // Inline validation error
+                  if (loginState.emailTouched &&
+                      loginState.emailValidationError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.sm,
+                        left: AppSpacing.sm,
+                      ),
+                      child: Text(
+                        loginState.emailValidationError!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                ],
               ),
 
               const SizedBox(height: AppSpacing.sectionGap),
@@ -126,16 +171,12 @@ class LoginScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: loginState.isLoading
+                  onPressed: loginState.isLoading || !loginState.isFormValid
                       ? null
                       : () {
-                          // Validate email
-                          if (loginState.email.isEmpty) {
-                            loginNotifier.setError('Please enter your email or ID');
-                          } else {
-                            // Call request OTP
-                            _handleRequestOtp(context, ref, loginNotifier, loginState.email);
-                          }
+                          // Form is valid, request OTP
+                          _handleRequestOtp(context, ref, loginNotifier,
+                              loginState.email);
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accentRed,
