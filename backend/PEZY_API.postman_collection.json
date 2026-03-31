@@ -9,6 +9,29 @@
       "name": "Authentication",
       "item": [
         {
+          "name": "0. Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"officer.bandara@pezy.gov\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "verify"]
+            },
+            "description": "Step 0 (Optional): Verify if email is registered before requesting OTP\n\nReturns:\n- exists: true/false\n- active: true/false\n- message: descriptive error/success message\n\nTest Users:\n- admin@pezy.gov\n- officer.bandara@pezy.gov\n- officer.silva@pezy.gov\n- officer.fernando@pezy.gov"
+          },
+          "response": []
+        },
+        {
           "name": "1. Request OTP",
           "event": [
             {
@@ -42,7 +65,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "auth", "request-otp"]
             },
-            "description": "Step 1: Request OTP for login\n\nTest Users:\n- admin@pezy.gov\n- officer.bandara@pezy.gov\n- officer.silva@pezy.gov\n- officer.fernando@pezy.gov"
+            "description": "Step 1: Request OTP for login\n\nRate Limited: 60 second cooldown between requests\n\nTest Users:\n- admin@pezy.gov\n- officer.bandara@pezy.gov\n- officer.silva@pezy.gov\n- officer.fernando@pezy.gov"
           },
           "response": []
         },
@@ -88,7 +111,26 @@
           "response": []
         },
         {
-          "name": "3. Refresh Access Token",
+          "name": "3. Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get current authenticated user's profile\n\nRequires: Valid access token in Authorization header\n\nReturns:\n- User profile (id, email, name, role, department, badge_number, phone, is_online, last_login_at, last_logout_at)"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Refresh Access Token",
           "event": [
             {
               "listen": "test",
@@ -121,12 +163,50 @@
               "host": ["{{base_url}}"],
               "path": ["api", "auth", "refresh-token"]
             },
-            "description": "Refresh access token using refresh token\n\nThis endpoint returns new access and refresh tokens"
+            "description": "Refresh access token using refresh token\n\nThis endpoint returns new access and refresh tokens (token rotation)"
           },
           "response": []
         },
         {
-          "name": "4. Logout",
+          "name": "4b. Refresh (Alias)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "    console.log('New access token obtained');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Shorter alias for refresh-token endpoint\n\nSame functionality as /refresh-token"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Logout",
           "request": {
             "method": "POST",
             "header": [
@@ -148,7 +228,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "auth", "logout"]
             },
-            "description": "Logout and mark user as offline"
+            "description": "Logout and mark user as offline\n\nRequires: Valid access token"
           },
           "response": []
         }
@@ -158,10 +238,14 @@
       "name": "Users",
       "item": [
         {
-          "name": "Create User",
+          "name": "Create User (Admin Only)",
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -176,7 +260,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "users", "create"]
             },
-            "description": "Create a new user"
+            "description": "Create a new user\n\nRequires: Admin role\nAuth: Bearer token required"
           },
           "response": []
         },
@@ -195,7 +279,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "users", "all"]
             },
-            "description": "Get all users (admin only)"
+            "description": "Get all users (public endpoint - no auth required)"
           },
           "response": []
         },
@@ -214,7 +298,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "users", "{{userId}}"]
             },
-            "description": "Get specific user details"
+            "description": "Get specific user details\n\nRequires: Authentication (any authenticated user)"
           },
           "response": []
         },
@@ -241,7 +325,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "users", "{{userId}}"]
             },
-            "description": "Update user information"
+            "description": "Update user information\n\nRequires: Authentication (any authenticated user)"
           },
           "response": []
         },
@@ -260,7 +344,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "users", "{{userId}}"]
             },
-            "description": "Delete a user"
+            "description": "Delete a user\n\nRequires: Authentication (any authenticated user)"
           },
           "response": []
         }
