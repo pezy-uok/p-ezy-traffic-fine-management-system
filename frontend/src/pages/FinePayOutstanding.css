@@ -1,3 +1,7 @@
+.fine-pay-outstanding-card h4,
+.fine-pay-outstanding-card p {
+  text-align: left;
+}
 .fine-pay-outstanding-page {
   padding-bottom: 0;
 }
@@ -9,7 +13,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  padding: 1.5rem 1rem 6.5rem;
+  padding: 1.5rem 1rem 2rem;
 }
 
 .fine-pay-outstanding-page__overlay {
@@ -47,6 +51,10 @@
   justify-content: space-between;
   gap: 1rem;
   margin-top: 0.25rem;
+}
+
+.fine-pay-outstanding-header__row > div {
+  text-align: left;
 }
 
 .fine-pay-outstanding-header h2 {
@@ -91,7 +99,7 @@
   border-radius: 999px;
   padding: 0.35rem 0.55rem;
   background: rgba(255, 255, 255, 0.72);
-  color: #ffffff;
+  color: #212121;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -102,15 +110,18 @@
 }
 
 .fine-pay-outstanding-card {
-  border: 1.5px solid #2f8fe3;
+  border: 1.5px solid rgba(47, 143, 227, 0.45);
   border-radius: 0.85rem;
-  background: rgba(245, 248, 252, 0.88);
+  background: rgba(238, 244, 251, 0.72);
   padding: 0.95rem 1rem;
-  box-shadow: 0 8px 20px rgba(37, 99, 141, 0.08);
+  box-shadow: 0 5px 12px rgba(37, 99, 141, 0.06);
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
 
 .fine-pay-outstanding-card.is-selected {
+  border-color: #1e88e5;
   background: rgba(250, 252, 255, 0.96);
+  box-shadow: 0 10px 22px rgba(37, 99, 141, 0.14);
 }
 
 .fine-pay-outstanding-card__top {
@@ -172,18 +183,21 @@
 .fine-pay-outstanding-card__check {
   width: 1.45rem;
   height: 1.45rem;
-  border: 0;
+  border: 2px solid #9abddf;
   border-radius: 50%;
-  background: #2a99ea;
+  background: #f4f8fc;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: transparent;
   cursor: pointer;
+  transition: all 180ms ease;
 }
 
 .fine-pay-outstanding-card__check.is-selected {
   background: #1e88e5;
+  border-color: #1e88e5;
+  color: #fff;
 }
 
 .fine-pay-outstanding-card__check-mark {
@@ -225,18 +239,15 @@
 }
 
 .fine-pay-outstanding-footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 20;
+  margin-top: 1.15rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
   padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 -8px 24px rgba(19, 32, 53, 0.08);
+  box-shadow: 0 10px 24px rgba(19, 32, 53, 0.1);
 }
 
 .fine-pay-outstanding-footer div {
@@ -273,7 +284,7 @@
 
 @media (max-width: 680px) {
   .fine-pay-outstanding-page__content {
-    padding: 1rem 0.8rem 6rem;
+    padding: 1rem 0.8rem 1.5rem;
   }
 
   .fine-pay-outstanding-header__row {

@@ -140,23 +140,23 @@ export default function FinePayOutstanding() {
               the offense date.
             </p>
           </div>
+
+          <footer className="fine-pay-outstanding-footer" aria-label="Payment summary">
+            <div>
+              <span>{selectedFineIds.length} fines selected</span>
+              <strong>{formatCurrency(totalAmount)}</strong>
+            </div>
+
+            <button
+              type="button"
+              className="fine-pay-outstanding-footer__button"
+              onClick={handlePayNow}
+              disabled={selectedFineIds.length === 0}
+            >
+              Pay Now
+            </button>
+          </footer>
         </div>
-
-        <footer className="fine-pay-outstanding-footer" aria-label="Payment summary">
-          <div>
-            <span>{selectedFineIds.length} fines selected</span>
-            <strong>{formatCurrency(totalAmount)}</strong>
-          </div>
-
-          <button
-            type="button"
-            className="fine-pay-outstanding-footer__button"
-            onClick={handlePayNow}
-            disabled={selectedFineIds.length === 0}
-          >
-            Pay Now
-          </button>
-        </footer>
       </div>
     </section>
   )
