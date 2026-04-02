@@ -1,0 +1,163 @@
+.fine-pay-failure-page {
+  padding-bottom: 0;
+}
+
+.fine-pay-failure-page__content {
+  min-height: clamp(30rem, 70vh, 43rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.2rem 1rem 3rem;
+  background: linear-gradient(180deg, #dce8f8 0%, #c7d8ee 100%);
+}
+
+.fine-pay-failure-card {
+  width: min(100%, 27rem);
+  text-align: center;
+}
+
+.fine-pay-failure-card__icon {
+  margin: 0 auto;
+  width: 3.7rem;
+  height: 3.7rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffd8d6;
+  color: #c92a2a;
+}
+
+.fine-pay-failure-card__icon-mark {
+  position: relative;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.fine-pay-failure-card__icon-mark::before,
+.fine-pay-failure-card__icon-mark::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.2rem;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.fine-pay-failure-card__icon-mark::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.fine-pay-failure-card__icon-mark::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.fine-pay-failure-card h2 {
+  margin-top: 1.2rem;
+  margin-bottom: 0;
+  color: #162339;
+  font-size: clamp(1.65rem, 3vw, 2rem);
+  font-weight: 800;
+}
+
+.fine-pay-failure-card p {
+  margin: 0.7rem auto 1.4rem;
+  max-width: 23rem;
+  color: #4f647f;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.fine-pay-failure-summary {
+  border-radius: 0.7rem;
+  background: #f7f7f7;
+  border-top: 4px solid #ef4444;
+  box-shadow: 0 10px 24px rgba(22, 35, 57, 0.08);
+  padding: 1.1rem 1.1rem 1rem;
+  text-align: left;
+}
+
+.fine-pay-failure-summary__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #5c6f86;
+  font-size: 0.84rem;
+  padding: 0.42rem 0;
+}
+
+.fine-pay-failure-summary__row span:last-child {
+  color: #26384f;
+}
+
+.fine-pay-failure-summary__row--amount strong {
+  color: #162339;
+  font-size: 1.58rem;
+}
+
+.fine-pay-failure-card__retry {
+  margin-top: 1.2rem;
+  width: 100%;
+  min-height: 2.9rem;
+  border: 0;
+  border-radius: 0.58rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fine-pay-failure-card__retry:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.32);
+}
+
+.fine-pay-failure-card__retry:active {
+  transform: translateY(0);
+}
+
+.fine-pay-failure-card__secondary-link {
+  margin-top: 1rem;
+  display: inline-block;
+  color: #1e5ed8;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fine-pay-failure-card__secondary-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 680px) {
+  .fine-pay-failure-page__content {
+    min-height: 27rem;
+    padding: 1.4rem 0.8rem 1.8rem;
+  }
+
+  .fine-pay-failure-card h2 {
+    font-size: 1.45rem;
+  }
+
+  .fine-pay-failure-card p {
+    font-size: 0.88rem;
+  }
+
+  .fine-pay-failure-summary {
+    padding-inline: 0.9rem;
+  }
+
+  .fine-pay-failure-summary__row--amount strong {
+    font-size: 1.35rem;
+  }
+}
