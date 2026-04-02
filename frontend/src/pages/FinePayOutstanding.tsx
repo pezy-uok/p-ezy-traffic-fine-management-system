@@ -40,6 +40,13 @@ const fines: FineItem[] = [
 
 const formatCurrency = (value: number) => `LKR ${value.toLocaleString('en-LK')}`
 
+const formatFineDate = (value: string) =>
+  new Date(value).toLocaleDateString('en-LK', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+
 export default function FinePayOutstanding() {
   const navigate = useNavigate()
   const [selectedFineIds, setSelectedFineIds] = useState<string[]>(fines.map(fine => fine.id))
@@ -101,9 +108,22 @@ export default function FinePayOutstanding() {
               const isSelected = selectedFineIds.includes(fine.id)
 
               return (
-                <article className={`fine-pay-outstanding-card${isSelected ? ' is-selected' : ''}`} key={fine.id}>
+                <label
+                  className={`fine-pay-outstanding-card${isSelected ? ' is-selected' : ''}`}
+                  key={fine.id}
+                  htmlFor={fine.id}
+                >
+                  <input
+                    id={fine.id}
+                    type="checkbox"
+                    className="fine-pay-outstanding-card__input"
+                    checked={isSelected}
+                    onChange={() => toggleFine(fine.id)}
+                    aria-label={isSelected ? `Remove ${fine.title}` : `Select ${fine.title}`}
+                  />
+
                   <div className="fine-pay-outstanding-card__top">
-                    <div>
+                    <div className="fine-pay-outstanding-card__title-group">
                       <h4>{fine.title}</h4>
                       <p>{fine.details}</p>
                     </div>
@@ -115,18 +135,12 @@ export default function FinePayOutstanding() {
                   </div>
 
                   <div className="fine-pay-outstanding-card__meta">
-                    <span>{fine.date}</span>
-                    <button
-                      type="button"
-                      className={`fine-pay-outstanding-card__check${isSelected ? ' is-selected' : ''}`}
-                      onClick={() => toggleFine(fine.id)}
-                      aria-pressed={isSelected}
-                      aria-label={isSelected ? `Remove ${fine.title}` : `Select ${fine.title}`}
-                    >
-                      <span className="fine-pay-outstanding-card__check-mark" aria-hidden="true" />
-                    </button>
+                    <span>Issued {formatFineDate(fine.date)}</span>
+                    <span className={`fine-pay-outstanding-card__check${isSelected ? ' is-selected' : ''}`} aria-hidden="true">
+                      <span className="fine-pay-outstanding-card__check-mark" />
+                    </span>
                   </div>
-                </article>
+                </label>
               )
             })}
           </div>
