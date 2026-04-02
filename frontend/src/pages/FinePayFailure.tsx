@@ -53,8 +53,8 @@ export default function FinePayFailure() {
             Try Payment Again
           </Link>
 
-          <Link to="/dashboard" className="fine-pay-failure-card__secondary-link">
-            Back to Dashboard
+          <Link to="/" className="fine-pay-failure-card__secondary-link">
+            Back to Home
           </Link>
         </article>
       </div>
