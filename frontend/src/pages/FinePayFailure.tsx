@@ -39,11 +39,6 @@ export default function FinePayFailure() {
             </div>
 
             <div className="fine-pay-failure-summary__row">
-              <span>Reference ID</span>
-              <span>TRX-291763</span>
-            </div>
-
-            <div className="fine-pay-failure-summary__row">
               <span>Reason</span>
               <span>Card authorization failed</span>
             </div>
