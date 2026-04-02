@@ -55,7 +55,7 @@ export default function FinePay() {
     }
 
     setLicenseError('')
-    navigate('/fine-pay/success')
+    navigate('/fine-pay/outstanding')
   }
 
   return (
