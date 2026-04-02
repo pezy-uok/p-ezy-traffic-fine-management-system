@@ -1,0 +1,298 @@
+.fine-pay-outstanding-page {
+  padding-bottom: 0;
+}
+
+.fine-pay-outstanding-page__content {
+  position: relative;
+  min-height: calc(100svh - 4.5rem);
+  background-image: var(--fine-pay-outstanding-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 1.5rem 1rem 6.5rem;
+}
+
+.fine-pay-outstanding-page__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(208, 227, 245, 0.9) 0%, rgba(193, 219, 242, 0.95) 100%);
+}
+
+.fine-pay-outstanding-page__shell {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 42rem);
+  margin: 0 auto;
+}
+
+.fine-pay-outstanding-header {
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, #2a99ea 0%, #2196f3 100%);
+  color: #fff;
+  padding: 1rem 1rem 0.9rem;
+  box-shadow: 0 14px 28px rgba(33, 150, 243, 0.18);
+}
+
+.fine-pay-outstanding-header__eyebrow {
+  margin: 0;
+  font-size: 0.69rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.fine-pay-outstanding-header__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.fine-pay-outstanding-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+}
+
+.fine-pay-outstanding-header p {
+  margin-top: 0.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.82rem;
+}
+
+.fine-pay-outstanding-header__status {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.36rem 0.7rem;
+  background: rgba(255, 255, 255, 0.18);
+  color: #d9ffe8;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.fine-pay-outstanding-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem 0 0.6rem;
+}
+
+.fine-pay-outstanding-list__header h3 {
+  margin: 0;
+  color: #152238;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.fine-pay-outstanding-list__header span {
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.fine-pay-outstanding-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fine-pay-outstanding-card {
+  border: 1.5px solid #2f8fe3;
+  border-radius: 0.85rem;
+  background: rgba(245, 248, 252, 0.88);
+  padding: 0.95rem 1rem;
+  box-shadow: 0 8px 20px rgba(37, 99, 141, 0.08);
+}
+
+.fine-pay-outstanding-card.is-selected {
+  background: rgba(250, 252, 255, 0.96);
+}
+
+.fine-pay-outstanding-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.fine-pay-outstanding-card h4 {
+  margin: 0;
+  color: #132035;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.fine-pay-outstanding-card p {
+  margin-top: 0.25rem;
+  color: rgba(19, 32, 53, 0.28);
+  font-size: 0.76rem;
+}
+
+.fine-pay-outstanding-card__amount-group {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.fine-pay-outstanding-card__amount-group strong {
+  display: block;
+  color: #132035;
+  font-size: 0.95rem;
+}
+
+.fine-pay-outstanding-card__tag {
+  display: inline-flex;
+  margin-top: 0.2rem;
+  border-radius: 999px;
+  padding: 0.16rem 0.45rem;
+  background: rgba(255, 122, 89, 0.15);
+  color: #ff6b4a;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.fine-pay-outstanding-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(167, 193, 223, 0.55);
+}
+
+.fine-pay-outstanding-card__meta span {
+  color: rgba(19, 32, 53, 0.28);
+  font-size: 0.72rem;
+}
+
+.fine-pay-outstanding-card__check {
+  width: 1.45rem;
+  height: 1.45rem;
+  border: 0;
+  border-radius: 50%;
+  background: #2a99ea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+}
+
+.fine-pay-outstanding-card__check.is-selected {
+  background: #1e88e5;
+}
+
+.fine-pay-outstanding-card__check-mark {
+  width: 0.42rem;
+  height: 0.72rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(40deg) translateY(-1px);
+}
+
+.fine-pay-outstanding-note {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border-radius: 0.55rem;
+  background: rgba(255, 248, 232, 0.95);
+  margin-top: 1rem;
+  padding: 0.85rem 0.9rem;
+  color: #b15c20;
+}
+
+.fine-pay-outstanding-note__icon {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.fine-pay-outstanding-note p {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.fine-pay-outstanding-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -8px 24px rgba(19, 32, 53, 0.08);
+}
+
+.fine-pay-outstanding-footer div {
+  text-align: center;
+}
+
+.fine-pay-outstanding-footer span {
+  display: block;
+  color: #9aa7b8;
+  font-size: 0.7rem;
+}
+
+.fine-pay-outstanding-footer strong {
+  color: #132035;
+  font-size: 1rem;
+}
+
+.fine-pay-outstanding-footer__button {
+  min-width: 8.5rem;
+  min-height: 2.3rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: linear-gradient(135deg, #2b9bf0 0%, #1579d6 100%);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fine-pay-outstanding-footer__button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 680px) {
+  .fine-pay-outstanding-page__content {
+    padding: 1rem 0.8rem 6rem;
+  }
+
+  .fine-pay-outstanding-header__row {
+    align-items: flex-start;
+  }
+
+  .fine-pay-outstanding-card__top {
+    gap: 0.8rem;
+  }
+
+  .fine-pay-outstanding-card h4 {
+    font-size: 0.88rem;
+  }
+
+  .fine-pay-outstanding-card__amount-group strong {
+    font-size: 0.88rem;
+  }
+
+  .fine-pay-outstanding-footer {
+    justify-content: space-between;
+  }
+}
