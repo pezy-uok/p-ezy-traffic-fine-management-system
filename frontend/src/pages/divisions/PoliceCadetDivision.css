@@ -1,0 +1,149 @@
+.cadet-page {
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
+  min-height: 100vh;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.cadet-page__hero {
+  min-height: clamp(18rem, 42vw, 29rem);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(1.2rem, 4vw, 2.9rem);
+}
+
+.cadet-page__hero-content {
+  max-width: 760px;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.33);
+  border: 1px solid rgba(248, 250, 252, 0.24);
+  border-radius: 1rem;
+  padding: clamp(1rem, 2.6vw, 1.55rem);
+  backdrop-filter: blur(2px);
+}
+
+.cadet-page__eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+  color: rgba(248, 250, 252, 0.84);
+}
+
+.cadet-page__hero-content h1 {
+  margin: 0.4rem 0 0.6rem;
+  color: #f8fafc;
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  line-height: 1.14;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  max-width: 16ch;
+}
+
+.cadet-page__hero-content p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.cadet-page__container {
+  width: min(1450px, 95vw);
+  margin: 0 auto;
+  padding: clamp(1.2rem, 3.8vw, 2.7rem) 0 clamp(2rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cadet-page__intro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.cadet-page__card,
+.cadet-page__history,
+.cadet-page__duties,
+.cadet-page__regions {
+  background: #fff;
+  border-radius: 1rem;
+  border: 1px solid #cbd5e1;
+  padding: 1rem;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.cadet-page__card h2 {
+  margin: 0 0 0.45rem;
+  color: #0c4a6e;
+}
+
+.cadet-page__card p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.58;
+}
+
+.cadet-page__section-head h3 {
+  margin: 0.35rem 0 0.5rem;
+  color: #0c4a6e;
+}
+
+.cadet-page__history p {
+  margin: 0.42rem 0;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.cadet-page__duties ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.cadet-page__duties li {
+  margin: 0.35rem 0;
+  color: #334155;
+  line-height: 1.56;
+}
+
+.cadet-page__chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.55rem;
+}
+
+.cadet-page__chips span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.44rem 0.72rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .cadet-page__container {
+    width: min(96vw, 860px);
+  }
+
+  .cadet-page__intro-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .cadet-page__hero-content h1 {
+    line-height: 1.2;
+  }
+
+  .cadet-page__chips {
+    grid-template-columns: 1fr 1fr;
+  }
+}
