@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
 import '../../../../shared/widgets/index.dart';
@@ -184,6 +185,68 @@ class ProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
 
+              // DEBUG: Clear stored tokens (for testing login flow)
+              if (!kIsWeb)
+                PezyButton(
+                  label: 'Clear Storage (Dev)',
+                  variant: PezyButtonVariant.outlined,
+                  isFullWidth: true,
+                  borderColor: const Color(0xFFFFA500),
+                  textColor: const Color(0xFFFFA500),
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Clear Storage'),
+                          content: const Text(
+                            'This will clear all stored tokens and log you out. Use this for testing the login flow.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text(
+                                'Clear',
+                                style: TextStyle(color: Color(0xFFFFA500)),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (confirmed == true && context.mounted) {
+                      try {
+                        final tokenStorage = ref.read(tokenStorageServiceProvider);
+                        await tokenStorage.clearAll();
+                        
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Storage cleared! Restart the app to see login screen.'),
+                              backgroundColor: Color(0xFFFFA500),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: ${e.toString()}'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
+                ),
+              const SizedBox(height: AppSpacing.xl),
+
               // Logout button
               PezyButton(
                 label: authState.isLoading ? 'Logging out...' : 'Logout',
@@ -204,7 +267,13 @@ class ProfileScreen extends ConsumerWidget {
                                 backgroundColor: AppColors.success,
                               ),
                             );
-                            // Navigation back to login is automatic via AppShell
+                            // Wait briefly then pop back to AppShell
+                            // AppShell will automatically show LoginScreen
+                            // because authProvider.isLoggedIn is now false
+                            await Future.delayed(const Duration(milliseconds: 500));
+                            if (context.mounted) {
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            }
                           }
                         } catch (e) {
                           if (context.mounted) {

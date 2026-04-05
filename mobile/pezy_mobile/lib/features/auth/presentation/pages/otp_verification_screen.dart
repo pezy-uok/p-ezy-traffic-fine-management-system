@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
-import '../../../../presentation/shell/main_navigation_screen.dart';
 import '../controllers/otp_controller.dart';
 import '../../utils/form_validation.dart';
 import '../providers/auth_provider.dart';
@@ -416,26 +415,23 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         print('⚠️  ERROR: Some token data is missing!\n');
       }
 
-      // On success, show message and navigate to home/dashboard
+      // On success, show message and navigate to home app
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Login successful! Redirecting...'),
+            content: Text('Login successful! Redirecting to home...'),
             backgroundColor: AppColors.success,
           ),
         );
 
-        // Wait briefly for snackbar to show, then navigate
+        // Wait briefly for snackbar to show, then pop back to AppShell
+        // This removes LoginScreen and OtpVerificationScreen from the stack
         await Future.delayed(const Duration(milliseconds: 800));
         if (context.mounted) {
-          // Navigate to MainNavigationScreen and clear the entire navigation stack
-          // This removes LoginScreen and OtpVerificationScreen from the stack
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => const MainNavigationScreen(),
-            ),
-            (Route route) => false, // Remove all previous routes
-          );
+          // Pop all the way back to AppShell (the root widget)
+          // AppShell will rebuild and automatically render MainNavigationScreen
+          // because authProvider.isLoggedIn is now true
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       }
     } catch (e) {
