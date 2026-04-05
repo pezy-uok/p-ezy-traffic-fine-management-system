@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import pLogo from '../assets/plogo.png'
 import './NavBar.css'
 
@@ -12,6 +12,10 @@ interface PrimaryMenuItem {
   label: string
   path?: string
   children?: SubMenuItem[]
+}
+
+interface NavBarProps {
+  activeLabel?: string
 }
 
 const divisionMenu: SubMenuItem[] = [
@@ -48,7 +52,7 @@ const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Survey' },
 ]
 
-export default function NavBar() {
+export default function NavBar({ activeLabel }: NavBarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openDropdownLabel, setOpenDropdownLabel] = useState<string | null>(null)
   const navigate = useNavigate()
