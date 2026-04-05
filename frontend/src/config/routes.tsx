@@ -11,6 +11,11 @@ import FinePayFailure from '../pages/FinePayFailure'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
 import PoliceHistory from '../pages/PoliceHistory'
+import AbuseChildrenWomenDivision from '../pages/divisions/AbuseChildrenWomenDivision'
+import FieldForceHeadquarters from '../pages/divisions/FieldForceHeadquarters'
+import MountedDivision from '../pages/divisions/MountedDivision'
+import PoliceCadetDivision from '../pages/divisions/PoliceCadetDivision'
+import TrafficRoadSafetyDivision from '../pages/divisions/TrafficRoadSafetyDivision'
 import AdminLogin from '../pages/AdminLogin'
 import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboard from '../pages/AdminDashboard'
@@ -60,6 +65,31 @@ export const routes: RouteConfig[] = [
     path: '/criminal-records/:recordId',
     element: <CriminalRecordProfile />,
     name: 'Criminal Record Profile',
+  },
+  {
+    path: '/divisions/abuse-children-women',
+    element: <AbuseChildrenWomenDivision />,
+    name: 'Division - Abuse of Children & Women',
+  },
+  {
+    path: '/divisions/field-force-headquarters',
+    element: <FieldForceHeadquarters />,
+    name: 'Division - Field Force Headquarters',
+  },
+  {
+    path: '/divisions/mounted-division',
+    element: <MountedDivision />,
+    name: 'Division - Mounted Division',
+  },
+  {
+    path: '/divisions/police-cadet-division',
+    element: <PoliceCadetDivision />,
+    name: 'Division - Police Cadet Division',
+  },
+  {
+    path: '/divisions/traffic-road-safety',
+    element: <TrafficRoadSafetyDivision />,
+    name: 'Division - Traffic Road Safety',
   },
   {
     path: '/news',

@@ -3,29 +3,46 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import pLogo from '../assets/plogo.png'
 import './NavBar.css'
 
+interface SubMenuItem {
+  label: string
+  path: string
+}
+
 interface PrimaryMenuItem {
   label: string
   path?: string
+  children?: SubMenuItem[]
 }
 
-const isActiveMenuItem = (pathname: string, item: PrimaryMenuItem) => {
-  if (!item.path) {
-    return false
-  }
-
-  if (item.path === '/') {
-    return pathname === '/'
-  }
-
-  return pathname === item.path || pathname.startsWith(`${item.path}/`)
-}
+const divisionMenu: SubMenuItem[] = [
+  {
+    label: 'Bureau for Investigation of Abuse of Children & Women',
+    path: '/divisions/abuse-children-women',
+  },
+  {
+    label: 'Field Force Headquarters',
+    path: '/divisions/field-force-headquarters',
+  },
+  {
+    label: 'Mounted Division',
+    path: '/divisions/mounted-division',
+  },
+  {
+    label: 'Police Cadet Division',
+    path: '/divisions/police-cadet-division',
+  },
+  {
+    label: 'Traffic Management and Road Safety Division',
+    path: '/divisions/traffic-road-safety',
+  },
+]
 
 const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Home', path: '/' },
   { label: 'About Us', path: '/about' },
   { label: 'Fine Pay', path: '/fine-pay' },
   { label: 'Criminal Records', path: '/criminal-records' },
-  { label: 'Division' },
+  { label: 'Division', children: divisionMenu },
   { label: 'Downloads' },
   { label: 'Library' },
   { label: 'Survey' },
@@ -33,18 +50,29 @@ const primaryMenu: PrimaryMenuItem[] = [
 
 export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const { pathname } = useLocation()
+  const [openDropdownLabel, setOpenDropdownLabel] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const toggleMenu = () => {
     setMenuOpen(previous => !previous)
+    setOpenDropdownLabel(null)
   }
 
   const handleMenuItemClick = (item: PrimaryMenuItem) => {
-    setMenuOpen(false)
-    if (item.path) {
-      navigate(item.path)
+    if (item.children?.length) {
+      setOpenDropdownLabel(previous => (previous === item.label ? null : item.label))
+      return
     }
+    setOpenDropdownLabel(null)
+    setMenuOpen(false)
+    if (!item.path) return
+    navigate(item.path)
+  }
+
+  const handleSubMenuItemClick = (item: SubMenuItem) => {
+    setOpenDropdownLabel(null)
+    setMenuOpen(false)
+    navigate(item.path)
   }
 
   return (
@@ -75,18 +103,57 @@ export default function NavBar() {
           <span className="home-police__menu-toggle-text">MENU</span>
         </button>
 
-        <nav id="primary-navigation" className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
-          {primaryMenu.map(item => (
-            <button
-              key={item.label}
-              type="button"
-              className={`home-police__menu-item${isActiveMenuItem(pathname, item) ? ' is-active' : ''}`}
-              onClick={() => handleMenuItemClick(item)}
-              aria-current={isActiveMenuItem(pathname, item) ? 'page' : undefined}
-            >
-              {item.label}
-            </button>
-          ))}
+        <nav className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
+          {primaryMenu.map(item => {
+            if (item.children?.length) {
+              const isOpen = openDropdownLabel === item.label
+              const triggerClass = `home-police__menu-item${item.label === activeLabel ? ' is-active' : ''}`
+              return (
+                <div
+                  key={item.label}
+                  className={`home-police__menu-group${isOpen ? ' is-open' : ''}`}
+                  onMouseLeave={() => setOpenDropdownLabel(previous => (previous === item.label ? null : previous))}
+                >
+                  <button
+                    type="button"
+                    className={triggerClass}
+                    onClick={() => handleMenuItemClick(item)}
+                    onMouseEnter={() => setOpenDropdownLabel(item.label)}
+                    aria-expanded={isOpen}
+                  >
+                    {item.label}
+                    <span className="home-police__menu-caret" aria-hidden="true">
+                      &#9662;
+                    </span>
+                  </button>
+
+                  <div className={`home-police__dropdown${isOpen ? ' is-open' : ''}`} role="menu" aria-label={`${item.label} submenu`}>
+                    {item.children.map(child => (
+                      <button
+                        key={child.path}
+                        type="button"
+                        className="home-police__dropdown-item"
+                        onClick={() => handleSubMenuItemClick(child)}
+                      >
+                        {child.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className={`home-police__menu-item${item.label === activeLabel ? ' is-active' : ''}`}
+                onClick={() => handleMenuItemClick(item)}
+              >
+                {item.label}
+              </button>
+            )
+          })}
         </nav>
 
         <div className="home-police__search">
