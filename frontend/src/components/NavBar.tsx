@@ -41,6 +41,13 @@ const divisionMenu: SubMenuItem[] = [
   },
 ]
 
+const libraryMenu: SubMenuItem[] = [
+  {
+    label: 'Rank Structure / Insignia',
+    path: '/library/ranks',
+  },
+]
+
 const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Home', path: '/' },
   { label: 'About Us', path: '/about' },
@@ -48,7 +55,7 @@ const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Criminal Records', path: '/criminal-records' },
   { label: 'Division', children: divisionMenu },
   { label: 'Downloads' },
-  { label: 'Library' },
+  { label: 'Library', children: libraryMenu },
   { label: 'Survey' },
 ]
 
