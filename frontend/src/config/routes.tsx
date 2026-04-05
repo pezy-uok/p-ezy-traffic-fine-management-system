@@ -5,6 +5,9 @@ import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
 import NewsAwareness from '../pages/NewsAwareness'
 import FinePay from '../pages/FinePay'
+import FinePayOutstanding from '../pages/FinePayOutstanding'
+import FinePaySuccess from '../pages/FinePaySuccess'
+import FinePayFailure from '../pages/FinePayFailure'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
 import PoliceHistory from '../pages/PoliceHistory'
@@ -97,6 +100,21 @@ export const routes: RouteConfig[] = [
     path: '/fine-pay',
     element: <FinePay />,
     name: 'Fine Pay',
+  },
+  {
+    path: '/fine-pay/outstanding',
+    element: <FinePayOutstanding />,
+    name: 'Fine Pay Outstanding',
+  },
+  {
+    path: '/fine-pay/success',
+    element: <FinePaySuccess />, 
+    name: 'Fine Pay Success',
+  },
+  {
+    path: '/fine-pay/failure',
+    element: <FinePayFailure />,
+    name: 'Fine Pay Failure',
   },
   {
     path: '/admin',

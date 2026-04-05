@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import pLogo from '../assets/plogo.png'
 import './NavBar.css'
 
@@ -48,11 +48,7 @@ const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Survey' },
 ]
 
-interface NavBarProps {
-  activeLabel?: string
-}
-
-export default function NavBar({ activeLabel }: NavBarProps) {
+export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openDropdownLabel, setOpenDropdownLabel] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -93,10 +89,11 @@ export default function NavBar({ activeLabel }: NavBarProps) {
       <div className="home-police__container home-police__menu-row">
         <button
           type="button"
-          className="home-police__menu-toggle"
+          className={`home-police__menu-toggle${menuOpen ? ' is-open' : ''}`}
           onClick={toggleMenu}
-          aria-label="Toggle menu"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={menuOpen}
+          aria-controls="primary-navigation"
         >
           <span className="home-police__menu-toggle-icon" aria-hidden="true">
             <span />
