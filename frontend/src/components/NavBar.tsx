@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import pLogo from '../assets/plogo.png'
 import './NavBar.css'
 
@@ -12,6 +12,10 @@ interface PrimaryMenuItem {
   label: string
   path?: string
   children?: SubMenuItem[]
+}
+
+interface NavBarProps {
+  activeLabel?: string
 }
 
 const divisionMenu: SubMenuItem[] = [
@@ -48,13 +52,36 @@ const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Survey' },
 ]
 
-interface NavBarProps {
-  activeLabel?: string
+const isPathMatch = (pathname: string, path: string) => {
+  if (path === '/') {
+    return pathname === '/'
+  }
+
+  return pathname === path || pathname.startsWith(`${path}/`)
 }
+
+const isActiveMenuItem = (pathname: string, item: PrimaryMenuItem, activeLabel?: string) => {
+  if (activeLabel) {
+    return activeLabel === item.label
+  }
+
+  if (item.children?.length) {
+    return item.children.some(child => isPathMatch(pathname, child.path))
+  }
+
+  if (!item.path) {
+    return false
+  }
+
+  return isPathMatch(pathname, item.path)
+}
+
+const isActiveSubMenuItem = (pathname: string, item: SubMenuItem) => isPathMatch(pathname, item.path)
 
 export default function NavBar({ activeLabel }: NavBarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openDropdownLabel, setOpenDropdownLabel] = useState<string | null>(null)
+  const { pathname } = useLocation()
   const navigate = useNavigate()
 
   const toggleMenu = () => {
@@ -67,6 +94,7 @@ export default function NavBar({ activeLabel }: NavBarProps) {
       setOpenDropdownLabel(previous => (previous === item.label ? null : item.label))
       return
     }
+
     setOpenDropdownLabel(null)
     setMenuOpen(false)
     if (!item.path) return
@@ -93,10 +121,11 @@ export default function NavBar({ activeLabel }: NavBarProps) {
       <div className="home-police__container home-police__menu-row">
         <button
           type="button"
-          className="home-police__menu-toggle"
+          className={`home-police__menu-toggle${menuOpen ? ' is-open' : ''}`}
           onClick={toggleMenu}
-          aria-label="Toggle menu"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={menuOpen}
+          aria-controls="primary-navigation"
         >
           <span className="home-police__menu-toggle-icon" aria-hidden="true">
             <span />
@@ -106,11 +135,14 @@ export default function NavBar({ activeLabel }: NavBarProps) {
           <span className="home-police__menu-toggle-text">MENU</span>
         </button>
 
-        <nav className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
+        <nav id="primary-navigation" className={`home-police__menu${menuOpen ? ' is-open' : ''}`} aria-label="Primary">
           {primaryMenu.map(item => {
+            const isActive = isActiveMenuItem(pathname, item, activeLabel)
+
             if (item.children?.length) {
               const isOpen = openDropdownLabel === item.label
-              const triggerClass = `home-police__menu-item${item.label === activeLabel ? ' is-active' : ''}`
+              const dropdownId = `${item.label.toLowerCase().replace(/\s+/g, '-')}-submenu`
+
               return (
                 <div
                   key={item.label}
@@ -119,10 +151,12 @@ export default function NavBar({ activeLabel }: NavBarProps) {
                 >
                   <button
                     type="button"
-                    className={triggerClass}
+                    className={`home-police__menu-item${isActive ? ' is-active' : ''}`}
                     onClick={() => handleMenuItemClick(item)}
                     onMouseEnter={() => setOpenDropdownLabel(item.label)}
                     aria-expanded={isOpen}
+                    aria-controls={dropdownId}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     {item.label}
                     <span className="home-police__menu-caret" aria-hidden="true">
@@ -130,13 +164,14 @@ export default function NavBar({ activeLabel }: NavBarProps) {
                     </span>
                   </button>
 
-                  <div className={`home-police__dropdown${isOpen ? ' is-open' : ''}`} role="menu" aria-label={`${item.label} submenu`}>
+                  <div id={dropdownId} className={`home-police__dropdown${isOpen ? ' is-open' : ''}`} role="menu" aria-label={`${item.label} submenu`}>
                     {item.children.map(child => (
                       <button
                         key={child.path}
                         type="button"
-                        className="home-police__dropdown-item"
+                        className={`home-police__dropdown-item${isActiveSubMenuItem(pathname, child) ? ' is-active' : ''}`}
                         onClick={() => handleSubMenuItemClick(child)}
+                        aria-current={isActiveSubMenuItem(pathname, child) ? 'page' : undefined}
                       >
                         {child.label}
                       </button>
@@ -150,8 +185,9 @@ export default function NavBar({ activeLabel }: NavBarProps) {
               <button
                 key={item.label}
                 type="button"
-                className={`home-police__menu-item${item.label === activeLabel ? ' is-active' : ''}`}
+                className={`home-police__menu-item${isActive ? ' is-active' : ''}`}
                 onClick={() => handleMenuItemClick(item)}
+                aria-current={isActive ? 'page' : undefined}
               >
                 {item.label}
               </button>

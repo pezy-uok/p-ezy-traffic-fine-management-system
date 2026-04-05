@@ -7,6 +7,7 @@ import {
   testSupabaseConnection,
 } from './config/supabaseClient.js';
 import userRoutes from './routes/userRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 dotenv.config();
 const app = express();
@@ -20,6 +21,7 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the System Development Backend API' });
 });
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 // Global middleware - must be last

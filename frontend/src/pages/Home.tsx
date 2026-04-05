@@ -68,7 +68,7 @@ export default function Home() {
 
   return (
     <section className="home-police">
-      <NavBar activeLabel="Home" />
+      <NavBar />
 
       <div className="home-police__container home-police__news-row">
         <span className="home-police__news-tag">News &#187;</span>

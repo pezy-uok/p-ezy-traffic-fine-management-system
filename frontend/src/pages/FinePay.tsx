@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
+import { useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
 import finePayBg from '../assets/slider/slide-1.png'
 import './Home.css'
 import './FinePay.css'
 
 export default function FinePay() {
+  const navigate = useNavigate()
   const [licenseNumber, setLicenseNumber] = useState('')
   const [licenseError, setLicenseError] = useState('')
 
@@ -53,11 +55,12 @@ export default function FinePay() {
     }
 
     setLicenseError('')
+    navigate('/fine-pay/outstanding')
   }
 
   return (
     <section className="home-police fine-pay-page">
-      <NavBar activeLabel="Fine Pay" />
+      <NavBar />
 
       <div className="fine-pay-page__content" style={{ '--fine-pay-bg-image': `url(${finePayBg})` } as CSSProperties}>
         <div className="fine-pay-page__overlay" />
