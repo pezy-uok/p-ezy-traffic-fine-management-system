@@ -10,6 +10,7 @@ import FinePaySuccess from '../pages/FinePaySuccess'
 import FinePayFailure from '../pages/FinePayFailure'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
+import PoliceHistory from '../pages/PoliceHistory'
 import AdminLogin from '../pages/AdminLogin'
 import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboard from '../pages/AdminDashboard'
@@ -44,6 +45,11 @@ export const routes: RouteConfig[] = [
     path: '/settings',
     element: <Settings />,
     name: 'Settings',
+  },
+  {
+    path: '/about',
+    element: <PoliceHistory />,
+    name: 'About Us',
   },
   {
     path: '/criminal-records',

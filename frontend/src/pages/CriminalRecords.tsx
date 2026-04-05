@@ -9,7 +9,6 @@ interface TipFormState {
   description: string
   anonymous: boolean
 }
-
 const statusToVariant: Record<RecordStatus, 'danger' | 'info' | 'warning'> = {
   wanted: 'danger',
   arrested: 'info',

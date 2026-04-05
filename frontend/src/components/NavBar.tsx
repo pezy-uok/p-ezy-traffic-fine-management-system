@@ -22,7 +22,7 @@ const isActiveMenuItem = (pathname: string, item: PrimaryMenuItem) => {
 
 const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Home', path: '/' },
-  { label: 'About Us' },
+  { label: 'About Us', path: '/about' },
   { label: 'Fine Pay', path: '/fine-pay' },
   { label: 'Criminal Records', path: '/criminal-records' },
   { label: 'Division' },
