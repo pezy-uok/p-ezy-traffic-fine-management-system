@@ -1,10 +1,16 @@
-/// Authentication API service
-/// Handles all API calls to backend auth endpoints
+/// Authentication API service.
+/// Handles all API calls to backend auth endpoints.
+library auth_api_service;
+
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+
+// Development mode flag - set to true to test without backend
+const bool _isDevelopmentMode = false;
 
 class AuthApiService {
   final Dio _dio;
-  static const String _baseUrl = 'http://localhost:3001/api/auth';
+  static const String _baseUrl = 'http://127.0.0.1:8000/api/auth';
 
   AuthApiService({Dio? dio})
       : _dio = dio ??
@@ -21,16 +27,49 @@ class AuthApiService {
   /// POST /api/auth/verify
   /// Returns: { success, exists, active, message, user: {...} }
   Future<VerifyEmailResponse> verifyEmail(String email) async {
+    // Development mode - mock response
+    if (_isDevelopmentMode) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Validate pezy.gov domain
+      if (!email.endsWith('@pezy.gov')) {
+        throw Exception('Only @pezy.gov emails are allowed. Use officer.bandara@pezy.gov');
+      }
+      
+      // Extract name safely from email (e.g., officer.bandara@pezy.gov -> Officer Bandara)
+      final namePart = email.split('@')[0]; // officer.bandara
+      final nameWords = namePart.split('.').map((word) => word[0].toUpperCase() + word.substring(1)).toList().join(' ');
+      
+      return VerifyEmailResponse(
+        success: true,
+        exists: true,
+        active: true,
+        message: 'Email verified successfully',
+        user: UserData(
+          id: '12345',
+          email: email,
+          name: nameWords,
+          role: 'police_officer',
+        ),
+      );
+    }
+
     try {
+      debugPrint('📧 Verifying email: $email');
+      debugPrint('📧 Full URL: $_baseUrl/verify');
+      
       final response = await _dio.post(
         '/verify',
         data: {'email': email},
       );
 
+      debugPrint('✅ Email verification successful');
       return VerifyEmailResponse.fromJson(response.data);
     } on DioException catch (e) {
+      debugPrint('❌ DioException during email verification: $e');
       throw _handleDioError(e);
     } catch (e) {
+      debugPrint('❌ Unexpected error during email verification: $e');
       throw Exception('Failed to verify email: $e');
     }
   }
@@ -39,16 +78,44 @@ class AuthApiService {
   /// POST /api/auth/request-otp
   /// Returns: { success, message, temporary_id }
   Future<RequestOtpResponse> requestOtp(String email) async {
+    // Development mode - mock response
+    if (_isDevelopmentMode) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return RequestOtpResponse(
+        success: true,
+        message: 'OTP sent to your registered mobile (Development Mode)',
+        temporaryId: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    }
+
     try {
+      debugPrint('\n═══════════════════════════════════════');
+      debugPrint('📱 REQUESTING OTP');
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('📧 Email: $email');
+      debugPrint('🔗 Base URL: $_baseUrl');
+      debugPrint('📍 Full URL: $_baseUrl/request-otp');
+      debugPrint('─────────────────────────────────────');
+      
       final response = await _dio.post(
         '/request-otp',
         data: {'email': email},
       );
 
+      debugPrint('✅ Response Status: ${response.statusCode}');
+      debugPrint('✅ Response Data: ${response.data}');
+      debugPrint('═══════════════════════════════════════\n');
       return RequestOtpResponse.fromJson(response.data);
     } on DioException catch (e) {
+      debugPrint('\n❌ DioException during OTP request:');
+      debugPrint('  Type: ${e.type}');
+      debugPrint('  Message: ${e.message}');
+      debugPrint('  Status Code: ${e.response?.statusCode}');
+      debugPrint('  Response: ${e.response?.data}');
+      debugPrint('═══════════════════════════════════════\n');
       throw _handleDioError(e);
     } catch (e) {
+      debugPrint('❌ Unexpected error during OTP request: $e\n');
       throw Exception('Failed to request OTP: $e');
     }
   }
@@ -60,7 +127,42 @@ class AuthApiService {
     String temporaryId,
     String otp,
   ) async {
+    // Development mode - mock response (accept any 6-digit OTP)
+    if (_isDevelopmentMode) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Validate OTP format
+      if (otp.length != 6 || !RegExp(r'^\d{6}$').hasMatch(otp)) {
+        throw Exception('Invalid OTP format. Please enter 6 digits.');
+      }
+      
+      return VerifyOtpResponse(
+        success: true,
+        message: 'Authentication successful (Development Mode)',
+        accessToken: 'dev_access_token_${DateTime.now().millisecondsSinceEpoch}',
+        refreshToken: 'dev_refresh_token_${DateTime.now().millisecondsSinceEpoch}',
+        user: UserData(
+          id: '12345',
+          email: 'officer@pezy.local',
+          name: 'Officer',
+          role: 'police_officer',
+        ),
+      );
+    }
+
     try {
+      debugPrint('\n═══════════════════════════════════════');
+      debugPrint('🔐 API SERVICE: VERIFY OTP START');
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('📍 Base URL: $_baseUrl');
+      debugPrint('📍 Endpoint: /verify-otp');
+      debugPrint('📍 Full URL: $_baseUrl/verify-otp');
+      debugPrint('📦 Request Data:');
+      debugPrint('   • temporary_id: $temporaryId');
+      debugPrint('   • otp: $otp');
+      debugPrint('─────────────────────────────────────');
+      debugPrint('🚀 Sending POST request...');
+      
       final response = await _dio.post(
         '/verify-otp',
         data: {
@@ -69,16 +171,85 @@ class AuthApiService {
         },
       );
 
+      debugPrint('✅ Response Received');
+      debugPrint('   Status Code: ${response.statusCode}');
+      debugPrint('   Data: ${response.data}');
+      debugPrint('═══════════════════════════════════════\n');
+      
       return VerifyOtpResponse.fromJson(response.data);
     } on DioException catch (e) {
+      debugPrint('\n❌ DioException during OTP verification:');
+      debugPrint('   Type: ${e.type}');
+      debugPrint('   Message: ${e.message}');
+      debugPrint('   Request URL: ${e.requestOptions.uri}');
+      debugPrint('   Status Code: ${e.response?.statusCode}');
+      debugPrint('   Response: ${e.response?.data}');
+      debugPrint('═══════════════════════════════════════\n');
       throw _handleDioError(e);
     } catch (e) {
+      debugPrint('\n❌ Unexpected error during OTP verification: $e');
+      debugPrint('═══════════════════════════════════════\n');
       throw Exception('Failed to verify OTP: $e');
+    }
+  }
+
+  /// Logout - Call backend to mark user offline
+  /// POST /api/auth/logout
+  /// Headers: { Authorization: Bearer <token> }
+  /// Returns: { success, message }
+  Future<void> logout(String accessToken) async {
+    try {
+      debugPrint('\n╔════════════════════════════════════════╗');
+      debugPrint('║  AUTH API SERVICE: logout            ║');
+      debugPrint('╠════════════════════════════════════════╣');
+      debugPrint('║ Token: ${accessToken.substring(0, 20)}...');
+      debugPrint('║ Base URL: $_baseUrl');
+      debugPrint('║ Full URL: $_baseUrl/logout');
+      debugPrint('╚════════════════════════════════════════╝\n');
+
+      debugPrint('🚀 Preparing logout request...');
+      debugPrint('   Bearer Token: ${accessToken.substring(0, 30)}...');
+      debugPrint('   Headers: Authorization: Bearer <token>');
+      
+      final response = await _dio.post(
+        '/logout',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      debugPrint('✅ Logout Response Received');
+      debugPrint('   Status Code: ${response.statusCode}');
+      debugPrint('   Data: ${response.data}');
+      debugPrint('   URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}\n');
+    } on DioException catch (e) {
+      debugPrint('\n❌ DioException during logout:');
+      debugPrint('   Type: ${e.type}');
+      debugPrint('   Message: ${e.message}');
+      debugPrint('   Request URL: ${e.requestOptions.baseUrl}${e.requestOptions.path}');
+      // Don't throw - logout should succeed even if API call fails
+      // Token will be cleared locally anyway
+    } catch (e) {
+      debugPrint('\n❌ Unexpected error during logout: $e\n');
+      debugPrint('Stack trace: $e');
+      // Don't throw - logout should succeed even if API call fails
     }
   }
 
   /// Handle DioException and convert to user-friendly error messages
   String _handleDioError(DioException error) {
+    // Log detailed error information for debugging
+    debugPrint('🔴 DIO Error Type: ${error.type}');
+    debugPrint('🔴 DIO Error Message: ${error.message}');
+    debugPrint('🔴 DIO Error Request URL: ${error.requestOptions.path}');
+    if (error.response != null) {
+      debugPrint('🔴 DIO Response Status: ${error.response!.statusCode}');
+      debugPrint('🔴 DIO Response Data: ${error.response!.data}');
+    }
+    
     if (error.response != null) {
       // Server returned error response
       final data = error.response!.data;

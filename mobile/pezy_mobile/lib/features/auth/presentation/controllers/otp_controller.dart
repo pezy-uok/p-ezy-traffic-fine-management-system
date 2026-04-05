@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/auth_api_service.dart';
 import '../../data/services/token_storage_service.dart';
-import '../utils/form_validation.dart';
+import '../../utils/form_validation.dart';
 
 /// OTP verification state
 class OtpState {
@@ -47,7 +48,7 @@ class OtpState {
       error: error,
       resendCountdown: resendCountdown ?? this.resendCountdown,
       otpTouched: otpTouched ?? this.otpTouched,
-      otpValidationError: otpValidationError ?? this.otpValidationError,
+      otpValidationError: otpValidationError,
     );
   }
 
@@ -96,11 +97,22 @@ class OtpNotifier extends StateNotifier<OtpState> {
     setLoading(true);
     clearError();
 
+    debugPrint('\n╔════════════════════════════════════════╗');
+    debugPrint('║  OTP CONTROLLER: verifyOtp START     ║');
+    debugPrint('╠════════════════════════════════════════╣');
+    debugPrint('║ Temporary ID: $_temporaryId');
+    debugPrint('║ OTP: ${state.otp}');
+    debugPrint('╚════════════════════════════════════════╝\n');
+
     try {
+      debugPrint('🔐 Calling _authRepository.verifyOtp()...');
       await _authRepository.verifyOtp(_temporaryId, state.otp);
+      debugPrint('✅ OTP verification successful - tokens saved\n');
       setLoading(false);
       // Success - tokens are saved in repository
     } catch (e) {
+      debugPrint('❌ OTP verification failed:');
+      debugPrint('   Error: $e\n');
       setLoading(false);
       setError(e.toString().replaceFirst('Exception: ', ''));
       rethrow;
@@ -113,8 +125,7 @@ class OtpNotifier extends StateNotifier<OtpState> {
     clearError();
 
     try {
-      final newTemporaryId =
-          await _authRepository.requestOtp(state.email);
+      await _authRepository.requestOtp(state.email);
       // Update temporary ID for next verification attempt
       // Note: In a real app, we'd update this, but it's part of the state
       setResending(false);

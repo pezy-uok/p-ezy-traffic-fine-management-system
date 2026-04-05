@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS users (
     is_verified BOOLEAN NOT NULL DEFAULT false,
     permissions JSONB DEFAULT '[]'::jsonb,
     can_access_mobile_app BOOLEAN DEFAULT true,
+    last_login TIMESTAMP WITH TIME ZONE,
+    last_activity_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     CONSTRAINT pin_required_when_verified CHECK ((is_verified = false) OR (pin_hash IS NOT NULL))
@@ -177,13 +179,18 @@ CREATE POLICY management_access ON fines FOR ALL TO authenticated
 USING (get_my_role() IN ('police_officer', 'admin'))
 WITH CHECK (get_my_role() IN ('police_officer', 'admin'));
 
+-- 3. ADD MISSING COLUMNS TO USERS TABLE (Activity Tracking)
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMP WITH TIME ZONE;
+
 -- 4. FULL MOCK DATA (With Constraints Satisfied)
 
 -- Users
-INSERT INTO users (id, email, name, phone, role, badge_number, status, is_verified, pin_hash)
+INSERT INTO users (id, email, name, phone, role, badge_number, status, is_verified, pin_hash, last_login, last_activity_at)
 VALUES 
-('00000000-0000-0000-0000-000000000001', 'admin@pezy.gov', 'System Admin', '+94111111111', 'admin', 'ADM-001', 'active', true, '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C'),
-('00000000-0000-0000-0000-000000000002', 'officer.bandara@pezy.gov', 'Shashmitha Bandara', '+94772222222', 'police_officer', 'PO-7721', 'active', true, '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C')
+('00000000-0000-0000-0000-000000000001', 'admin@pezy.gov', 'System Admin', '+94111111111', 'admin', 'ADM-001', 'active', true, '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C', NULL, NULL),
+('00000000-0000-0000-0000-000000000002', 'officer.bandara@pezy.gov', 'Shashmitha Bandara', '+94772222222', 'police_officer', 'PO-7721', 'active', true, '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C', NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- Drivers

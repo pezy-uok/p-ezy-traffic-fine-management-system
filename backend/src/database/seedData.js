@@ -23,6 +23,8 @@ const seedUsers = [
     password: 'password123',
     pin_hash: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C',
     can_access_mobile_app: true,
+    last_login: null,
+    last_activity_at: null,
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
@@ -38,6 +40,8 @@ const seedUsers = [
     password: 'password123',
     pin_hash: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C',
     can_access_mobile_app: true,
+    last_login: null,
+    last_activity_at: null,
   },
   {
     id: '00000000-0000-0000-0000-000000000003',
@@ -53,6 +57,8 @@ const seedUsers = [
     password: 'password123',
     pin_hash: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C',
     can_access_mobile_app: true,
+    last_login: null,
+    last_activity_at: null,
   },
   {
     id: '00000000-0000-0000-0000-000000000004',
@@ -68,6 +74,8 @@ const seedUsers = [
     password: 'password123',
     pin_hash: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6L6s58otWpQy0S2C',
     can_access_mobile_app: true,
+    last_login: null,
+    last_activity_at: null,
   },
 ];
 

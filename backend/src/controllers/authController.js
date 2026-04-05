@@ -29,12 +29,23 @@ const generateOTP = () => {
 export const requestOTP = async (req, res, next) => {
   try {
     const { email } = req.body;
+    console.log(`\n📞 OTP Request received for: ${email}`);
 
     // Validate input
     if (!email) {
+      console.log('❌ Email is required');
       return res.status(400).json({
         success: false,
         message: 'Email is required',
+      });
+    }
+
+    // Validate email domain - must be @pezy.gov
+    if (!email.endsWith('@pezy.gov')) {
+      console.log('❌ Invalid email domain:', email);
+      return res.status(403).json({
+        success: false,
+        message: 'Only @pezy.gov email addresses are allowed',
       });
     }
 
@@ -49,14 +60,18 @@ export const requestOTP = async (req, res, next) => {
 
     // Check if user exists
     if (error || !user) {
+      console.log('❌ User not found:', email, error?.message);
       return res.status(401).json({
         success: false,
         message: 'Email not found in system',
       });
     }
 
+    console.log(`✓ User found: ${user.name} (${user.email}), Role: ${user.role}, Status: ${user.status}`);
+
     // Check if user is admin or police officer
     if (user.role !== 'admin' && user.role !== 'police_officer') {
+      console.log(`❌ User role invalid: ${user.role}`);
       return res.status(403).json({
         success: false,
         message: 'Only police officers and admins can access this system',
@@ -65,6 +80,7 @@ export const requestOTP = async (req, res, next) => {
 
     // Check if user is active
     if (user.status !== 'active') {
+      console.log(`❌ User status invalid: ${user.status}`);
       return res.status(403).json({
         success: false,
         message: 'Your account is inactive. Please contact admin.',
@@ -80,6 +96,7 @@ export const requestOTP = async (req, res, next) => {
       const remainingSeconds = OTP_COOLDOWN_SECONDS - secondsElapsed;
       
       if (remainingSeconds > 0) {
+        console.log(`⏱️ Rate limited: ${remainingSeconds}s remaining`);
         return res.status(429).json({
           success: false,
           message: `Too many OTP requests. Please wait ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''} before requesting another OTP.`,
@@ -107,7 +124,15 @@ export const requestOTP = async (req, res, next) => {
     otpRequestLimiter.set(email, Date.now());
 
     // TODO: Send OTP to phone number via SMS (integrate with SMS service)
-    console.log(`📱 OTP sent to ${user.phone}: ${otp}`);
+    console.log('\n');
+    console.log('╔════════════════════════════════════════╗');
+    console.log('║          🔐 OTP GENERATED             ║');
+    console.log('╠════════════════════════════════════════╣');
+    console.log(`║  Phone: ${user.phone.padEnd(31)} ║`);
+    console.log(`║  OTP Code: ${otp.padEnd(25)} ║`);
+    console.log(`║  Expires in: 5 minutes${' '.repeat(13)} ║`);
+    console.log('╚════════════════════════════════════════╝');
+    console.log('\n');
     // In production, integrate with AWS SES, Twilio, or similar SMS service
     // await sendSMS(user.phone, `Your PEZY login OTP is: ${otp}`);
 
@@ -117,6 +142,7 @@ export const requestOTP = async (req, res, next) => {
       temporary_id: temporaryId,
     });
   } catch (error) {
+    console.log('🔴 Error in requestOTP:', error.message);
     next(error);
   }
 };
@@ -184,12 +210,11 @@ export const verifyOTP = async (req, res, next) => {
       .eq('id', otpData.userId)
       .single();
 
-    // Mark user as online - update last_login_at and is_online
+    // Mark user as online - update last_login
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        is_online: true,
-        last_login_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
       })
       .eq('id', otpData.userId);
 
@@ -342,27 +367,55 @@ export const refreshAccessToken = async (req, res, next) => {
  */
 export const logout = async (req, res) => {
   try {
+    console.log('\n╔════════════════════════════════════════╗');
+    console.log('║  LOGOUT ENDPOINT                       ║');
+    console.log('╠════════════════════════════════════════╣');
+
     // Extract user ID from JWT (middleware should add this)
     const userId = req.user?.id;
+    console.log(`║ User ID from req.user: ${userId ? `✅ ${userId}` : '❌ null'}`);
+    console.log(`║ Full req.user: ${JSON.stringify(req.user)}`);
 
     if (userId) {
+      console.log('║ Attempting to update last_activity_at...');
       const supabase = getSupabaseClient();
       
-      // Mark user as offline
-      await supabase
+      // Mark user as offline - update last activity
+      const { data, error } = await supabase
         .from('users')
         .update({
-          is_online: false,
-          last_logout_at: new Date().toISOString(),
+          last_activity_at: new Date().toISOString(),
         })
         .eq('id', userId);
+
+      if (error) {
+        console.log(`║ ❌ Database error: ${error.message}`);
+        console.log(`╚════════════════════════════════════════╝\n`);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to update user status',
+          error: error.message,
+        });
+      }
+
+      console.log(`║ ✅ User ${userId} last_activity_at updated`);
+    } else {
+      console.log('║ ⚠️  No user ID found - token validation may have failed');
     }
 
+    console.log('║ Sending 200 response - Logout successful');
+    console.log('╚════════════════════════════════════════╝\n');
+    
     return res.status(200).json({
       success: true,
       message: 'Logout successful. Please discard your token.',
     });
   } catch (error) {
+    console.log('║ ❌ ERROR in logout:');
+    console.log(`║    ${error.message}`);
+    console.log(`║    Stack: ${error.stack}`);
+    console.log('╚════════════════════════════════════════╝\n');
+    
     return res.status(500).json({
       success: false,
       message: 'Logout failed',
@@ -415,10 +468,9 @@ export const getCurrentUser = async (req, res, next) => {
         phone: freshUserData.phone,
         department: freshUserData.department,
         badge_number: freshUserData.badge_number,
-        is_active: freshUserData.is_active,
-        is_online: freshUserData.is_online,
-        last_login_at: freshUserData.last_login_at,
-        last_logout_at: freshUserData.last_logout_at,
+        status: freshUserData.status,
+        last_login: freshUserData.last_login,
+        last_activity_at: freshUserData.last_activity_at,
       },
     });
   } catch (error) {

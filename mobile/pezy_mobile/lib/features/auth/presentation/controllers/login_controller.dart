@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/auth_api_service.dart';
 import '../../data/services/token_storage_service.dart';
-import '../utils/form_validation.dart';
+import '../../utils/form_validation.dart';
 
 /// Login state
 class LoginState {
@@ -39,8 +39,7 @@ class LoginState {
       error: error,
       otpRequested: otpRequested ?? this.otpRequested,
       emailTouched: emailTouched ?? this.emailTouched,
-      emailValidationError:
-          emailValidationError ?? this.emailValidationError,
+      emailValidationError: emailValidationError,
     );
   }
 }
@@ -74,22 +73,38 @@ class LoginNotifier extends StateNotifier<LoginState> {
   /// Request OTP - Call backend API
   /// Returns temporary_id if successful
   Future<String> requestOtp() async {
+    print('\n╔════════════════════════════════════════╗');
+    print('║  LOGIN CONTROLLER: requestOtp START  ║');
+    print('╚════════════════════════════════════════╝');
     setLoading(true);
     clearError();
 
     try {
       // Step 1: Verify email exists
+      print('📧 Step 1: Verifying email: ${state.email}');
       await _authRepository.verifyEmail(state.email);
+      print('✅ Step 1: Email verification successful');
 
       // Step 2: Request OTP
+      print('📱 Step 2: Requesting OTP...');
       final temporaryId = await _authRepository.requestOtp(state.email);
+      print('✅ Step 2: OTP request successful, temporary_id: $temporaryId');
 
       setLoading(false);
       setOtpRequested(true);
+      print('╔════════════════════════════════════════╗');
+      print('║  LOGIN CONTROLLER: requestOtp SUCCESS ║');
+      print('╚════════════════════════════════════════╝\n');
       return temporaryId;
     } catch (e) {
+      print('❌ Exception in requestOtp: $e');
       setLoading(false);
-      setError(e.toString().replaceFirst('Exception: ', ''));
+      final errorMsg = e.toString().replaceFirst('Exception: ', '');
+      setError(errorMsg);
+      print('╔════════════════════════════════════════╗');
+      print('║  LOGIN CONTROLLER: requestOtp FAILED  ║');
+      print('║  Error: $errorMsg');
+      print('╚════════════════════════════════════════╝\n');
       rethrow;
     }
   }
