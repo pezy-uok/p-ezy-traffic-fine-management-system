@@ -55,7 +55,8 @@ router.post('/refresh', refreshAccessToken);
 /**
  * POST /api/auth/logout
  * Logout (frontend discards token)
+ * Headers: { Authorization: Bearer <token> }
  */
-router.post('/logout', logout);
+router.post('/logout', authenticate, logout);
 
 export default router;

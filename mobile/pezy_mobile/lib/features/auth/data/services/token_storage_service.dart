@@ -2,6 +2,7 @@
 /// Handles storing and retrieving JWT tokens using secure storage
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../../core/utils/jwt_utils.dart';
 
 class TokenStorageService {
   static const String _accessTokenKey = 'access_token';
@@ -88,10 +89,54 @@ class TokenStorageService {
     }
   }
 
-  /// Check if user is logged in (has access token)
+  /// Check if user is logged in (has valid, non-expired access token)
+  /// Validates JWT token expiration on the client side
   Future<bool> isLoggedIn() async {
-    final token = await getAccessToken();
-    return token != null && token.isNotEmpty;
+    try {
+      debugPrint('\n🔐 TOKEN STORAGE: Checking if logged in...');
+      
+      final token = await getAccessToken();
+      
+      if (token == null || token.isEmpty) {
+        debugPrint('   ❌ No access token found in storage\n');
+        return false;
+      }
+
+      debugPrint('   ✅ Access token found: ${token.substring(0, 20)}...');
+
+      // Validate token format and expiration
+      debugPrint('   🔍 Validating JWT format...');
+      final payload = JwtUtils.decodeToken(token);
+      if (payload == null) {
+        debugPrint('   ❌ Invalid JWT format - clearing storage\n');
+        await clearAll(); // Clear invalid token
+        return false;
+      }
+
+      debugPrint('   ✅ JWT format valid. User ID: ${payload['id']}');
+
+      // Check token expiration
+      debugPrint('   ⏰ Checking token expiration...');
+      final isExpired = JwtUtils.isTokenExpired(token);
+      
+      if (isExpired) {
+        debugPrint('   ⏱️  Token has expired - clearing storage\n');
+        await clearAll(); // Clear expired token
+        return false;
+      }
+
+      // Get time remaining
+      final secondsLeft = JwtUtils.getSecondsUntilExpiration(token);
+      if (secondsLeft != null) {
+        final minutes = secondsLeft ~/ 60;
+        debugPrint('   ✅ Token valid - expires in ${minutes}min (${secondsLeft}s)\n');
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('   ❌ Error checking login status: $e\n');
+      return false;
+    }
   }
 
   /// Clear all tokens and user data (logout)

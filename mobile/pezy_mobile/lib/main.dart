@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/index.dart';
-import 'presentation/shell/main_navigation_screen.dart';
+import 'presentation/shell/app_shell.dart';
+
+const bool _isDevelopmentMode = false; // Change to false for production - NOW DISABLED FOR REAL API CALLS
 
 void main() {
   runApp(
@@ -21,7 +23,8 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const MainNavigationScreen(),
+      debugShowCheckedModeBanner: _isDevelopmentMode, // Show dev banner in dev mode
+      home: const AppShell(),
     );
   }
 }

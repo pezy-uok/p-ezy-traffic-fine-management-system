@@ -1,5 +1,7 @@
 /// Authentication state and notifier
 /// Manages the overall authentication state of the app
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/auth_api_service.dart';
@@ -100,13 +102,57 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      final isLoggedIn = await _authRepository.isLoggedIn();
+      debugPrint('\n╔════════════════════════════════════════╗');
+      debugPrint('║  AUTH PROVIDER: checkAuthStatus()      ║');
+      debugPrint('╠════════════════════════════════════════╣');
+
+      // Skip auth check on desktop platforms
+      try {
+        if (!kIsWeb &&
+            (defaultTargetPlatform == TargetPlatform.windows ||
+                defaultTargetPlatform == TargetPlatform.linux ||
+                defaultTargetPlatform == TargetPlatform.macOS)) {
+          debugPrint('║ ⏭️  Desktop platform detected - skipping');
+          debugPrint('╚════════════════════════════════════════╝\n');
+          state = state.copyWith(
+            isLoading: false,
+            isLoggedIn: false,
+          );
+          return;
+        }
+      } catch (_) {
+        // If platform detection fails, skip auth check
+        debugPrint('║ ⚠️  Platform detection failed - skipping');
+        debugPrint('╚════════════════════════════════════════╝\n');
+        state = state.copyWith(
+          isLoading: false,
+          isLoggedIn: false,
+        );
+        return;
+      }
+
+      debugPrint('║ 📱 Mobile/Web platform detected');
+      debugPrint('║ Checking token validity with timeout...');
+
+      // Add timeout to prevent hanging on mobile
+      final isLoggedIn = await _authRepository
+          .isLoggedIn()
+          .timeout(const Duration(seconds: 3), onTimeout: () => false);
+
+      debugPrint('║ Token check result: ${isLoggedIn ? '✅ VALID' : '❌ INVALID'}');
 
       if (isLoggedIn) {
+        debugPrint('║ Retrieving stored user data...');
         final accessToken = await _tokenStorage.getAccessToken();
         final userId = await _tokenStorage.getUserId();
         final userEmail = await _tokenStorage.getUserEmail();
         final userName = await _tokenStorage.getUserName();
+
+        debugPrint('║ User Data:');
+        debugPrint('║   ID: ${userId ?? '❌ null'}');
+        debugPrint('║   Email: ${userEmail ?? '❌ null'}');
+        debugPrint('║   Name: ${userName ?? '❌ null'}');
+        debugPrint('║   Token: ${accessToken != null ? '✅ Found' : '❌ null'}');
 
         if (accessToken != null &&
             userId != null &&
@@ -119,21 +165,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
             role: 'police_officer', // Default, could be stored too
           );
 
+          debugPrint('║ ✅ All data present - setting logged in state');
           state = state.copyWith(
             isLoading: false,
             isLoggedIn: true,
             user: user,
             accessToken: accessToken,
           );
+          debugPrint('╚════════════════════════════════════════╝\n');
           return;
+        } else {
+          debugPrint('║ ❌ Some user data missing - clearing state');
         }
+      } else {
+        debugPrint('║ ❌ Token invalid or expired');
       }
 
+      debugPrint('║ Setting logged out state');
       state = state.copyWith(
         isLoading: false,
         isLoggedIn: false,
       );
+      debugPrint('╚════════════════════════════════════════╝\n');
     } catch (e) {
+      debugPrint('║ ❌ ERROR: $e');
+      debugPrint('╚════════════════════════════════════════╝\n');
       state = state.copyWith(
         isLoading: false,
         isLoggedIn: false,
@@ -144,16 +200,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Logout
   Future<void> logout() async {
+    print('\n🚀 AUTH NOTIFIER: logout() called\n');
     state = state.copyWith(isLoading: true);
 
     try {
+      print('╔════════════════════════════════════════╗');
+      print('║  AUTH NOTIFIER: logout               ║');
+      print('╚════════════════════════════════════════╝\n');
+
+      print('🔄 State: isLoading = true');
+      print('📞 Calling _authRepository.logout()...\n');
       await _authRepository.logout();
+      print('\n✅ Repository logout completed successfully');
+
+      // Clear auth state
+      print('🗑️  Clearing auth state...');
       state = const AuthState();
+      print('✅ Auth state cleared (isLoggedIn = false)\n');
     } catch (e) {
+      print('\n❌ Logout error in notifier: $e\n');
+      print('Stack trace: $e');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
       );
+      rethrow;
     }
   }
 

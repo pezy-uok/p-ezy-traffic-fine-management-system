@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/index.dart';
+import '../../../../core/theme/index.dart';
+import '../../../../presentation/shell/main_navigation_screen.dart';
 import '../controllers/otp_controller.dart';
-import '../utils/form_validation.dart';
+import '../../utils/form_validation.dart';
 import '../providers/auth_provider.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
@@ -28,20 +29,24 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    _startResendTimer();
+    // Use addPostFrameCallback to avoid modifying provider during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startResendTimer();
+    });
   }
 
   void _startResendTimer() {
     _resendCountdown = 60;
-    ref.read(otpProvider((email: widget.email, temporaryId: widget.temporaryId)).notifier).setResendCountdown(60);
 
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
       setState(() {
         _resendCountdown--;
       });
-      ref
-          .read(otpProvider((email: widget.email, temporaryId: widget.temporaryId)).notifier)
-          .setResendCountdown(_resendCountdown);
 
       if (_resendCountdown <= 0) {
         timer.cancel();
@@ -133,6 +138,44 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.sectionGap),
+
+              // DEBUG: Show API Response Info
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.lightGray,
+                  borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                  border: Border.all(color: AppColors.mediumGray),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ℹ️ DEBUG INFO (Remove in Production)',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Temporary ID:',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                    SelectableText(
+                      widget.temporaryId,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -266,7 +309,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  if (otpState.canResend)
+                  if (_resendCountdown <= 0)
                     GestureDetector(
                       onTap: otpState.isResending
                           ? null
@@ -283,7 +326,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     )
                   else
                     Text(
-                      'Resend in ${otpState.resendCountdown}s',
+                      'Resend in ${_resendCountdown}s',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.textTertiary,
                       ),
@@ -325,8 +368,21 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     String otp,
   ) async {
     try {
+      // DEBUG: Check form state before sending request
+      print('\n╔════════════════════════════════════════╗');
+      print('║  OTP VERIFICATION - DEBUG START      ║');
+      print('╠════════════════════════════════════════╣');
+      print('║ Email: $email');
+      print('║ OTP Entered: $otp');
+      print('║ OTP Length: ${otp.length}');
+      print('║ Is Numeric: ${RegExp(r"^\d+$").hasMatch(otp)}');
+      print('║ Form Valid: ${otpNotifier.state.isFormValid}');
+      print('╚════════════════════════════════════════╝\n');
+
       // Call the controller's verifyOtp method
+      print('🚀 Calling otpNotifier.verifyOtp()...');
       await otpNotifier.verifyOtp();
+      print('✅ verifyOtp() completed successfully\n');
 
       // Get the updated auth state (tokens and user data are now saved)
       final tokenStorage = ref.read(tokenStorageServiceProvider);
@@ -335,11 +391,18 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       final userEmail = await tokenStorage.getUserEmail();
       final userName = await tokenStorage.getUserName();
 
+      print('📦 Tokens retrieved from storage:');
+      print('   Access Token: ${accessToken != null ? '✅ Found' : '❌ Not found'}');
+      print('   User ID: ${userId ?? '❌ null'}');
+      print('   Email: ${userEmail ?? '❌ null'}');
+      print('   Name: ${userName ?? '❌ null'}\n');
+
       // Update global auth state
       if (accessToken != null &&
           userId != null &&
           userEmail != null &&
           userName != null) {
+        print('🔄 Updating global auth state...');
         final authNotifier = ref.read(authProvider.notifier);
         authNotifier.setAuthenticatedUser(
           id: userId,
@@ -348,6 +411,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           role: 'police_officer', // Default - could store actual role
           accessToken: accessToken,
         );
+        print('✅ Global auth state updated\n');
+      } else {
+        print('⚠️  ERROR: Some token data is missing!\n');
       }
 
       // On success, show message and navigate to home/dashboard
@@ -359,14 +425,16 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           ),
         );
 
-        // TODO: Delay and navigate to home screen
-        // Navigator.of(context).pushReplacementNamed('/home');
-        await Future.delayed(const Duration(milliseconds: 500));
+        // Wait briefly for snackbar to show, then navigate
+        await Future.delayed(const Duration(milliseconds: 800));
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Home screen coming soon'),
+          // Navigate to MainNavigationScreen and clear the entire navigation stack
+          // This removes LoginScreen and OtpVerificationScreen from the stack
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => const MainNavigationScreen(),
             ),
+            (Route route) => false, // Remove all previous routes
           );
         }
       }

@@ -4,23 +4,21 @@ class FormValidation {
   /// Returns null if valid, error message string if invalid
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email or ID number is required';
+      return 'Email is required';
     }
 
     // Check if it's an email format
     if (value.contains('@')) {
-      // Simple email validation
-      final emailRegex = RegExp(
-        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+      // Email must be in pezy.gov domain
+      final pezyEmailRegex = RegExp(
+        r'^[a-zA-Z0-9._%+-]+@pezy\.gov$',
       );
-      if (!emailRegex.hasMatch(value)) {
-        return 'Please enter a valid email address';
+      if (!pezyEmailRegex.hasMatch(value)) {
+        return 'Email must be in @pezy.gov domain (e.g., officer.bandara@pezy.gov)';
       }
     } else {
-      // Validate as ID number (digits only, typically 5-10 digits)
-      if (!RegExp(r'^[0-9]{5,10}$').hasMatch(value)) {
-        return 'ID number must be 5-10 digits';
-      }
+      // ID number not supported for pezy officers
+      return 'Please use your @pezy.gov email address';
     }
 
     return null;
@@ -49,11 +47,9 @@ class FormValidation {
     if (value.isEmpty) return false;
 
     if (value.contains('@')) {
-      return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-          .hasMatch(value);
-    } else {
-      return RegExp(r'^[0-9]{5,10}$').hasMatch(value);
+      return RegExp(r'^[a-zA-Z0-9._%+-]+@pezy\.gov$').hasMatch(value);
     }
+    return false; // Only pezy.gov emails allowed
   }
 
   /// Check if OTP is correctly formatted

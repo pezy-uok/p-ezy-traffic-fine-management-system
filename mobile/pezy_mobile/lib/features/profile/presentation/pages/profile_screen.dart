@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
 import '../../../../shared/widgets/index.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Profile screen
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final currentUser = ref.watch(currentUserProvider);
+
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: PezyAppBar(
         title: 'Profile',
         showLogo: true,
@@ -58,19 +63,26 @@ class ProfileScreen extends StatelessWidget {
 
                     // Name
                     Text(
-                      'John Doe',
-                      style: AppTextStyles.headlineSmall.copyWith(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 22),
+                      currentUser?.name ?? 'User',
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 22,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
 
-                    // License number
-                    Text(
-                      'License: DL-123456789',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: Color(0xFF64748B),
-                        fontSize: 13,
+                    // Badge or role
+                    if (currentUser != null)
+                      Text(
+                        (currentUser.badge?.isNotEmpty ?? false)
+                            ? 'Badge: ${currentUser.badge}'
+                            : 'Role: ${currentUser.role}',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: const Color(0xFF64748B),
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -112,20 +124,27 @@ class ProfileScreen extends StatelessWidget {
               _buildProfileOption(
                 icon: Icons.email,
                 label: 'Email',
-                value: 'john.doe@example.com',
+                value: currentUser?.email ?? 'N/A',
               ),
               const SizedBox(height: AppSpacing.md),
-              _buildProfileOption(
-                icon: Icons.phone,
-                label: 'Phone',
-                value: '+91 9876543210',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _buildProfileOption(
-                icon: Icons.location_on,
-                label: 'Location',
-                value: 'Mumbai, Maharashtra',
-              ),
+              if (currentUser?.phone != null && (currentUser!.phone?.isNotEmpty ?? false))
+                ...[
+                  _buildProfileOption(
+                    icon: Icons.phone,
+                    label: 'Phone',
+                    value: currentUser!.phone ?? '',
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+              if (currentUser?.department != null && (currentUser!.department?.isNotEmpty ?? false))
+                ...[
+                  _buildProfileOption(
+                    icon: Icons.domain,
+                    label: 'Department',
+                    value: currentUser!.department ?? '',
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
               const SizedBox(height: AppSpacing.xl),
 
               // Settings
@@ -167,16 +186,37 @@ class ProfileScreen extends StatelessWidget {
 
               // Logout button
               PezyButton(
-                label: 'Logout',
+                label: authState.isLoading ? 'Logging out...' : 'Logout',
                 variant: PezyButtonVariant.outlined,
                 isFullWidth: true,
                 borderColor: AppColors.error,
                 textColor: AppColors.error,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Logging out...')),
-                  );
-                },
+                isDisabled: authState.isLoading,
+                onPressed: authState.isLoading
+                    ? null
+                    : () async {
+                        try {
+                          await ref.read(authProvider.notifier).logout();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Logged out successfully'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                            // Navigation back to login is automatic via AppShell
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Logout failed: ${e.toString()}'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
               ),
               const SizedBox(height: AppSpacing.xl),
             ],
