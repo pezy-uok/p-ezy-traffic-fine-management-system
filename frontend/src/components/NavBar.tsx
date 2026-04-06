@@ -43,6 +43,10 @@ const divisionMenu: SubMenuItem[] = [
 
 const libraryMenu: SubMenuItem[] = [
   {
+    label: 'List of IGP',
+    path: '/library/igp',
+  },
+  {
     label: 'Ranks',
     path: '/library/ranks',
   },

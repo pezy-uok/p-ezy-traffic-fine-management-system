@@ -11,6 +11,7 @@ import FinePayFailure from '../pages/FinePayFailure'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
 import PoliceHistory from '../pages/PoliceHistory'
+import PoliceIGPList from '../pages/PoliceIGPList'
 import PoliceRanks from '../pages/PoliceRanks'
 import PoliceMedals from '../pages/PoliceMedals'
 import AbuseChildrenWomenDivision from '../pages/divisions/AbuseChildrenWomenDivision'
@@ -57,6 +58,11 @@ export const routes: RouteConfig[] = [
     path: '/about',
     element: <PoliceHistory />,
     name: 'About Us',
+  },
+  {
+    path: '/library/igp',
+    element: <PoliceIGPList />,
+    name: 'Library - List of IGP',
   },
   {
     path: '/library/ranks',
