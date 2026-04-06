@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
 import finePayBg from '../assets/slider/slide-1.png'
 import './Home.css'
 import './FinePayOutstanding.css'
+
+type FinePayLocationState = {
+  suspensionReminder?: string
+  licenseNumber?: string
+}
 
 type FineItem = {
   id: string
@@ -49,7 +54,9 @@ const formatFineDate = (value: string) =>
 
 export default function FinePayOutstanding() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [selectedFineIds, setSelectedFineIds] = useState<string[]>(fines.map(fine => fine.id))
+  const reminderState = location.state as FinePayLocationState | null
 
   const selectedFines = useMemo(
     () => fines.filter(fine => selectedFineIds.includes(fine.id)),
@@ -86,6 +93,21 @@ export default function FinePayOutstanding() {
         <div className="fine-pay-outstanding-page__overlay" />
 
         <div className="fine-pay-outstanding-page__shell">
+          {reminderState?.suspensionReminder && (
+            <section className="fine-pay-outstanding-reminder" role="alert" aria-live="polite">
+              <div className="fine-pay-outstanding-reminder__icon" aria-hidden="true">
+                !
+              </div>
+              <div className="fine-pay-outstanding-reminder__body">
+                <h3>Suspension reminder</h3>
+                <p>{reminderState.suspensionReminder}</p>
+                {reminderState.licenseNumber && (
+                  <span>License: {reminderState.licenseNumber}</span>
+                )}
+              </div>
+            </section>
+          )}
+
           <article className="fine-pay-outstanding-header" aria-labelledby="driver-info-title">
             <p className="fine-pay-outstanding-header__eyebrow">Driving License Verified</p>
             <div className="fine-pay-outstanding-header__row">
