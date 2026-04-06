@@ -11,6 +11,7 @@ import FinePayFailure from '../pages/FinePayFailure'
 import CriminalRecords from '../pages/CriminalRecords'
 import CriminalRecordProfile from '../pages/CriminalRecordProfile'
 import PoliceHistory from '../pages/PoliceHistory'
+import PoliceRanks from '../pages/PoliceRanks'
 import AbuseChildrenWomenDivision from '../pages/divisions/AbuseChildrenWomenDivision'
 import FieldForceHeadquarters from '../pages/divisions/FieldForceHeadquarters'
 import MountedDivision from '../pages/divisions/MountedDivision'
@@ -55,6 +56,11 @@ export const routes: RouteConfig[] = [
     path: '/about',
     element: <PoliceHistory />,
     name: 'About Us',
+  },
+  {
+    path: '/library/ranks',
+    element: <PoliceRanks />,
+    name: 'Library - Ranks',
   },
   {
     path: '/criminal-records',
