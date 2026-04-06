@@ -46,6 +46,10 @@ const libraryMenu: SubMenuItem[] = [
     label: 'Ranks',
     path: '/library/ranks',
   },
+  {
+    label: 'Medals',
+    path: '/library/medals',
+  },
 ]
 
 const primaryMenu: PrimaryMenuItem[] = [
