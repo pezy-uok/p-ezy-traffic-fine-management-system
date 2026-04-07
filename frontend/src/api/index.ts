@@ -18,6 +18,15 @@ import type {
 
 // Auth API endpoints
 export const authAPI = {
+  adminRequestOTP: (payload: { identifier: string }) =>
+    axiosInstance.post('/auth/admin-request-otp', payload),
+
+  adminVerifyOTP: (payload: { temporary_id: string; otp: string; expectedRole: 'admin' }) =>
+    axiosInstance.post('/auth/verify-otp', payload),
+
+  adminLogin: (credentials: { identifier: string; password: string }) =>
+    axiosInstance.post('/auth/admin-login', credentials),
+
   login: (credentials: LoginRequest) =>
     axiosInstance.post<ApiResponse<LoginResponse>>('/auth/login', credentials),
 

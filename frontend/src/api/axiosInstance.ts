@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios'
 import type { InternalAxiosRequestConfig } from 'axios'
 
 // Get base URL from environment or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -36,11 +36,21 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     // Handle different error status codes
     if (error.response) {
+      const requestUrl = error.config?.url || ''
+      const isAuthChallengeRequest =
+        requestUrl.includes('/auth/admin-login') ||
+        requestUrl.includes('/auth/admin-request-otp') ||
+        requestUrl.includes('/auth/verify-otp')
+
       switch (error.response.status) {
         case 401: {
-          // Unauthorized - clear auth token and redirect to login
-          localStorage.removeItem('authToken')
-          window.location.href = '/login'
+          // Don't force redirect on failed login attempts.
+          if (!isAuthChallengeRequest) {
+            localStorage.removeItem('authToken')
+            localStorage.removeItem('refreshToken')
+            localStorage.removeItem('adminUser')
+            window.location.href = '/admin'
+          }
           break
         }
         case 403: {

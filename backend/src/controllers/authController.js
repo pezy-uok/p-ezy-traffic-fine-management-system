@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '../config/supabaseClient.js';
 import { generateAccessToken, generateRefreshToken, decodeToken } from '../utils/jwtUtils.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 // In-memory OTP storage (In production, use Redis or database)
 const otpStorage = new Map();
@@ -12,6 +13,257 @@ const refreshTokenStorage = new Map();
 const otpRequestLimiter = new Map(); // { email: timestamp }
 
 const OTP_COOLDOWN_SECONDS = 60; // 60 second cooldown between OTP requests
+
+const findAdminByIdentifier = async (identifier) => {
+  const supabase = getSupabaseClient();
+  const normalizedIdentifier = String(identifier).trim().toLowerCase();
+
+  // 1) Exact email match
+  let lookup = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', normalizedIdentifier)
+    .maybeSingle();
+
+  if (lookup.data && !lookup.error) {
+    return lookup.data;
+  }
+
+  // 2) Username-like match by email local-part (e.g. "admin" -> admin@...)
+  if (!normalizedIdentifier.includes('@')) {
+    lookup = await supabase
+      .from('users')
+      .select('*')
+      .ilike('email', `${normalizedIdentifier}@%`)
+      .eq('role', 'admin')
+      .limit(1)
+      .maybeSingle();
+
+    if (lookup.data && !lookup.error) {
+      return lookup.data;
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Admin OTP Request - Identifier (username or email) only
+ * POST /api/auth/admin-request-otp
+ * Body: { identifier }
+ */
+export const requestAdminOTP = async (req, res, next) => {
+  try {
+    const { identifier } = req.body;
+
+    if (!identifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username or email is required',
+      });
+    }
+
+    const user = await findAdminByIdentifier(identifier);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Admin account not found',
+      });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required',
+      });
+    }
+
+    if (user.status !== 'active') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin account is inactive',
+      });
+    }
+
+    const lastRequestTime = otpRequestLimiter.get(user.email);
+    const now = Date.now();
+
+    if (lastRequestTime) {
+      const secondsElapsed = Math.floor((now - lastRequestTime) / 1000);
+      const remainingSeconds = OTP_COOLDOWN_SECONDS - secondsElapsed;
+
+      if (remainingSeconds > 0) {
+        return res.status(429).json({
+          success: false,
+          message: `Too many OTP requests. Please wait ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}.`,
+          retryAfter: remainingSeconds,
+        });
+      }
+    }
+
+    const otp = generateOTP();
+    const temporaryId = `admin_otp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    otpStorage.set(temporaryId, {
+      email: user.email,
+      otp,
+      role: 'admin',
+      userId: user.id,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      attempts: 0,
+    });
+
+    otpRequestLimiter.set(user.email, Date.now());
+
+    // Testing mode: OTP is printed to terminal instead of sending via email service.
+    console.log('\n');
+    console.log('╔════════════════════════════════════════╗');
+    console.log('║      ADMIN EMAIL OTP (TEST MODE)      ║');
+    console.log('╠════════════════════════════════════════╣');
+    console.log(`║  Email: ${(user.email || '').padEnd(31)} ║`);
+    console.log(`║  OTP Code: ${otp.padEnd(25)} ║`);
+    console.log('║  Expires in: 5 minutes                ║');
+    console.log('╚════════════════════════════════════════╝');
+    console.log('\n');
+
+    return res.status(200).json({
+      success: true,
+      message: `OTP generated for ${user.email}. Check backend terminal (test mode).`,
+      temporary_id: temporaryId,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Admin Login - Email/identifier + password to JWT
+ * POST /api/auth/admin-login
+ * Body: { identifier, password }
+ */
+export const adminLogin = async (req, res, next) => {
+  try {
+    const { identifier, password } = req.body;
+
+    if (!identifier || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Identifier and password are required',
+      });
+    }
+
+    const normalizedIdentifier = String(identifier).trim().toLowerCase();
+    const normalizedPassword = String(password);
+    const supabase = getSupabaseClient();
+
+    // Try email first; fallback to badge_number when identifier is not an email.
+    let userQuery = supabase
+      .from('users')
+      .select('*')
+      .eq('email', normalizedIdentifier)
+      .maybeSingle();
+
+    let { data: user, error } = await userQuery;
+
+    if ((!user || error) && !normalizedIdentifier.includes('@')) {
+      const badgeLookup = await supabase
+        .from('users')
+        .select('*')
+        .eq('badge_number', normalizedIdentifier)
+        .maybeSingle();
+
+      user = badgeLookup.data;
+      error = badgeLookup.error;
+    }
+
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials',
+      });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required',
+      });
+    }
+
+    if (user.status !== 'active') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin account is inactive',
+      });
+    }
+
+    // Prefer secure hash verification; fallback supports dev data that may still store plain password.
+    let isPasswordValid = false;
+    if (user.pin_hash) {
+      try {
+        isPasswordValid = await bcrypt.compare(normalizedPassword, user.pin_hash);
+      } catch {
+        isPasswordValid = false;
+      }
+    }
+
+    if (!isPasswordValid && user.password) {
+      isPasswordValid = normalizedPassword === user.password;
+    }
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials',
+      });
+    }
+
+    await supabase
+      .from('users')
+      .update({
+        last_login: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    const tokenPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+      department: user.department,
+      badge: user.badge_number,
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    refreshTokenStorage.set(refreshToken, {
+      userId: user.id,
+      email: user.email,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Admin login successful',
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        department: user.department,
+        badge: user.badge_number,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 /**
  * Generate random OTP
@@ -155,7 +407,7 @@ export const requestOTP = async (req, res, next) => {
  */
 export const verifyOTP = async (req, res, next) => {
   try {
-    const { temporary_id, otp } = req.body;
+    const { temporary_id, otp, expectedRole } = req.body;
 
     // Validate input
     if (!temporary_id || !otp) {
@@ -172,6 +424,13 @@ export const verifyOTP = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'OTP session expired or invalid. Request a new OTP.',
+      });
+    }
+
+    if (expectedRole && otpData.role && otpData.role !== expectedRole) {
+      return res.status(403).json({
+        success: false,
+        message: 'OTP session role mismatch',
       });
     }
 
@@ -209,6 +468,13 @@ export const verifyOTP = async (req, res, next) => {
       .select('*')
       .eq('id', otpData.userId)
       .single();
+
+    if (expectedRole && user.role !== expectedRole) {
+      return res.status(403).json({
+        success: false,
+        message: `${expectedRole} access required`,
+      });
+    }
 
     // Mark user as online - update last_login
     const { error: updateError } = await supabase
