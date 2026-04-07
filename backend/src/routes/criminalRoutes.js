@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
-import { createCriminalRecord } from '../controllers/criminalController.js';
+import { createCriminalRecord, updateCriminalRecord } from '../controllers/criminalController.js';
 
 const router = express.Router();
 
@@ -16,5 +16,12 @@ const router = express.Router();
  * Protected: requires police_officer role
  */
 router.post('/create', authenticate, authorize('police_officer'), createCriminalRecord);
+
+/**
+ * PATCH /api/criminals/:id
+ * Update a criminal record
+ * Protected: requires police_officer role
+ */
+router.patch('/:id', authenticate, authorize('police_officer'), updateCriminalRecord);
 
 export default router;

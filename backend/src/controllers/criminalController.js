@@ -1,4 +1,4 @@
-import { createCriminal } from '../services/criminalService.js';
+import { createCriminal, updateCriminal } from '../services/criminalService.js';
 
 /**
  * Create a new criminal record
@@ -13,6 +13,28 @@ export const createCriminalRecord = async (req, res, next) => {
     const criminal = await createCriminal(criminalData);
 
     return res.status(201).json({
+      success: true,
+      criminal,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update a criminal record
+ * PATCH /api/criminals/:id
+ * Protected: requires authenticate + authorize('police_officer')
+ * Returns: { success, criminal }
+ */
+export const updateCriminalRecord = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const criminal = await updateCriminal(id, updateData);
+
+    return res.status(200).json({
       success: true,
       criminal,
     });
