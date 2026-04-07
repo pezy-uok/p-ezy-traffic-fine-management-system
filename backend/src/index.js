@@ -10,6 +10,7 @@ import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
 import criminalRoutes from './routes/criminalRoutes.js';
+import fineRoutes from './routes/fineRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 dotenv.config();
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/criminals', criminalRoutes);
+app.use('/api/fines', fineRoutes);
 
 // Global middleware - must be last
 app.use(notFoundHandler);
