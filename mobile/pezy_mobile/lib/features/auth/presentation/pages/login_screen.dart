@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
 import '../controllers/login_controller.dart';
-import '../../utils/form_validation.dart';
 import 'otp_verification_screen.dart';
 
 class LoginScreen extends ConsumerWidget {

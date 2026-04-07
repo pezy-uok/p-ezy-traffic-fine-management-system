@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
 import '../providers/most_wanted_provider.dart';
-import 'criminal_profile_screen.dart';
 
 /// Most Wanted criminals grid screen
 ///
 /// This screen displays a 2-column grid of most wanted criminals with their
-/// avatars and names for police officers to quickly identify high-priority targets.
+/// information for police officers to quickly identify high-priority targets.
 class MostWantedScreen extends ConsumerWidget {
   const MostWantedScreen({super.key});
 
@@ -20,18 +19,36 @@ class MostWantedScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // PEZY logo
+          // PEZY logo and header
           Padding(
             padding: const EdgeInsets.only(
               top: AppSpacing.screenPaddingVertical,
               bottom: AppSpacing.lg,
             ),
-            child: Center(
-              child: Icon(
-                Icons.security,
-                size: 40,
-                color: AppColors.primaryBlack,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Icon(
+                      Icons.security,
+                      size: 40,
+                      color: AppColors.primaryBlack,
+                    ),
+                  ),
+                ),
+                // Refresh button
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.lg),
+                  child: IconButton(
+                    onPressed: () {
+                      ref.read(mostWantedProvider.notifier).refresh();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    color: AppColors.accentRed,
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -43,14 +60,35 @@ class MostWantedScreen extends ConsumerWidget {
               vertical: 12,
             ),
             color: AppColors.accentRed,
-            child: Text(
-              'MOST WANTED',
-              style: AppTextStyles.titleMedium.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 2,
-                fontSize: 16,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'MOST WANTED',
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2,
+                    fontSize: 16,
+                  ),
+                ),
+                // Wanted count badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    criminalsState.criminals.length.toString(),
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -88,11 +126,11 @@ class MostWantedScreen extends ConsumerWidget {
                           return _CriminalCard(
                             criminal: criminal,
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      CriminalProfileScreen(criminal: criminal),
+                              // Navigate to criminal profile
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${criminal.name} details'),
+                                  duration: const Duration(seconds: 2),
                                 ),
                               );
                             },
@@ -125,8 +163,8 @@ class _CriminalCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.borderColor,
-            width: 1,
+            color: AppColors.accentRed.withValues(alpha: 0.3),
+            width: 2,
           ),
           boxShadow: [
             BoxShadow(
@@ -139,33 +177,23 @@ class _CriminalCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Circular avatar
+            // Circular avatar with initials
             Container(
               width: 90,
               height: 90,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.grey[300],
+                color: AppColors.accentRed.withValues(alpha: 0.15),
                 border: Border.all(
-                  color: Colors.grey[400]!,
+                  color: AppColors.accentRed,
                   width: 2,
                 ),
               ),
-              child: ClipOval(
-                child: Image.network(
-                  criminal.avatarUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Fallback to avatar icon with dark background
-                    return Container(
-                      color: Colors.grey[700],
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 48,
-                      ),
-                    );
-                  },
+              child: Center(
+                child: Icon(
+                  Icons.person,
+                  color: AppColors.accentRed,
+                  size: 48,
                 ),
               ),
             ),
@@ -189,9 +217,73 @@ class _CriminalCard extends StatelessWidget {
                 ),
               ),
             ),
+
+            const SizedBox(height: AppSpacing.sm),
+
+            // Criminal ID if available
+            if (criminal.identificationNumber != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Text(
+                  'ID: ${criminal.identificationNumber}',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: Colors.grey[600],
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+
+            // Danger level badge if available
+            if (criminal.dangerLevel != null && criminal.dangerLevel!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppSpacing.sm,
+                  left: AppSpacing.sm,
+                  right: AppSpacing.sm,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getDangerColor(criminal.dangerLevel!).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '⚠️ ${criminal.dangerLevel}',
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: _getDangerColor(criminal.dangerLevel!),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  /// Get color based on danger level
+  Color _getDangerColor(String dangerLevel) {
+    switch (dangerLevel.toLowerCase()) {
+      case 'critical':
+      case 'high':
+        return AppColors.error;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return AppColors.success;
+      default:
+        return AppColors.textSecondary;
+    }
   }
 }

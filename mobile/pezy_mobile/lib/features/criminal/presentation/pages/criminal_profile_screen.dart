@@ -80,19 +80,13 @@ class CriminalProfileScreen extends StatelessWidget {
                     ],
                   ),
                   child: ClipOval(
-                    child: Image.network(
-                      criminal.avatarUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[700],
-                          child: Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 80,
-                          ),
-                        );
-                      },
+                    child: Container(
+                      color: AppColors.accentRed.withValues(alpha: 0.15),
+                      child: Icon(
+                        Icons.person,
+                        color: AppColors.accentRed,
+                        size: 80,
+                      ),
                     ),
                   ),
                 ),
@@ -151,7 +145,7 @@ class CriminalProfileScreen extends StatelessWidget {
                     ],
                   ),
                   child: Text(
-                    criminal.description,
+                    criminal.description ?? 'No description available',
                     textAlign: TextAlign.justify,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
