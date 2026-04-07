@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
-import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords, deleteCriminalRecord } from '../controllers/criminalController.js';
+import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords, deleteCriminalRecord, getCriminalRecord } from '../controllers/criminalController.js';
 
 const router = express.Router();
 
@@ -23,6 +23,13 @@ router.get('/', authenticate, authorize('police_officer'), getAllCriminalsRecord
  * Protected: requires police_officer role
  */
 router.post('/create', authenticate, authorize('police_officer'), createCriminalRecord);
+
+/**
+ * GET /api/criminals/:id
+ * Get a criminal record by ID
+ * Protected: requires police_officer role
+ */
+router.get('/:id', authenticate, authorize('police_officer'), getCriminalRecord);
 
 /**
  * PATCH /api/criminals/:id
