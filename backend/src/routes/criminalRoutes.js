@@ -1,7 +1,8 @@
 import express from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
-import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords, deleteCriminalRecord, getCriminalRecord } from '../controllers/criminalController.js';
+import { uploadCriminalPhoto } from '../middlewares/uploadPhoto.js';
+import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords, deleteCriminalRecord, getCriminalRecord, uploadCriminalPhotoRecord } from '../controllers/criminalController.js';
 
 const router = express.Router();
 
@@ -23,6 +24,19 @@ router.get('/', authenticate, authorize('police_officer'), getAllCriminalsRecord
  * Protected: requires police_officer role
  */
 router.post('/create', authenticate, authorize('police_officer'), createCriminalRecord);
+
+/**
+ * POST /api/criminals/:id/photo
+ * Upload or update criminal photo
+ * Protected: requires police_officer role
+ * Body: multipart/form-data with 'photo' field
+ */
+router.post('/:id/photo', 
+  authenticate, 
+  authorize('police_officer'),
+  uploadCriminalPhoto.single('photo'),
+  uploadCriminalPhotoRecord
+);
 
 /**
  * GET /api/criminals/:id

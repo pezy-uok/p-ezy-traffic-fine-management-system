@@ -8,20 +8,36 @@ import 'criminal_providers.dart';
 class MostWantedCriminal {
   final String id;
   final String name;
+  final String firstName;
+  final String lastName;
+  final String? dateOfBirth;
+  final String? gender;
   final String? description;
+  final String? identificationNumber;
+  final String status;
   final bool isWanted;
   final String? dangerLevel;
-  final String? identificationNumber;
+  final List<String>? knownAliases;
+  final bool arrestedBefore;
   final int arrestCount;
+  final String? photoPath;
 
   MostWantedCriminal({
     required this.id,
     required this.name,
+    required this.firstName,
+    required this.lastName,
+    this.dateOfBirth,
+    this.gender,
     this.description,
+    this.identificationNumber,
+    required this.status,
     required this.isWanted,
     this.dangerLevel,
-    this.identificationNumber,
+    this.knownAliases,
+    required this.arrestedBefore,
     required this.arrestCount,
+    this.photoPath,
   });
 
   /// Create from Criminal model
@@ -29,11 +45,19 @@ class MostWantedCriminal {
     return MostWantedCriminal(
       id: criminal.id,
       name: criminal.fullName,
+      firstName: criminal.firstName,
+      lastName: criminal.lastName,
+      dateOfBirth: criminal.dateOfBirth,
+      gender: criminal.gender,
       description: criminal.physicalDescription,
+      identificationNumber: criminal.identificationNumber,
+      status: criminal.status,
       isWanted: criminal.wanted,
       dangerLevel: criminal.dangerLevel,
-      identificationNumber: criminal.identificationNumber,
+      knownAliases: criminal.knownAliases,
+      arrestedBefore: criminal.arrestedBefore,
       arrestCount: criminal.arrestCount,
+      photoPath: criminal.photoPath,
     );
   }
 }

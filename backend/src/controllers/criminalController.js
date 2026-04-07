@@ -1,4 +1,5 @@
 import { createCriminal, updateCriminal, getAllCriminals, deleteCriminal, getCriminalById } from '../services/criminalService.js';
+import { deletePhotoFile } from '../middlewares/uploadPhoto.js';
 
 /**
  * Create a new criminal record
@@ -121,6 +122,57 @@ export const deleteCriminalRecord = async (req, res, next) => {
       ...result,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Upload or update criminal photo
+ * POST /api/criminals/:id/photo
+ * Protected: requires authenticate + authorize('police_officer')
+ * Body: multipart/form-data with 'photo' field
+ * Returns: { success, criminal }
+ */
+export const uploadCriminalPhotoRecord = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No photo file provided',
+      });
+    }
+
+    // Construct photo path
+    const photoPath = `/uploads/criminals/${req.file.filename}`;
+    const photoSize = req.file.size;
+
+    // Get current criminal to check for existing photo
+    const currentCriminal = await getCriminalById(id);
+
+    // Delete old photo if it exists
+    if (currentCriminal.photo_path) {
+      deletePhotoFile(currentCriminal.photo_path);
+    }
+
+    // Update criminal record with new photo path
+    const criminal = await updateCriminal(id, {
+      photo_path: photoPath,
+      photo_size: photoSize,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Photo uploaded successfully',
+      criminal,
+    });
+  } catch (error) {
+    // Delete uploaded file if something goes wrong
+    if (req.file) {
+      deletePhotoFile(`/uploads/criminals/${req.file.filename}`);
+    }
     next(error);
   }
 };
