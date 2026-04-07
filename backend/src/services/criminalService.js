@@ -28,12 +28,13 @@ export const createCriminal = async (criminalData) => {
 
   const supabase = getSupabaseClient();
 
-  // Check if identification_number already exists (if provided)
+  // Check if identification_number already exists (if provided) - exclude soft-deleted records
   if (criminalData.identification_number) {
     const { data: existing } = await supabase
       .from('criminals')
       .select('id')
       .eq('identification_number', criminalData.identification_number)
+      .is('deleted_at', null)
       .single();
 
     if (existing) {
@@ -114,23 +115,25 @@ export const updateCriminal = async (criminalId, updateData) => {
 
   const supabase = getSupabaseClient();
 
-  // Check if criminal exists
+  // Check if criminal exists (and not soft-deleted)
   const { data: existing } = await supabase
     .from('criminals')
     .select('id')
     .eq('id', criminalId)
+    .is('deleted_at', null)
     .single();
 
   if (!existing) {
     throw new NotFoundError('Criminal not found');
   }
 
-  // If identification_number is being updated, check for duplicates
+  // If identification_number is being updated, check for duplicates (excluding soft-deleted)
   if (updateData.identification_number) {
     const { data: duplicate } = await supabase
       .from('criminals')
       .select('id')
       .eq('identification_number', updateData.identification_number)
+      .is('deleted_at', null)
       .neq('id', criminalId)
       .single();
 
@@ -159,6 +162,7 @@ export const updateCriminal = async (criminalId, updateData) => {
     .from('criminals')
     .update(updatePayload)
     .eq('id', criminalId)
+    .is('deleted_at', null)
     .select()
     .single();
 
@@ -213,6 +217,9 @@ export const getAllCriminals = async (options = {}) => {
 
   let query = supabase.from('criminals').select('*', { count: 'exact' });
 
+  // Filter out soft-deleted records
+  query = query.is('deleted_at', null);
+
   // Apply filters
   if (options.status) {
     query = query.eq('status', options.status);
@@ -258,5 +265,51 @@ export const getAllCriminals = async (options = {}) => {
     total: count,
     limit,
     offset,
+  };
+};
+
+/**
+ * Delete a criminal record (soft delete - sets deleted_at timestamp)
+ * @param {string} criminalId - Criminal ID (UUID)
+ * @returns {Promise<Object>} { deleted: true, message: 'Criminal record deleted' }
+ * @throws {ValidationError} If criminal ID is missing
+ * @throws {NotFoundError} If criminal not found
+ */
+export const deleteCriminal = async (criminalId) => {
+  if (!criminalId) {
+    throw new ValidationError('Criminal ID is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  // Check if criminal exists and is not already deleted
+  const { data: existing } = await supabase
+    .from('criminals')
+    .select('id, deleted_at')
+    .eq('id', criminalId)
+    .single();
+
+  if (!existing) {
+    throw new NotFoundError('Criminal not found');
+  }
+
+  if (existing.deleted_at) {
+    throw new ValidationError('Criminal record is already deleted');
+  }
+
+  // Soft delete: set deleted_at timestamp
+  const { error } = await supabase
+    .from('criminals')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', criminalId);
+
+  if (error) {
+    throw new Error(`Failed to delete criminal record: ${error.message}`);
+  }
+
+  return {
+    deleted: true,
+    message: 'Criminal record deleted successfully',
+    criminal_id: criminalId,
   };
 };

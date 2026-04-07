@@ -1,4 +1,4 @@
-import { createCriminal, updateCriminal, getAllCriminals } from '../services/criminalService.js';
+import { createCriminal, updateCriminal, getAllCriminals, deleteCriminal } from '../services/criminalService.js';
 
 /**
  * Create a new criminal record
@@ -73,6 +73,27 @@ export const getAllCriminalsRecords = async (req, res, next) => {
     Object.keys(queryOptions).forEach(key => queryOptions[key] === undefined && delete queryOptions[key]);
 
     const result = await getAllCriminals(queryOptions);
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Delete a criminal record (soft delete)
+ * DELETE /api/criminals/:id
+ * Protected: requires authenticate + authorize('police_officer')
+ * Returns: { success, deleted: true, message, criminal_id }
+ */
+export const deleteCriminalRecord = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await deleteCriminal(id);
 
     return res.status(200).json({
       success: true,
