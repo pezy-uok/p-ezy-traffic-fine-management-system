@@ -16,6 +16,7 @@ class Criminal {
   final List<String>? knownAliases;
   final bool arrestedBefore;
   final int arrestCount;
+  final String? photoPath; // Photo file path
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt; // Soft delete timestamp (null if not deleted)
@@ -34,6 +35,7 @@ class Criminal {
     this.knownAliases,
     required this.arrestedBefore,
     required this.arrestCount,
+    this.photoPath,
     required this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -67,6 +69,7 @@ class Criminal {
       knownAliases: (json['known_aliases'] as List<dynamic>?)?.cast<String>(),
       arrestedBefore: json['arrested_before'] as bool? ?? false,
       arrestCount: json['arrest_count'] as int? ?? 0,
+      photoPath: json['photo_path'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
       deletedAt: json['deleted_at'] != null ? DateTime.parse(json['deleted_at'] as String) : null,

@@ -13,6 +13,9 @@ src/types/
 ├── dashboard.ts      # Dashboard & analytics types (Stats, Charts, etc.)
 ├── content.ts        # Content types (Post, Comment, Tag, etc.)
 ├── errors.ts         # Error handling types
+├── criminal.ts       # Criminal record management types
+├── fine.ts           # Traffic fine/citation types
+├── incident.ts       # Incident/accident report types
 └── README.md         # This file
 ```
 
@@ -128,6 +131,44 @@ const user: User = {
 - `ErrorSeverity` - Error severity levels: LOW, MEDIUM, HIGH, CRITICAL
 - `ErrorLog` - Error log entry
 - `ErrorRecoveryStrategy` - Error recovery configuration
+
+### Criminal Types (`criminal.ts`)
+- `Criminal` - Criminal record entity with photo support
+- `CriminalStatus` - Status constant: ACTIVE, INACTIVE, DECEASED, DEPORTED
+- `DangerLevel` - Danger level constant: LOW, MEDIUM, HIGH, CRITICAL
+- `CriminalWithDetails` - Criminal with computed fullName and photoUrl
+- `CreateCriminalRequest` - Create criminal record payload
+- `UpdateCriminalRequest` - Update criminal record payload
+- `CriminalListResponse` - Paginated criminal list
+- `CriminalFilters` - Criminal list query filters
+- Helper functions: `getCriminalFullName()`, `getDangerLevelColor()`, `getStatusColor()`
+
+### Fine Types (`fine.ts`)
+- `Fine` - Traffic fine/citation entity
+- `FineStatus` - Status constant: PENDING, PAID, APPEALED, CANCELLED, OVERDUE
+- `FineSeverity` - Severity constant: WARNING, LOW, MEDIUM, HIGH, CRITICAL
+- `FineWithDetails` - Fine with calculated remaining_amount, is_overdue, days_until_due
+- `CreateFineRequest` - Create fine payload
+- `UpdateFineRequest` - Update fine payload
+- `PayFineRequest` - Record payment for fine
+- `FineListResponse` - Paginated fine list
+- `FineFilters` - Fine list query filters
+- `FineStatistics` - Fine statistics and aggregations
+- Helper functions: `getSeverityColor()`, `getFineStatusColor()`, `isFineOverdue()`, `getRemainingAmount()`, `getDaysUntilDue()`, `formatFineAmount()`
+
+### Incident Types (`incident.ts`)
+- `Incident` - Incident/accident report entity
+- `IncidentType` - Type constant: ACCIDENT, MINOR_VIOLATION, MAJOR_VIOLATION, HIT_AND_RUN, CRIMINAL_ACTIVITY, OTHER
+- `IncidentSeverity` - Severity constant: LOW, MEDIUM, HIGH, CRITICAL
+- `IncidentStatus` - Status constant: REPORTED, INVESTIGATING, RESOLVED, CLOSED, ARCHIVED
+- `InjuryLevel` - Injury level constant: NONE, MINOR, MODERATE, SEVERE, FATAL
+- `IncidentWithDetails` - Incident with computed daysOpen and isPending
+- `CreateIncidentRequest` - Create incident payload
+- `UpdateIncidentRequest` - Update incident payload
+- `IncidentListResponse` - Paginated incident list
+- `IncidentFilters` - Incident list query filters
+- `IncidentStatistics` - Incident statistics and aggregations
+- Helper functions: `getIncidentTypeLabel()`, `getIncidentSeverityColor()`, `getIncidentStatusColor()`, `getInjuryLevelColor()`, `getDaysOpen()`, `isIncidentPending()`
 
 ## Constants vs Enums
 

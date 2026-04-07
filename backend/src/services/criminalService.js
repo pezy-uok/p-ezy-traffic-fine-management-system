@@ -56,6 +56,9 @@ export const createCriminal = async (criminalData) => {
     known_aliases: criminalData.known_aliases || null,
     arrested_before: criminalData.arrested_before || false,
     arrest_count: criminalData.arrest_count || 0,
+    photo_path: criminalData.photo_path || null,
+    photo_uploaded_at: criminalData.photo_path ? new Date().toISOString() : null,
+    photo_size: criminalData.photo_size || null,
   };
 
   // Insert into database
@@ -83,6 +86,9 @@ export const createCriminal = async (criminalData) => {
     known_aliases: criminal.known_aliases,
     arrested_before: criminal.arrested_before,
     arrest_count: criminal.arrest_count,
+    photo_path: criminal.photo_path,
+    photo_uploaded_at: criminal.photo_uploaded_at,
+    photo_size: criminal.photo_size,
     created_at: criminal.created_at,
     updated_at: criminal.updated_at,
   };
@@ -128,6 +134,9 @@ export const getCriminalById = async (criminalId) => {
     known_aliases: criminal.known_aliases,
     arrested_before: criminal.arrested_before,
     arrest_count: criminal.arrest_count,
+    photo_path: criminal.photo_path,
+    photo_uploaded_at: criminal.photo_uploaded_at,
+    photo_size: criminal.photo_size,
     created_at: criminal.created_at,
     updated_at: criminal.updated_at,
   };
@@ -201,6 +210,11 @@ export const updateCriminal = async (criminalId, updateData) => {
   if (updateData.known_aliases !== undefined) updatePayload.known_aliases = updateData.known_aliases;
   if (updateData.arrested_before !== undefined) updatePayload.arrested_before = updateData.arrested_before;
   if (updateData.arrest_count !== undefined) updatePayload.arrest_count = updateData.arrest_count;
+  if (updateData.photo_path !== undefined) {
+    updatePayload.photo_path = updateData.photo_path;
+    updatePayload.photo_uploaded_at = updateData.photo_path ? new Date().toISOString() : null;
+  }
+  if (updateData.photo_size !== undefined) updatePayload.photo_size = updateData.photo_size;
 
   // Update in database
   const { data: criminal, error } = await supabase
@@ -229,6 +243,9 @@ export const updateCriminal = async (criminalId, updateData) => {
     known_aliases: criminal.known_aliases,
     arrested_before: criminal.arrested_before,
     arrest_count: criminal.arrest_count,
+    photo_path: criminal.photo_path,
+    photo_uploaded_at: criminal.photo_uploaded_at,
+    photo_size: criminal.photo_size,
     created_at: criminal.created_at,
     updated_at: criminal.updated_at,
   };
@@ -304,6 +321,9 @@ export const getAllCriminals = async (options = {}) => {
       known_aliases: criminal.known_aliases,
       arrested_before: criminal.arrested_before,
       arrest_count: criminal.arrest_count,
+      photo_path: criminal.photo_path,
+      photo_uploaded_at: criminal.photo_uploaded_at,
+      photo_size: criminal.photo_size,
       created_at: criminal.created_at,
       updated_at: criminal.updated_at,
     })),

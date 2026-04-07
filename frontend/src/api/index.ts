@@ -14,7 +14,8 @@ import type {
   AnalyticsPeriod,
 } from '@/types'
 
-// Define types for API responses
+// Export axiosInstance for use in services
+export { axiosInstance }
 
 // Auth API endpoints
 export const authAPI = {
