@@ -1,5 +1,5 @@
 import express from 'express';
-import { requestOTP, verifyOTP, refreshAccessToken, logout, getCurrentUser, verifyEmail } from '../controllers/authController.js';
+import { requestOTP, verifyOTP, refreshAccessToken, logout, getCurrentUser, verifyEmail, adminLogin, requestAdminOTP } from '../controllers/authController.js';
 import { authenticate } from '../middlewares/authenticate.js';
 
 const router = express.Router();
@@ -11,6 +11,20 @@ const router = express.Router();
  * Returns: { success, exists: true/false, message, user: {...} }
  */
 router.post('/verify', verifyEmail);
+
+/**
+ * POST /api/auth/admin-login
+ * Admin login with identifier + password
+ * Body: { identifier, password }
+ */
+router.post('/admin-login', adminLogin);
+
+/**
+ * POST /api/auth/admin-request-otp
+ * Admin login step 1 with Username/Email
+ * Body: { identifier }
+ */
+router.post('/admin-request-otp', requestAdminOTP);
 
 /**
  * POST /api/auth/request-otp

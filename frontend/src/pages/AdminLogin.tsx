@@ -1,24 +1,32 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { authAPI } from '@/api'
 import './AdminLogin.css'
 
 interface LoginFormValues {
   identifier: string
-  password: string
+  otp: string
 }
 
 interface LoginFormErrors {
   identifier?: string
-  password?: string
+  otp?: string
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,}$/
 
 export default function AdminLogin() {
+  const navigate = useNavigate()
   const [identifier, setIdentifier] = useState('')
-  const [password, setPassword] = useState('')
+  const [otp, setOtp] = useState('')
+  const [temporaryId, setTemporaryId] = useState('')
+  const [step, setStep] = useState<'request' | 'verify'>('request')
   const [errors, setErrors] = useState<LoginFormErrors>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   const validateField = (name: keyof LoginFormValues, value: string): string | undefined => {
     const trimmedValue = value.trim()
@@ -37,8 +45,10 @@ export default function AdminLogin() {
       }
     }
 
-    if (name === 'password' && trimmedValue.length < 6) {
-      return 'Password must be at least 6 characters long.'
+    if (name === 'otp') {
+      if (!/^\d{6}$/.test(trimmedValue)) {
+        return 'OTP must be a 6-digit code.'
+      }
     }
 
     return undefined
@@ -52,9 +62,9 @@ export default function AdminLogin() {
       nextErrors.identifier = identifierError
     }
 
-    const passwordError = validateField('password', values.password)
-    if (passwordError) {
-      nextErrors.password = passwordError
+    const otpError = validateField('otp', values.otp)
+    if (otpError) {
+      nextErrors.otp = otpError
     }
 
     return nextErrors
@@ -63,6 +73,7 @@ export default function AdminLogin() {
   const handleIdentifierChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = event.target.value
     setIdentifier(nextValue)
+    setAuthError(null)
 
     if (errors.identifier || isSubmitted) {
       setErrors(previous => ({
@@ -72,14 +83,15 @@ export default function AdminLogin() {
     }
   }
 
-  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOtpChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = event.target.value
-    setPassword(nextValue)
+    setOtp(nextValue)
+    setAuthError(null)
 
-    if (errors.password || isSubmitted) {
+    if (errors.otp || isSubmitted) {
       setErrors(previous => ({
         ...previous,
-        password: validateField('password', nextValue),
+        otp: validateField('otp', nextValue),
       }))
     }
   }
@@ -91,18 +103,85 @@ export default function AdminLogin() {
     }))
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitted(true)
 
-    const nextErrors = validateForm({ identifier, password })
+    if (step === 'request') {
+      const identifierError = validateField('identifier', identifier)
+      setErrors({ identifier: identifierError })
+
+      if (identifierError) {
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setAuthError(null)
+
+        const response = await authAPI.adminRequestOTP({
+          identifier: identifier.trim(),
+        })
+
+        setTemporaryId(response.data.temporary_id)
+        setStep('verify')
+        setIsSubmitted(false)
+        setErrors({})
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          setAuthError(error.response?.data?.message || 'Failed to request OTP')
+        } else {
+          setAuthError('Unable to request OTP right now. Please try again.')
+        }
+      } finally {
+        setIsLoading(false)
+      }
+
+      return
+    }
+
+    const nextErrors = validateForm({ identifier, otp })
     setErrors(nextErrors)
 
     if (Object.keys(nextErrors).length > 0) {
       return
     }
 
-    // Form is valid. API login integration can be added here.
+    try {
+      setIsLoading(true)
+      setAuthError(null)
+
+      const tokenResponse = await authAPI.adminVerifyOTP({
+        temporary_id: temporaryId,
+        otp: otp.trim(),
+        expectedRole: 'admin',
+      })
+
+      const { accessToken, refreshToken, user } = tokenResponse.data
+
+      localStorage.setItem('authToken', accessToken)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('adminUser', JSON.stringify(user))
+
+      navigate('/admin/dashboard', { replace: true })
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setAuthError(error.response?.data?.message || 'Invalid OTP code')
+      } else {
+        setAuthError('Unable to verify OTP right now. Please try again.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBackToIdentifier = () => {
+    setStep('request')
+    setOtp('')
+    setTemporaryId('')
+    setErrors({})
+    setAuthError(null)
+    setIsSubmitted(false)
   }
 
   return (
@@ -128,8 +207,9 @@ export default function AdminLogin() {
             value={identifier}
             onChange={handleIdentifierChange}
             onBlur={() => handleBlur('identifier', identifier)}
-            placeholder="admin@police.gov"
+            placeholder="admin or admin@pezy.gov"
             autoComplete="username"
+            disabled={step === 'verify'}
             aria-invalid={Boolean(errors.identifier)}
             aria-describedby={errors.identifier ? 'admin-identifier-error' : undefined}
           />
@@ -139,28 +219,52 @@ export default function AdminLogin() {
             </p>
           ) : null}
 
-          <label htmlFor="admin-password">Password</label>
-          <input
-            id="admin-password"
-            type="password"
-            value={password}
-            onChange={handlePasswordChange}
-            onBlur={() => handleBlur('password', password)}
-            placeholder="Password"
-            autoComplete="current-password"
-            aria-invalid={Boolean(errors.password)}
-            aria-describedby={errors.password ? 'admin-password-error' : undefined}
-          />
-          {errors.password ? (
-            <p id="admin-password-error" className="admin-login__error" role="alert">
-              {errors.password}
+          {step === 'verify' ? (
+            <>
+              <label htmlFor="admin-otp">OTP Code</label>
+              <input
+                id="admin-otp"
+                type="text"
+                value={otp}
+                onChange={handleOtpChange}
+                onBlur={() => handleBlur('otp', otp)}
+                placeholder="Enter 6-digit OTP"
+                inputMode="numeric"
+                maxLength={6}
+                autoComplete="one-time-code"
+                aria-invalid={Boolean(errors.otp)}
+                aria-describedby={errors.otp ? 'admin-otp-error' : undefined}
+              />
+              {errors.otp ? (
+                <p id="admin-otp-error" className="admin-login__error" role="alert">
+                  {errors.otp}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+
+          {authError ? (
+            <p className="admin-login__error" role="alert">
+              {authError}
             </p>
           ) : null}
 
-          <button type="submit">Sign in</button>
+          <button type="submit" disabled={isLoading}>
+            {isLoading ? (step === 'request' ? 'Sending OTP...' : 'Verifying...') : (step === 'request' ? 'Send OTP' : 'Verify OTP')}
+          </button>
+
+          {step === 'verify' ? (
+            <button type="button" className="admin-login__secondary" onClick={handleBackToIdentifier}>
+              Change Username/Email
+            </button>
+          ) : null}
         </form>
 
-        <p className="admin-login__demo">Demo credentials: admin@police.gov / admin123</p>
+        <p className="admin-login__demo">
+          {step === 'request'
+            ? 'For testing, OTP is printed in backend terminal.'
+            : 'Enter the OTP shown in backend terminal to access dashboard.'}
+        </p>
       </div>
     </section>
   )

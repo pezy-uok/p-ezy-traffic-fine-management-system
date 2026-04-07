@@ -98,6 +98,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     } finally {
       // Clear local storage and redirect to login regardless of API response
       localStorage.removeItem('authToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('adminUser')
       navigate('/admin')
       setIsLoggingOut(false)
     }
