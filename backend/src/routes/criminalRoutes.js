@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
-import { createCriminalRecord, updateCriminalRecord } from '../controllers/criminalController.js';
+import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords } from '../controllers/criminalController.js';
 
 const router = express.Router();
 
@@ -9,6 +9,13 @@ const router = express.Router();
  * Criminal Management Routes
  * Base: /api/criminals
  */
+
+/**
+ * GET /api/criminals
+ * Get all criminals with optional filtering and pagination
+ * Protected: requires police_officer role
+ */
+router.get('/', authenticate, authorize('police_officer'), getAllCriminalsRecords);
 
 /**
  * POST /api/criminals/create

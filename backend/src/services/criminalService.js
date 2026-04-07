@@ -184,3 +184,79 @@ export const updateCriminal = async (criminalId, updateData) => {
     updated_at: criminal.updated_at,
   };
 };
+
+/**
+ * Get all criminals with optional filtering and pagination
+ * @param {Object} options - Query options
+ * @param {number} options.limit - Number of records per page (default: 50, max: 1000)
+ * @param {number} options.offset - Number of records to skip (default: 0)
+ * @param {string} options.status - Filter by status ('active', 'inactive', 'deceased', 'deported')
+ * @param {boolean} options.wanted - Filter by wanted status (true/false)
+ * @param {string} options.search - Search by first_name or last_name (partial match)
+ * @param {string} options.orderBy - Field to order by (default: 'created_at')
+ * @param {string} options.orderDirection - 'asc' or 'desc' (default: 'desc')
+ * @returns {Promise<Object>} { criminals: Array, total: number, limit, offset }
+ */
+export const getAllCriminals = async (options = {}) => {
+  const supabase = getSupabaseClient();
+
+  // Validate and set defaults
+  let limit = options.limit || 50;
+  if (limit > 1000) limit = 1000;
+  if (limit < 1) limit = 1;
+
+  const offset = options.offset || 0;
+  if (offset < 0) throw new ValidationError('Offset cannot be negative');
+
+  const orderBy = options.orderBy || 'created_at';
+  const orderDirection = (options.orderDirection === 'asc') ? 'asc' : 'desc';
+
+  let query = supabase.from('criminals').select('*', { count: 'exact' });
+
+  // Apply filters
+  if (options.status) {
+    query = query.eq('status', options.status);
+  }
+
+  if (options.wanted !== undefined) {
+    query = query.eq('wanted', options.wanted);
+  }
+
+  if (options.search) {
+    // Search is case-insensitive using ilike
+    const searchTerm = `%${options.search}%`;
+    query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm}`);
+  }
+
+  // Apply ordering, pagination
+  const { data: criminals, error, count } = await query
+    .order(orderBy, { ascending: orderDirection === 'asc' })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    throw new Error(`Failed to fetch criminals: ${error.message}`);
+  }
+
+  return {
+    criminals: criminals.map((criminal) => ({
+      id: criminal.id,
+      first_name: criminal.first_name,
+      last_name: criminal.last_name,
+      date_of_birth: criminal.date_of_birth,
+      gender: criminal.gender,
+      physical_description: criminal.physical_description,
+      identification_number: criminal.identification_number,
+      status: criminal.status,
+      wanted: criminal.wanted,
+      danger_level: criminal.danger_level,
+      known_aliases: criminal.known_aliases,
+      arrested_before: criminal.arrested_before,
+      arrest_count: criminal.arrest_count,
+      created_at: criminal.created_at,
+      updated_at: criminal.updated_at,
+    })),
+    total: count,
+    limit,
+    offset,
+  };
+};
