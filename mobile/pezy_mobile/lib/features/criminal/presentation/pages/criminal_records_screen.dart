@@ -1,210 +1,497 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
 import '../../../../shared/widgets/index.dart';
+import '../providers/criminal_list_controller.dart';
 
-/// Criminal Records screen
-class CriminalRecordsScreen extends StatelessWidget {
+/// Criminal Records screen - Lists all criminals in the database
+class CriminalRecordsScreen extends ConsumerStatefulWidget {
   const CriminalRecordsScreen({super.key});
 
   @override
+  ConsumerState<CriminalRecordsScreen> createState() => _CriminalRecordsScreenState();
+}
+
+class _CriminalRecordsScreenState extends ConsumerState<CriminalRecordsScreen> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    
+    debugPrint('\n╔════════════════════════════════════════╗');
+    debugPrint('║  CRIMINAL RECORDS SCREEN: initState    ║');
+    debugPrint('╠════════════════════════════════════════╣');
+    debugPrint('║ Scheduling fetchCriminals() call...');
+    
+    // Fetch criminals on first load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('║ ✅ Post frame callback triggered');
+      debugPrint('║ Calling ref.read(criminalListProvider.notifier).fetchCriminals()');
+      ref.read(criminalListProvider.notifier).fetchCriminals();
+    });
+    
+    debugPrint('╚════════════════════════════════════════╝\n');
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Handle scroll to load more criminals (pagination)
+  void _onScroll() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      ref.read(criminalListProvider.notifier).loadMore();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final criminalListState = ref.watch(criminalListProvider);
+    final wantedCount = ref.watch(wantedCriminalsCountProvider);
+    final isLoading = criminalListState.isLoading;
+    final error = criminalListState.error;
+    final criminals = criminalListState.criminals;
+
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: PezyAppBar(
         title: 'Criminal Records',
         showLogo: true,
         actions: [
           PezyAppBarAction(
-            icon: Icons.filter_list,
+            icon: Icons.refresh,
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Filter pressed')),
-              );
+              ref.read(criminalListProvider.notifier).refreshCriminals();
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.screenPaddingHorizontal),
+      body: isLoading && criminals.isEmpty
+          ? _buildLoadingState()
+          : error != null && criminals.isEmpty
+              ? _buildErrorState(error)
+              : _buildCriminalsList(
+                  criminals: criminals,
+                  totalCount: criminalListState.total,
+                  wantedCount: wantedCount,
+                  isLoadingMore: criminalListState.isLoadingMore,
+                ),
+    );
+  }
+
+  /// Loading state UI
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: AppColors.accentRed,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'Loading criminals...',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Error state UI
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: AppColors.error,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'Failed to load criminals',
+            style: AppTextStyles.titleSmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPaddingHorizontal),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(criminalListProvider.notifier).refreshCriminals();
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build criminals list
+  Widget _buildCriminalsList({
+    required List<dynamic> criminals,
+    required int totalCount,
+    required int wantedCount,
+    required bool isLoadingMore,
+  }) {
+    return Column(
+      children: [
+        // Summary stats
+        Container(
+          margin: const EdgeInsets.all(AppSpacing.screenPaddingHorizontal),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.accentRed.withValues(alpha: 0.2),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Summary
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.success.withValues(alpha: 0.2),
-                    width: 2,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Records',
+                    style: AppTextStyles.titleSmall.copyWith(color: Colors.black87, fontSize: 15),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Status', style: AppTextStyles.titleSmall.copyWith(color: Colors.black87, fontSize: 15)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'Clean',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.success,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
+                    decoration: BoxDecoration(
+                      color: AppColors.accentRed.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'No active criminal records found in your profile.',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
+                    child: Text(
+                      totalCount.toString(),
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.accentRed,
                         fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // Information
-              Text(
-                'About Criminal Records',
-                style: AppTextStyles.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _buildInfoCard(
-                title: 'What is included?',
-                content:
-                    'Criminal records include any offenses, violations, and pending cases.',
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
-              _buildInfoCard(
-                title: 'When is it updated?',
-                content:
-                    'Records are updated in real-time when new cases are filed or resolved.',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _buildInfoCard(
-                title: 'How to appeal?',
-                content:
-                    'You can appeal any record through the app or contact support directly.',
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // Documents section
-              Text(
-                'Related Documents',
-                style: AppTextStyles.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _buildDocumentCard(
-                title: 'Clearance Certificate',
-                type: 'PDF',
-                date: 'Mar 20, 2026',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _buildDocumentCard(
-                title: 'Records Verification',
-                type: 'PDF',
-                date: 'Mar 15, 2026',
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Wanted Criminals',
+                    style: AppTextStyles.titleSmall.copyWith(color: Colors.black87, fontSize: 15),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      wantedCount.toString(),
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.error,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Criminals list
+        if (criminals.isEmpty)
+          Expanded(
+            child: Center(
+              child: Text(
+                'No criminals found',
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPaddingHorizontal),
+              itemCount: criminals.length + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                // Show loading indicator at end if loading more
+                if (index == criminals.length) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.accentRed,
+                      ),
+                    ),
+                  );
+                }
+
+                final criminal = criminals[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _buildCriminalCard(criminal),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildInfoCard({
-    required String title,
-    required String content,
-  }) {
+  /// Build individual criminal card
+  Widget _buildCriminalCard(dynamic criminal) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: criminal.wanted ? AppColors.error.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.1),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.titleSmall),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            content,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      criminal.fullName,
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    if (criminal.identificationNumber != null)
+                      Text(
+                        'ID: ${criminal.identificationNumber}',
+                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                      ),
+                  ],
+                ),
+              ),
+              // Status badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(criminal.status).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  criminal.status.substring(0, 1).toUpperCase() + criminal.status.substring(1),
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: _getStatusColor(criminal.status),
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Info row: Gender, DOB, Arrest count
+          Row(
+            children: [
+              if (criminal.gender != null) ...[
+                Expanded(
+                  child: _buildInfoChip(
+                    icon: Icons.person,
+                    label: criminal.gender,
+                  ),
+                ),
+              ],
+              if (criminal.arrestCount > 0) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _buildInfoChip(
+                    icon: Icons.gavel,
+                    label: 'Arrests: ${criminal.arrestCount}',
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Wanted and Danger level badges
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              if (criminal.wanted)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.warning,
+                        size: 14,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'WANTED',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.error,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (criminal.dangerLevel != null && criminal.dangerLevel!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getDangerColor(criminal.dangerLevel!).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _getDangerColor(criminal.dangerLevel!).withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    'Danger: ${criminal.dangerLevel}',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: _getDangerColor(criminal.dangerLevel!),
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDocumentCard({
-    required String title,
-    required String type,
-    required String date,
+  /// Build info chip for criminal details
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.accentRed.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(AppSpacing.cornerRadius / 2),
-            ),
-            child: Icon(
-              Icons.description,
-              color: AppColors.accentRed,
-              size: AppSpacing.iconSizeMedium,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
+          Icon(icon, size: 14, color: AppColors.textSecondary),
+          const SizedBox(width: 6),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTextStyles.titleSmall),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  '$type • $date',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                ),
-              ],
+            child: Text(
+              label,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          Icon(
-            Icons.download_rounded,
-            color: AppColors.accentRed,
-            size: AppSpacing.iconSizeMedium,
           ),
         ],
       ),
     );
+  }
+
+  /// Get status badge color
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'active':
+        return AppColors.success;
+      case 'inactive':
+        return Colors.orange;
+      case 'deceased':
+      case 'deported':
+        return Colors.grey;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  /// Get danger level color
+  Color _getDangerColor(String dangerLevel) {
+    switch (dangerLevel.toLowerCase()) {
+      case 'critical':
+      case 'high':
+        return AppColors.error;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return AppColors.success;
+      default:
+        return AppColors.textSecondary;
+    }
   }
 }

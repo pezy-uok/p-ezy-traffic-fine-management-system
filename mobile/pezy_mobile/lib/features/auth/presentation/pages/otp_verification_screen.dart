@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/index.dart';
 import '../controllers/otp_controller.dart';
-import '../../utils/form_validation.dart';
 import '../providers/auth_provider.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
@@ -375,7 +374,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       print('║ OTP Entered: $otp');
       print('║ OTP Length: ${otp.length}');
       print('║ Is Numeric: ${RegExp(r"^\d+$").hasMatch(otp)}');
-      print('║ Form Valid: ${otpNotifier.state.isFormValid}');
       print('╚════════════════════════════════════════╝\n');
 
       // Call the controller's verifyOtp method
@@ -383,14 +381,32 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       await otpNotifier.verifyOtp();
       print('✅ verifyOtp() completed successfully\n');
 
-      // Get the updated auth state (tokens and user data are now saved)
+      // Extract user data from API response (already saved to storage by repository)
       final tokenStorage = ref.read(tokenStorageServiceProvider);
-      final accessToken = await tokenStorage.getAccessToken();
-      final userId = await tokenStorage.getUserId();
-      final userEmail = await tokenStorage.getUserEmail();
-      final userName = await tokenStorage.getUserName();
+      const maxRetries = 3;
+      int retryCount = 0;
+      String? accessToken;
+      String? userId;
+      String? userEmail;
+      String? userName;
 
-      print('📦 Tokens retrieved from storage:');
+      // Retry reading from storage in case of timing issues
+      while (retryCount < maxRetries && accessToken == null) {
+        accessToken = await tokenStorage.getAccessToken();
+        userId = await tokenStorage.getUserId();
+        userEmail = await tokenStorage.getUserEmail();
+        userName = await tokenStorage.getUserName();
+
+        if (accessToken == null) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            print('⏳ Tokens not found in storage, retrying... ($retryCount/$maxRetries)');
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+        }
+      }
+
+      print('📦 Tokens retrieved from storage after $retryCount retries:');
       print('   Access Token: ${accessToken != null ? '✅ Found' : '❌ Not found'}');
       print('   User ID: ${userId ?? '❌ null'}');
       print('   Email: ${userEmail ?? '❌ null'}');
@@ -412,7 +428,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         );
         print('✅ Global auth state updated\n');
       } else {
-        print('⚠️  ERROR: Some token data is missing!\n');
+        print('⚠️  ERROR: Some token data is missing after $maxRetries retries!\n');
+        throw Exception('Failed to read tokens from secure storage');
       }
 
       // On success, show message and navigate to home app

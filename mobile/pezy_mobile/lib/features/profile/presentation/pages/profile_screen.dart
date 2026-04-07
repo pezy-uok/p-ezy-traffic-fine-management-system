@@ -128,21 +128,21 @@ class ProfileScreen extends ConsumerWidget {
                 value: currentUser?.email ?? 'N/A',
               ),
               const SizedBox(height: AppSpacing.md),
-              if (currentUser?.phone != null && (currentUser!.phone?.isNotEmpty ?? false))
+              if (currentUser?.phone?.isNotEmpty ?? false)
                 ...[
                   _buildProfileOption(
                     icon: Icons.phone,
                     label: 'Phone',
-                    value: currentUser!.phone ?? '',
+                    value: currentUser?.phone ?? '',
                   ),
                   const SizedBox(height: AppSpacing.md),
                 ],
-              if (currentUser?.department != null && (currentUser!.department?.isNotEmpty ?? false))
+              if (currentUser?.department?.isNotEmpty ?? false)
                 ...[
                   _buildProfileOption(
                     icon: Icons.domain,
                     label: 'Department',
-                    value: currentUser!.department ?? '',
+                    value: currentUser?.department ?? '',
                   ),
                   const SizedBox(height: AppSpacing.md),
                 ],
