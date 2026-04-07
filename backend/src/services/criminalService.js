@@ -89,6 +89,51 @@ export const createCriminal = async (criminalData) => {
 };
 
 /**
+ * Get a criminal record by ID
+ * @param {string} criminalId - Criminal ID (UUID)
+ * @returns {Promise<Object>} Criminal object
+ * @throws {ValidationError} If criminal ID is missing
+ * @throws {NotFoundError} If criminal not found or is deleted
+ */
+export const getCriminalById = async (criminalId) => {
+  if (!criminalId) {
+    throw new ValidationError('Criminal ID is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  // Get criminal by ID, excluding soft-deleted records
+  const { data: criminal, error } = await supabase
+    .from('criminals')
+    .select('*')
+    .eq('id', criminalId)
+    .is('deleted_at', null)
+    .single();
+
+  if (error || !criminal) {
+    throw new NotFoundError('Criminal not found');
+  }
+
+  return {
+    id: criminal.id,
+    first_name: criminal.first_name,
+    last_name: criminal.last_name,
+    date_of_birth: criminal.date_of_birth,
+    gender: criminal.gender,
+    physical_description: criminal.physical_description,
+    identification_number: criminal.identification_number,
+    status: criminal.status,
+    wanted: criminal.wanted,
+    danger_level: criminal.danger_level,
+    known_aliases: criminal.known_aliases,
+    arrested_before: criminal.arrested_before,
+    arrest_count: criminal.arrest_count,
+    created_at: criminal.created_at,
+    updated_at: criminal.updated_at,
+  };
+};
+
+/**
  * Update an existing criminal record
  * @param {string} criminalId - Criminal ID (UUID)
  * @param {Object} updateData - Fields to update
