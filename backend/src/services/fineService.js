@@ -129,8 +129,80 @@ export const getFineById = async () => {
   return notImplemented('getFineById');
 };
 
-export const getFinesByLicense = async () => {
-  return notImplemented('getFinesByLicense');
+export const getFinesByLicense = async (licenseNo) => {
+  if (!licenseNo) {
+    throw new ValidationError('licenseNo is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  const { data: driver, error: driverError } = await supabase
+    .from('drivers')
+    .select('id, license_number, first_name, last_name')
+    .eq('license_number', licenseNo)
+    .single();
+
+  if (driverError || !driver) {
+    throw new NotFoundError('Driver not found for the provided licenseNo');
+  }
+
+  // PEZY-408 requires filtering with isDeleted=false and sorting by issuedDate DESC.
+  // Current schema in this project uses snake_case and may not always include is_deleted,
+  // so we prefer it when present and gracefully fallback when missing.
+  let fines = null;
+
+  const finesWithSoftDeleteFilter = await supabase
+    .from('fines')
+    .select('*')
+    .eq('driver_id', driver.id)
+    .eq('is_deleted', false)
+    .order('issue_date', { ascending: false });
+
+  if (!finesWithSoftDeleteFilter.error) {
+    fines = finesWithSoftDeleteFilter.data || [];
+  } else {
+    const { data: fallbackFines, error: fallbackError } = await supabase
+      .from('fines')
+      .select('*')
+      .eq('driver_id', driver.id)
+      .order('issue_date', { ascending: false });
+
+    if (fallbackError) {
+      throw new AppError(`Failed to fetch fines by licenseNo: ${fallbackError.message}`, 500);
+    }
+
+    fines = (fallbackFines || []).filter((fine) => {
+      if (typeof fine.is_deleted === 'boolean') {
+        return fine.is_deleted === false;
+      }
+
+      if (fine.deleted_at !== undefined) {
+        return fine.deleted_at === null;
+      }
+
+      return true;
+    });
+  }
+
+  return fines.map((fine) => ({
+    id: fine.id,
+    driver_id: fine.driver_id,
+    license_number: driver.license_number,
+    driver_name: `${driver.first_name || ''} ${driver.last_name || ''}`.trim(),
+    issued_by_officer_id: fine.issued_by_officer_id,
+    amount: fine.amount,
+    reason: fine.reason,
+    violation_code: fine.violation_code,
+    location: fine.location,
+    vehicle_registration: fine.vehicle_registration,
+    status: fine.status,
+    issue_date: fine.issue_date,
+    due_date: fine.due_date,
+    payment_date: fine.payment_date,
+    payment_method: fine.payment_method,
+    created_at: fine.created_at,
+    updated_at: fine.updated_at,
+  }));
 };
 
 export const getOutdatedFines = async () => {
