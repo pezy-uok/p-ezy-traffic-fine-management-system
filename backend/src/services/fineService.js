@@ -206,7 +206,57 @@ export const getFinesByLicense = async (licenseNo) => {
 };
 
 export const getOutdatedFines = async () => {
-  return notImplemented('getOutdatedFines');
+  const supabase = getSupabaseClient();
+
+  const cutoffDate = new Date();
+  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 30);
+  const cutoffIsoDate = cutoffDate.toISOString().split('T')[0];
+
+  // PEZY-409 expects status=PENDING and issuedDate < now-30d.
+  // Current schema uses status='unpaid' and issue_date, so we support both.
+  let fines = null;
+
+  const pendingQuery = await supabase
+    .from('fines')
+    .select('*')
+    .eq('status', 'pending')
+    .lt('issued_date', cutoffIsoDate)
+    .order('amount', { ascending: false });
+
+  if (!pendingQuery.error) {
+    fines = pendingQuery.data || [];
+  } else {
+    const unpaidQuery = await supabase
+      .from('fines')
+      .select('*')
+      .eq('status', 'unpaid')
+      .lt('issue_date', cutoffIsoDate)
+      .order('amount', { ascending: false });
+
+    if (unpaidQuery.error) {
+      throw new AppError(`Failed to fetch outdated fines: ${unpaidQuery.error.message}`, 500);
+    }
+
+    fines = unpaidQuery.data || [];
+  }
+
+  return fines.map((fine) => ({
+    id: fine.id,
+    driver_id: fine.driver_id,
+    issued_by_officer_id: fine.issued_by_officer_id,
+    amount: fine.amount,
+    reason: fine.reason,
+    violation_code: fine.violation_code,
+    location: fine.location,
+    vehicle_registration: fine.vehicle_registration,
+    status: fine.status,
+    issue_date: fine.issue_date || fine.issued_date || null,
+    due_date: fine.due_date || null,
+    payment_date: fine.payment_date || null,
+    payment_method: fine.payment_method || null,
+    created_at: fine.created_at,
+    updated_at: fine.updated_at,
+  }));
 };
 
 export const updateFineStatus = async () => {
