@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
-import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords } from '../controllers/criminalController.js';
+import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords, deleteCriminalRecord } from '../controllers/criminalController.js';
 
 const router = express.Router();
 
@@ -30,5 +30,12 @@ router.post('/create', authenticate, authorize('police_officer'), createCriminal
  * Protected: requires police_officer role
  */
 router.patch('/:id', authenticate, authorize('police_officer'), updateCriminalRecord);
+
+/**
+ * DELETE /api/criminals/:id
+ * Delete a criminal record (soft delete)
+ * Protected: requires police_officer role
+ */
+router.delete('/:id', authenticate, authorize('police_officer'), deleteCriminalRecord);
 
 export default router;
