@@ -125,8 +125,76 @@ export const createFine = async (fineData, authUser) => {
   };
 };
 
-export const getFineById = async () => {
-  return notImplemented('getFineById');
+export const getFineById = async (fineId) => {
+  if (!fineId) {
+    throw new ValidationError('fineId is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  // Fetch the fine WITHOUT soft-delete columns (they don't exist in this schema)
+  const { data: fineData, error } = await supabase
+    .from('fines')
+    .select(`
+      id,
+      driver_id,
+      issued_by_officer_id,
+      amount,
+      reason,
+      violation_code,
+      location,
+      vehicle_registration,
+      status,
+      issue_date,
+      due_date,
+      payment_date,
+      payment_method,
+      created_at,
+      updated_at
+    `)
+    .eq('id', fineId)
+    .single();
+
+  if (error) {
+    console.error('Supabase error fetching fine:', error);
+    throw new NotFoundError('Fine not found');
+  }
+
+  if (!fineData) {
+    throw new NotFoundError('Fine not found');
+  }
+
+  // Now fetch driver info separately if driver_id exists
+  let driver = {};
+  if (fineData.driver_id) {
+    const { data: driverData } = await supabase
+      .from('drivers')
+      .select('id, license_number, first_name, last_name')
+      .eq('id', fineData.driver_id)
+      .single();
+
+    driver = driverData || {};
+  }
+
+  return {
+    id: fineData.id,
+    driver_id: fineData.driver_id,
+    license_number: driver.license_number || null,
+    driver_name: driver ? `${driver.first_name || ''} ${driver.last_name || ''}`.trim() : null,
+    issued_by_officer_id: fineData.issued_by_officer_id,
+    amount: fineData.amount,
+    reason: fineData.reason,
+    violation_code: fineData.violation_code,
+    location: fineData.location,
+    vehicle_registration: fineData.vehicle_registration,
+    status: fineData.status,
+    issue_date: fineData.issue_date,
+    due_date: fineData.due_date,
+    payment_date: fineData.payment_date,
+    payment_method: fineData.payment_method,
+    created_at: fineData.created_at,
+    updated_at: fineData.updated_at,
+  };
 };
 
 export const getFinesByLicense = async (licenseNo) => {
