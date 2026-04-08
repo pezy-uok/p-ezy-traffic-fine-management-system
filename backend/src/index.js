@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { initializeDatabase } from './config/database.js';
 import {
   initializeSupabaseClient,
@@ -11,12 +13,21 @@ import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
+
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // 🔍 Log all incoming requests for debugging
 app.use((req, res, next) => {
@@ -26,12 +37,15 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Backend server is running' });
 });
+
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the System Development Backend API' });
 });
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/drivers', driverRoutes);

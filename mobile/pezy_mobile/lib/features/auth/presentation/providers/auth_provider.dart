@@ -1,11 +1,12 @@
 /// Authentication state and notifier
 /// Manages the overall authentication state of the app
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/auth_api_service.dart';
 import '../../data/services/token_storage_service.dart';
+import '../../data/services/auth_interceptor.dart';
 
 /// User data model
 class AuthUser {
@@ -99,42 +100,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Check if user is already logged in (on app startup)
   Future<void> checkAuthStatus() async {
+    // If already logged in, don't override by doing another check
+    if (state.isLoggedIn) {
+      debugPrint('\n╔════════════════════════════════════════╗');
+      debugPrint('║  AUTH PROVIDER: checkAuthStatus()      ║');
+      debugPrint('║ ⏭️  User already logged in - skipping   ║');
+      debugPrint('╚════════════════════════════════════════╝\n');
+      return;
+    }
+
     state = state.copyWith(isLoading: true);
 
     try {
       debugPrint('\n╔════════════════════════════════════════╗');
       debugPrint('║  AUTH PROVIDER: checkAuthStatus()      ║');
       debugPrint('╠════════════════════════════════════════╣');
+      debugPrint('║ 📱 Checking token validity...');
 
-      // Skip auth check on desktop platforms
-      try {
-        if (!kIsWeb &&
-            (defaultTargetPlatform == TargetPlatform.windows ||
-                defaultTargetPlatform == TargetPlatform.linux ||
-                defaultTargetPlatform == TargetPlatform.macOS)) {
-          debugPrint('║ ⏭️  Desktop platform detected - skipping');
-          debugPrint('╚════════════════════════════════════════╝\n');
-          state = state.copyWith(
-            isLoading: false,
-            isLoggedIn: false,
-          );
-          return;
-        }
-      } catch (_) {
-        // If platform detection fails, skip auth check
-        debugPrint('║ ⚠️  Platform detection failed - skipping');
-        debugPrint('╚════════════════════════════════════════╝\n');
-        state = state.copyWith(
-          isLoading: false,
-          isLoggedIn: false,
-        );
-        return;
-      }
-
-      debugPrint('║ 📱 Mobile/Web platform detected');
-      debugPrint('║ Checking token validity with timeout...');
-
-      // Add timeout to prevent hanging on mobile
+      // Check if tokens are valid (works on all platforms)
       final isLoggedIn = await _authRepository
           .isLoggedIn()
           .timeout(const Duration(seconds: 3), onTimeout: () => false);
@@ -240,6 +223,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? phone,
     String? badge,
   }) {
+    debugPrint('\n╔════════════════════════════════════════╗');
+    debugPrint('║  AUTH NOTIFIER: setAuthenticatedUser   ║');
+    debugPrint('╠════════════════════════════════════════╣');
+    debugPrint('║ Setting logged-in state');
+    debugPrint('║ User: $name ($email)');
+    debugPrint('║ Token: ${accessToken.substring(0, 20)}...');
+    debugPrint('╚════════════════════════════════════════╝\n');
+
     final user = AuthUser(
       id: id,
       email: email,
@@ -251,11 +242,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     state = state.copyWith(
+      isLoading: false,
       isLoggedIn: true,
       user: user,
       accessToken: accessToken,
       error: null,
     );
+
+    debugPrint('✅ Auth state updated: isLoading=false, isLoggedIn=true\n');
   }
 
   /// Clear auth state (for logout or error)
@@ -303,4 +297,10 @@ final currentUserProvider = Provider<AuthUser?>((ref) {
 final accessTokenProvider = Provider<String?>((ref) {
   final authState = ref.watch(authProvider);
   return authState.accessToken;
+});
+
+/// Authenticated Dio provider - used for all API calls requiring auth
+final authenticatedDioProvider = Provider<Dio>((ref) {
+  final tokenStorage = ref.watch(tokenStorageServiceProvider);
+  return createAuthenticatedDio(tokenStorage);
 });

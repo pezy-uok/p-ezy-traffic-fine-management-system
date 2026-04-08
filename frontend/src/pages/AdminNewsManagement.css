@@ -245,6 +245,40 @@
   border-top: 1px solid #e4e9f0;
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.admin-news__card-side {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.admin-news__stats {
+  min-width: 96px;
+  border-radius: 10px;
+  border: 1px solid #d6dde7;
+  background: #f8fafc;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.admin-news__stats span {
+  display: block;
+  color: #203968;
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.admin-news__stats small {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.admin-news__summary {
   flex-wrap: wrap;
   gap: 8px;
   color: #7a8190;
@@ -283,6 +317,21 @@
 
 .admin-news__action-btn:hover {
   background: #eff3f8;
+}
+
+.admin-news__action-btn--edit:hover {
+  background: #dbeafe;
+  color: #0284c7;
+}
+
+.admin-news__action-btn--delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.admin-news__action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .admin-news__action-btn svg {
@@ -385,6 +434,26 @@
 .admin-news__modal-form label {
   display: grid;
   gap: 6px;
+}
+
+.admin-news__modal-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-news__check-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.admin-news__check-item input {
+  width: 16px;
+  height: 16px;
 }
 
 .admin-news__modal-form label span {

@@ -12,6 +12,36 @@ export interface DashboardStats {
   averageSessionDuration: number
 }
 
+export interface AdminDashboardStatCard {
+  id: 'totalFines' | 'criminalRecords' | 'activeCases' | 'newsPublished' | string
+  title: string
+  value: string
+  trend: string
+  trendPositive: boolean
+  tone: 'blue' | 'red' | 'yellow' | 'green'
+}
+
+export interface AdminDashboardQuickStat {
+  label: string
+  value: string
+  tone: 'blue' | 'red' | 'yellow' | 'green'
+}
+
+export interface AdminDashboardStats {
+  cards: AdminDashboardStatCard[]
+  quickStats: AdminDashboardQuickStat[]
+  summary: {
+    totalFines: number
+    criminalRecords: number
+    activeCases: number
+    newsPublished: number
+    finesThisWeek: number
+    newRecords: number
+    wantedCriminals: number
+  }
+  generatedAt: string
+}
+
 /** Chart data point */
 export interface ChartDataPoint {
   label: string

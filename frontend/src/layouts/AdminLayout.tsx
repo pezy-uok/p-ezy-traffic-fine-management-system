@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Swal from 'sweetalert2'
 import { authAPI } from '@/api'
+import '../styles/admin-tailwind.css'
 import './AdminLayout.css'
 
 interface AdminLayoutProps {
@@ -52,6 +53,15 @@ const navItems: AdminNavItem[] = [
       </svg>
     ),
   },
+  {
+    label: 'Users',
+    to: '/admin/users',
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-8 1.67-8 5v1h16v-1c0-3.33-4.67-5-8-5Zm6-3a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm0 2a6.93 6.93 0 0 0-2 .29c1.21.84 2 1.93 2 3.21v1h4v-1c0-2.4-2.78-3.7-4-3.5Z" fill="currentColor" />
+      </svg>
+    ),
+  },
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -98,14 +108,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     } finally {
       // Clear local storage and redirect to login regardless of API response
       localStorage.removeItem('authToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('adminUser')
       navigate('/admin')
       setIsLoggingOut(false)
     }
   }
 
   return (
-    <section className="admin-shell" aria-label="Admin dashboard layout">
-      <aside className="admin-shell__sidebar">
+    <section className="admin-shell admin-tw-shell" aria-label="Admin dashboard layout">
+      <aside className="admin-shell__sidebar admin-tw-sidebar">
         <div className="admin-shell__brand">
           <div className="admin-shell__brand-badge" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="presentation" focusable="false">
@@ -161,7 +173,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </button>
       </aside>
 
-      <div className="admin-shell__content">{children}</div>
+      <div className="admin-shell__content admin-tw-content">{children}</div>
     </section>
   )
 }

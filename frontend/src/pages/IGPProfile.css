@@ -1,0 +1,132 @@
+/* ============================================================================
+   IGP PROFILE PAGE STYLES
+   ============================================================================ */
+
+.igp-profile {
+  width: 100%;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+/* Hero Section */
+.igp-profile__hero {
+  background: #fff;
+  color: #0284c7;
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+}
+
+.igp-profile__hero-title {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Container */
+.igp-profile__container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Image Section */
+.igp-profile__image-section {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.igp-profile__image {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(2, 132, 199, 0.15);
+  display: block;
+  margin: 0 auto 2rem;
+}
+
+.igp-profile__name {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #0284c7;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+/* Article Section */
+.igp-profile__article {
+  line-height: 1.8;
+  color: #334155;
+  font-size: 1.05rem;
+}
+
+.igp-profile__article p {
+  margin: 0 0 1.5rem 0;
+  text-align: justify;
+}
+
+.igp-profile__article p:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .igp-profile__hero {
+    padding: 2.5rem 1rem;
+  }
+
+  .igp-profile__hero-title {
+    font-size: 1.8rem;
+  }
+
+  .igp-profile__container {
+    padding: 2rem 1rem;
+  }
+
+  .igp-profile__image {
+    max-width: 100%;
+  }
+
+  .igp-profile__name {
+    font-size: 1.4rem;
+  }
+
+  .igp-profile__article {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .igp-profile__hero {
+    padding: 2rem 1rem;
+  }
+
+  .igp-profile__hero-title {
+    font-size: 1.4rem;
+  }
+
+  .igp-profile__container {
+    padding: 1.5rem 1rem;
+  }
+
+  .igp-profile__name {
+    font-size: 1.2rem;
+  }
+
+  .igp-profile__article {
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .igp-profile__article p {
+    margin-bottom: 1.25rem;
+  }
+}
+

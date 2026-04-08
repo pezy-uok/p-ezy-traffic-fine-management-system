@@ -6,10 +6,21 @@ import finePayBg from '../assets/slider/slide-1.png'
 import './Home.css'
 import './FinePay.css'
 
+const suspendedLicenseNumbers = new Set([
+  'B1234567',
+  'AB123456',
+  'AB1234567',
+])
+
+const suspensionWarningMessage =
+  'This driving license may be suspended in 7 days if the outstanding fine is not cleared. Please settle it early to avoid suspension.'
+
 export default function FinePay() {
   const navigate = useNavigate()
   const [licenseNumber, setLicenseNumber] = useState('')
   const [licenseError, setLicenseError] = useState('')
+  const [licenseWarning, setLicenseWarning] = useState('')
+  const [showSuspensionWarning, setShowSuspensionWarning] = useState(false)
 
   // Common Sri Lankan license formats supported by the portal.
   const sriLankanLicensePatterns = [
@@ -39,6 +50,15 @@ export default function FinePay() {
     if (licenseError) {
       setLicenseError(validateLicenseNumber(sanitized))
     }
+
+    if (suspendedLicenseNumbers.has(sanitized)) {
+      setShowSuspensionWarning(true)
+      setLicenseWarning(suspensionWarningMessage)
+      return
+    }
+
+    setShowSuspensionWarning(false)
+    setLicenseWarning('')
   }
 
   const handleLicenseBlur = () => {
@@ -51,10 +71,27 @@ export default function FinePay() {
 
     if (validationError) {
       setLicenseError(validationError)
+      setShowSuspensionWarning(false)
+      setLicenseWarning('')
       return
     }
 
     setLicenseError('')
+
+    if (suspendedLicenseNumbers.has(licenseNumber)) {
+      setShowSuspensionWarning(true)
+      setLicenseWarning(suspensionWarningMessage)
+      navigate('/fine-pay/outstanding', {
+        state: {
+          suspensionReminder: suspensionWarningMessage,
+          licenseNumber,
+        },
+      })
+      return
+    }
+
+    setShowSuspensionWarning(false)
+    setLicenseWarning('')
     navigate('/fine-pay/outstanding')
   }
 
@@ -89,6 +126,17 @@ export default function FinePay() {
               <small id="license-error" className="fine-pay-card__error" role="alert">
                 {licenseError}
               </small>
+            )}
+            {showSuspensionWarning && (
+              <section className="fine-pay-card__warning" role="alert" aria-live="polite">
+                <div className="fine-pay-card__warning-icon" aria-hidden="true">
+                  !
+                </div>
+                <div className="fine-pay-card__warning-body">
+                  <h3>Suspension reminder</h3>
+                  <p>{licenseWarning}</p>
+                </div>
+              </section>
             )}
             <button type="submit">Check Fines</button>
           </form>

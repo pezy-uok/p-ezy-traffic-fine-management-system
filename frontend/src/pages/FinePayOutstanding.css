@@ -29,6 +29,60 @@
   margin: 0 auto;
 }
 
+.fine-pay-outstanding-reminder {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  border-left: 4px solid #dc2626;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.96) 0%, rgba(255, 250, 235, 0.96) 100%);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.fine-pay-outstanding-reminder__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.fine-pay-outstanding-reminder__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fine-pay-outstanding-reminder__body h3 {
+  margin: 0;
+  color: #991b1b;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.fine-pay-outstanding-reminder__body p {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.fine-pay-outstanding-reminder__body span {
+  color: #9f1239;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .fine-pay-outstanding-header {
   border-radius: 0.9rem;
   background: linear-gradient(135deg, #2a99ea 0%, #2196f3 100%);

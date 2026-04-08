@@ -8,9 +8,10 @@ This folder contains the HTTP client setup for your React application using axio
 The main axios instance with:
 - **Base URL**: Automatically configured from `VITE_API_BASE_URL` environment variable
 - **Default Timeout**: 10 seconds
-- **Request Interceptor**: Automatically adds Bearer token to requests if available
+- **Request Interceptor**: Automatically adds Bearer token using `VITE_AUTH_TOKEN_KEY` (defaults to `authToken`)
 - **Response Interceptor**: Handles errors with status-specific logic:
-  - `401`: Clears auth token and redirects to `/login`
+  - `401`: Clears auth storage and redirects to `/admin` for protected routes
+  - `401` on auth challenge endpoints: no redirect (`/auth/login`, `/auth/admin-login`, `/auth/admin-request-otp`, `/auth/verify-otp`)
   - `403`: Logs forbidden error
   - `404`: Logs not found error
   - `500`: Logs server error
@@ -28,7 +29,8 @@ All endpoints include TypeScript types for request/response data.
 
 ### 1. Set up environment variables (`.env`)
 ```
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_BASE_URL=http://localhost:8000/api
+VITE_AUTH_TOKEN_KEY=authToken
 ```
 
 ### 2. Use API service functions directly
@@ -70,9 +72,10 @@ const data = await axiosInstance.post('/custom-endpoint', { /* data */ })
 
 The axios instance automatically handles Bearer token authentication:
 
-1. When a login request succeeds, store the token:
+1. When a login request succeeds, store the token with the configured key:
    ```typescript
-   localStorage.setItem('authToken', token)
+  const tokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken'
+  localStorage.setItem(tokenKey, token)
    ```
 
 2. The request interceptor automatically adds it to all requests:
@@ -80,7 +83,7 @@ The axios instance automatically handles Bearer token authentication:
    Authorization: Bearer <token>
    ```
 
-3. If a 401 response is received, the error interceptor clears the token and redirects to login.
+3. If a 401 response is received for a protected route, the error interceptor clears auth storage and redirects to `/admin`.
 
 ## Error Handling
 
