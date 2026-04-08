@@ -1,73 +1,92 @@
-# React + TypeScript + Vite
+# PEzy Admin Portal Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Admin portal frontend built with React, Vite, and TypeScript.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19
+- Vite 8
+- TypeScript 5
+- React Router
+- Axios
+- Tailwind CSS 4
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 20+
+- npm 10+
+- Backend API running on `http://localhost:8000`
 
-## Expanding the ESLint configuration
+## Environment Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Copy `.env.example` to `.env`.
+2. Set `VITE_API_BASE_URL` to your backend API URL.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Default local value:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Install
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+## Run (Development)
+
+```bash
+npm run dev
+```
+
+Vite default URL:
+
+- `http://localhost:5173`
+
+Admin routes:
+
+- `/admin`
+- `/admin/dashboard`
+- `/admin/fines`
+- `/admin/criminal-records`
+- `/admin/news`
+
+## Build
+
+```bash
+npm run build
+```
+
+## Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Folder Overview
+
+- `src/pages` — route pages, including admin pages
+- `src/components` — reusable UI components
+- `src/layouts` — shared app and admin layouts
+- `src/api` — axios instance and API wrappers
+- `src/config` — route and app config
+- `src/types` — TypeScript interfaces
+
+## Tailwind CSS (Admin Portal)
+
+Tailwind is installed and configured with PostCSS.
+
+Configuration files:
+
+- `tailwind.config.js`
+- `postcss.config.js`
+- `src/index.css`
+- `src/styles/admin-tailwind.css`
+
+Admin Tailwind layer:
+
+- `src/styles/admin-tailwind.css` defines admin-specific Tailwind component classes.
+- It is imported in `src/layouts/AdminLayout.tsx` and applied to the admin shell/sidebar/content.
+
+If you add a new admin page, prefer Tailwind utility classes or the reusable classes in `src/styles/admin-tailwind.css`.

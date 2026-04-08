@@ -4,6 +4,7 @@ import Dashboard from '../pages/Dashboard'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
 import NewsAwareness from '../pages/NewsAwareness'
+import IGPProfile from '../pages/IGPProfile'
 import FinePay from '../pages/FinePay'
 import FinePayOutstanding from '../pages/FinePayOutstanding'
 import FinePaySuccess from '../pages/FinePaySuccess'
@@ -19,12 +20,7 @@ import FieldForceHeadquarters from '../pages/divisions/FieldForceHeadquarters'
 import MountedDivision from '../pages/divisions/MountedDivision'
 import PoliceCadetDivision from '../pages/divisions/PoliceCadetDivision'
 import TrafficRoadSafetyDivision from '../pages/divisions/TrafficRoadSafetyDivision'
-import AdminLogin from '../pages/AdminLogin'
-import AdminLayout from '../layouts/AdminLayout'
-import AdminDashboard from '../pages/AdminDashboard'
-import AdminFineManagement from '../pages/AdminFineManagement'
-import AdminCriminalRecords from '../pages/AdminCriminalRecords'
-import AdminNewsManagement from '../pages/AdminNewsManagement'
+import { adminRoutes } from './adminRoutes'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -115,6 +111,11 @@ export const routes: RouteConfig[] = [
     name: 'News & Awareness',
   },
   {
+    path: '/igp-profile',
+    element: <IGPProfile />,
+    name: 'IGP Profile',
+  },
+  {
     path: '/fine-pay',
     element: <FinePay />,
     name: 'Fine Pay',
@@ -134,47 +135,7 @@ export const routes: RouteConfig[] = [
     element: <FinePayFailure />,
     name: 'Fine Pay Failure',
   },
-  {
-    path: '/admin',
-    element: <AdminLogin />,
-    name: 'Admin Login',
-  },
-  {
-    path: '/admin/dashboard',
-    element: (
-      <AdminLayout>
-        <AdminDashboard sectionName="Dashboard" />
-      </AdminLayout>
-    ),
-    name: 'Admin Dashboard',
-  },
-  {
-    path: '/admin/fines',
-    element: (
-      <AdminLayout>
-        <AdminFineManagement />
-      </AdminLayout>
-    ),
-    name: 'Admin Fines',
-  },
-  {
-    path: '/admin/criminal-records',
-    element: (
-      <AdminLayout>
-        <AdminCriminalRecords />
-      </AdminLayout>
-    ),
-    name: 'Admin Criminal Records',
-  },
-  {
-    path: '/admin/news',
-    element: (
-      <AdminLayout>
-        <AdminNewsManagement />
-      </AdminLayout>
-    ),
-    name: 'Admin News',
-  },
+  ...adminRoutes,
   {
     path: '/*',
     element: <NotFound />,

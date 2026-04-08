@@ -118,6 +118,15 @@
   transform: translateY(1px);
 }
 
+.admin-login__form .admin-login__secondary {
+  margin-top: 0;
+  background: #64748b;
+}
+
+.admin-login__form .admin-login__secondary:hover {
+  background: #475569;
+}
+
 .admin-login__demo {
   text-align: center;
   color: #64748b;

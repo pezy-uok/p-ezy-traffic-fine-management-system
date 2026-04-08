@@ -21,3 +21,12 @@ export * from './errors'
 
 // Content & Resources types
 export * from './content'
+
+// Criminal management types
+export * from './criminal'
+
+// Fine/Traffic citation types
+export * from './fine'
+
+// Incident/Accident types
+export * from './incident'

@@ -10,10 +10,10 @@ class AppConfig {
   /// Change this value to match your backend server URL
   ///
   /// Examples:
-  /// - Development: 'http://localhost:3000/api'
+  /// - Development: 'http://localhost:8000/api'
   /// - Staging: 'https://staging-api.pezy.com/api'
   /// - Production: 'https://api.pezy.com/api'
-  static const String apiBaseUrl = 'http://localhost:3000/api';
+  static const String apiBaseUrl = 'http://localhost:8000/api';
 
   /// API Timeout (in seconds)
   static const int apiTimeoutSeconds = 30;

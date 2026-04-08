@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { adminAPI } from '@/api'
+import type { AdminDashboardStats } from '@/types'
 import AdminMainContent from '../layouts/AdminMainContent'
 import AdminStatCards from '../components/admin/AdminStatCards'
 import './AdminDashboard.css'
@@ -71,7 +73,52 @@ const quickStats: QuickStat[] = [
 ]
 
 export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashboardProps) {
-  const topSection = <AdminStatCards />
+  const [stats, setStats] = useState<AdminDashboardStats | null>(null)
+  const [isStatsLoading, setIsStatsLoading] = useState(true)
+  const [statsError, setStatsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadStats = async () => {
+      try {
+        setIsStatsLoading(true)
+        setStatsError(null)
+
+        const response = await adminAPI.getStats()
+
+        if (!isMounted) {
+          return
+        }
+
+        setStats(response.data.stats)
+      } catch (error) {
+        if (!isMounted) {
+          return
+        }
+
+        console.error('Failed to fetch admin dashboard stats:', error)
+        setStatsError('Unable to load dashboard stats right now.')
+      } finally {
+        if (isMounted) {
+          setIsStatsLoading(false)
+        }
+      }
+    }
+
+    loadStats()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const topSection = (
+    <div>
+      {statsError ? <p className="admin-dashboard__error">{statsError}</p> : null}
+      <AdminStatCards cards={stats?.cards} isLoading={isStatsLoading} />
+    </div>
+  )
 
   const primarySection = (
     <>
@@ -95,7 +142,7 @@ export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashb
     <>
       <h3 className="admin-dashboard__panel-title">Quick Stats</h3>
       <div className="admin-dashboard__quick-stats">
-        {quickStats.map(item => (
+        {(stats?.quickStats || quickStats).map(item => (
           <article key={item.label} className={`admin-dashboard__quick-item is-${item.tone}`}>
             <span>{item.label}</span>
             <strong>{item.value}</strong>

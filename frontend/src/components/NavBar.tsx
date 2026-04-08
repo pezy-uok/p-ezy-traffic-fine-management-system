@@ -56,6 +56,13 @@ const libraryMenu: SubMenuItem[] = [
   },
 ]
 
+const surveyMenu: SubMenuItem[] = [
+  {
+    label: 'Inspector General of Police',
+    path: '/igp-profile',
+  },
+]
+
 const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Home', path: '/' },
   { label: 'About Us', path: '/about' },
@@ -64,7 +71,7 @@ const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Division', children: divisionMenu },
   { label: 'Downloads' },
   { label: 'Library', children: libraryMenu },
-  { label: 'Survey' },
+  { label: 'Survey', children: surveyMenu },
 ]
 
 export default function NavBar({ activeLabel }: NavBarProps) {

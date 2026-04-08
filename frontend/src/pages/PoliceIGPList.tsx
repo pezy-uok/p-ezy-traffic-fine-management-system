@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import NavBar from '../components/NavBar'
 import pLogo from '../assets/plogo.png'
 import './PoliceIGPList.css'
@@ -97,6 +97,7 @@ export default function PoliceIGPList() {
   const [loadedImageIds, setLoadedImageIds] = useState<Record<string, boolean>>({})
 
   const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase())
+  const isSearching = deferredQuery.length > 0
 
   const activeEra = useMemo(
     () => eraGroups.find(group => group.id === activeEraId) ?? eraGroups[0],
@@ -106,27 +107,32 @@ export default function PoliceIGPList() {
   const visibleEntries = useMemo(
     () =>
       igpEntries.filter(entry => {
-        const matchesEra = entry.eraId === activeEraId
+        const matchesEra = isSearching || entry.eraId === activeEraId
         const matchesQuery =
           deferredQuery.length === 0 ||
           entry.name.toLowerCase().includes(deferredQuery) ||
-          entry.period.toLowerCase().includes(deferredQuery)
+          entry.period.toLowerCase().includes(deferredQuery) ||
+          (eraGroups.find(group => group.id === entry.eraId)?.label.toLowerCase().includes(deferredQuery) ?? false)
 
         return matchesEra && matchesQuery
       }),
-    [activeEraId, deferredQuery],
+    [activeEraId, deferredQuery, isSearching],
   )
 
-  useEffect(() => {
-    setLoadedImageIds({})
-  }, [activeEraId, deferredQuery])
+  const searchSummary = isSearching
+    ? `Showing ${visibleEntries.length} result${visibleEntries.length === 1 ? '' : 's'} for "${searchQuery.trim()}".`
+    : activeEra.summary
 
-  const handleImageLoad = (entryId: string) => {
-    setLoadedImageIds(previous => ({ ...previous, [entryId]: true }))
+  const handleImageReady = (entryId: string) => {
+    setLoadedImageIds(previous => (previous[entryId] ? previous : { ...previous, [entryId]: true }))
   }
 
   const handleScrollToRoster = () => {
     document.querySelector('#igp-roster')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery('')
   }
 
   return (
@@ -245,9 +251,9 @@ export default function PoliceIGPList() {
           <div className="igp-list__section-heading">
             <div>
               <p className="igp-list__eyebrow">Leadership Archive</p>
-              <h3>Browse By Era</h3>
+              <h3>{isSearching ? 'Search Leadership Archive' : 'Browse By Era'}</h3>
             </div>
-            <p>{activeEra.summary}</p>
+            <p>{searchSummary}</p>
           </div>
 
           <div className="igp-list__controls">
@@ -267,39 +273,65 @@ export default function PoliceIGPList() {
               ))}
             </div>
 
-            <label className="igp-list__search">
+            <label className="igp-list__search" htmlFor="igp-search">
               <span>Search</span>
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={event => setSearchQuery(event.target.value)}
-                placeholder="Search by name or period"
-                aria-label="Search IGP records"
-              />
+              <div className="igp-list__search-input">
+                <input
+                  id="igp-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={event => setSearchQuery(event.target.value)}
+                  placeholder="Search by name, period, or era"
+                  aria-label="Search IGP records"
+                />
+                {searchQuery.trim().length > 0 ? (
+                  <button type="button" className="igp-list__search-clear" onClick={handleClearSearch}>
+                    Clear
+                  </button>
+                ) : null}
+              </div>
             </label>
           </div>
 
-          <div className="igp-list__card-grid" role="tabpanel" aria-label={activeEra.label}>
-            {visibleEntries.map((entry, index) => (
-              <article key={entry.id} className="igp-list__card" style={{ animationDelay: `${index * 45}ms` }}>
-                <div className="igp-list__card-top">
-                  <span>{entry.period}</span>
-                </div>
+          <div className="igp-list__card-grid" role="tabpanel" aria-label={isSearching ? 'Search results' : activeEra.label}>
+            {visibleEntries.length > 0 ? (
+              visibleEntries.map((entry, index) => {
+                const eraLabel = eraGroups.find(group => group.id === entry.eraId)?.label ?? activeEra.label
 
-                <div className={`igp-list__portrait-frame${loadedImageIds[entry.id] ? ' is-loaded' : ''}`}>
-                  <div className="igp-list__portrait-skeleton" aria-hidden="true" />
-                  <img
-                    src={getPortrait(entry.imageFile)}
-                    alt={entry.name}
-                    loading="lazy"
-                    onLoad={() => handleImageLoad(entry.id)}
-                  />
-                </div>
+                return (
+                  <article key={entry.id} className="igp-list__card" style={{ animationDelay: `${index * 45}ms` }}>
+                    <div className="igp-list__card-top">
+                      <span>{entry.period}</span>
+                      {isSearching ? <span className="igp-list__card-era">{eraLabel}</span> : null}
+                    </div>
 
-                <h4>{entry.name}</h4>
-                <p>{entry.period}</p>
-              </article>
-            ))}
+                    <div className={`igp-list__portrait-frame${loadedImageIds[entry.id] ? ' is-loaded' : ''}`}>
+                      <div className="igp-list__portrait-skeleton" aria-hidden="true" />
+                      <img
+                        src={getPortrait(entry.imageFile)}
+                        alt={entry.name}
+                        loading="lazy"
+                        ref={node => {
+                          if (node?.complete) {
+                            handleImageReady(entry.id)
+                          }
+                        }}
+                        onLoad={() => handleImageReady(entry.id)}
+                        onError={() => handleImageReady(entry.id)}
+                      />
+                    </div>
+
+                    <h4>{entry.name}</h4>
+                    <p>{entry.period}</p>
+                  </article>
+                )
+              })
+            ) : (
+              <div className="igp-list__empty-state">
+                <strong>No IGP records matched your search.</strong>
+                <p>Try another name, year range, or clear the search to return to the selected era.</p>
+              </div>
+            )}
           </div>
         </section>
       </div>
