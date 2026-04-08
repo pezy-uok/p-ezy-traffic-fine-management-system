@@ -259,6 +259,51 @@ export const getOutdatedFines = async () => {
   }));
 };
 
+export const getAllFinesForAdmin = async () => {
+  const supabase = getSupabaseClient();
+
+  const { data: fines, error } = await supabase
+    .from('fines')
+    .select(`
+      id,
+      amount,
+      reason,
+      status,
+      issue_date,
+      due_date,
+      created_at,
+      driver_id,
+      drivers(first_name, last_name)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new AppError(`Failed to fetch fines: ${error.message}`, 500);
+  }
+
+  const todayIso = new Date().toISOString().split('T')[0];
+
+  return (fines || []).map((fine) => {
+    const isPaid = fine.status === 'paid';
+    const isOverdue = !isPaid && fine.due_date && fine.due_date < todayIso;
+    const normalizedStatus = isPaid ? 'paid' : isOverdue ? 'overdue' : 'pending';
+    const driver = fine.drivers || {};
+    const offender = `${driver.first_name || ''} ${driver.last_name || ''}`.trim() || 'Unknown Driver';
+
+    return {
+      id: fine.id,
+      offender,
+      violation: fine.reason || 'N/A',
+      amount: Number(fine.amount || 0),
+      date: fine.issue_date || (fine.created_at ? fine.created_at.split('T')[0] : null),
+      status: normalizedStatus,
+      raw_status: fine.status,
+      due_date: fine.due_date,
+      driver_id: fine.driver_id,
+    };
+  });
+};
+
 export const updateFineStatus = async () => {
   return notImplemented('updateFineStatus');
 };

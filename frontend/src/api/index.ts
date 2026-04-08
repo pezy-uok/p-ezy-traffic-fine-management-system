@@ -76,4 +76,8 @@ export const dashboardAPI = {
     }),
 }
 
+export const adminAPI = {
+  getAllFines: () => axiosInstance.get('/admin/fines'),
+}
+
 export default axiosInstance

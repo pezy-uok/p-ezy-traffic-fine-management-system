@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { adminAPI } from '@/api'
 import './AdminFineManagement.css'
 
 interface FineRecord {
@@ -10,48 +11,7 @@ interface FineRecord {
   status: 'paid' | 'pending' | 'overdue'
 }
 
-const initialFineRecords: FineRecord[] = [
-  {
-    id: 'F001',
-    offender: 'Nimal Perera',
-    violation: 'Speeding',
-    amount: 'LKR 250',
-    date: '2026-03-18',
-    status: 'paid',
-  },
-  {
-    id: 'F002',
-    offender: 'Kasun Silva',
-    violation: 'No Seat Belt',
-    amount: 'LKR 100',
-    date: '2026-03-20',
-    status: 'pending',
-  },
-  {
-    id: 'F003',
-    offender: 'Amila Fernando',
-    violation: 'Signal Jumping',
-    amount: 'LKR 350',
-    date: '2026-03-17',
-    status: 'overdue',
-  },
-  {
-    id: 'F004',
-    offender: 'Sanduni Jayasuriya',
-    violation: 'Illegal Parking',
-    amount: 'LKR 150',
-    date: '2026-03-22',
-    status: 'paid',
-  },
-  {
-    id: 'F005',
-    offender: 'Ravindu Senanayake',
-    violation: 'Overtaking Violation',
-    amount: 'LKR 500',
-    date: '2026-03-15',
-    status: 'pending',
-  },
-]
+const initialFineRecords: FineRecord[] = []
 
 const statusLabel: Record<FineRecord['status'], string> = {
   paid: 'Paid',
@@ -64,6 +24,8 @@ type FineModalMode = 'add' | 'edit'
 
 export default function AdminFineManagement() {
   const [fineRecords, setFineRecords] = useState<FineRecord[]>(initialFineRecords)
+  const [isLoadingFines, setIsLoadingFines] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [fineToDelete, setFineToDelete] = useState<FineRecord | null>(null)
   const [modalMode, setModalMode] = useState<FineModalMode>('add')
@@ -80,6 +42,49 @@ export default function AdminFineManagement() {
     status: 'pending',
   })
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof FineRecord, string>>>({})
+
+  useEffect(() => {
+    const fetchFines = async () => {
+      try {
+        setIsLoadingFines(true)
+        setLoadError(null)
+
+        const response = await adminAPI.getAllFines()
+        const payload = response.data as {
+          fines?: Array<{
+            id: string
+            offender?: string
+            violation?: string
+            amount?: number | string
+            date?: string | null
+            status?: 'paid' | 'pending' | 'overdue'
+          }>
+        }
+
+        const mapped = (payload.fines || []).map((fine) => {
+          const numericAmount = Number(fine.amount || 0)
+
+          return {
+            id: fine.id,
+            offender: fine.offender || 'Unknown Driver',
+            violation: fine.violation || 'N/A',
+            amount: `LKR ${numericAmount.toLocaleString('en-LK')}`,
+            date: fine.date || '-',
+            status: fine.status || 'pending',
+          } as FineRecord
+        })
+
+        setFineRecords(mapped)
+      } catch (error) {
+        console.error('Failed to fetch admin fines:', error)
+        setLoadError('Unable to load fines right now. Please refresh.')
+      } finally {
+        setIsLoadingFines(false)
+      }
+    }
+
+    fetchFines()
+  }, [])
 
   const filteredFineRecords = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -343,7 +348,23 @@ export default function AdminFineManagement() {
             </tr>
           </thead>
           <tbody>
-            {filteredFineRecords.map(record => (
+            {isLoadingFines ? (
+              <tr>
+                <td className="admin-fines__empty" colSpan={7}>
+                  Loading fines...
+                </td>
+              </tr>
+            ) : null}
+
+            {!isLoadingFines && loadError ? (
+              <tr>
+                <td className="admin-fines__empty" colSpan={7}>
+                  {loadError}
+                </td>
+              </tr>
+            ) : null}
+
+            {!isLoadingFines && !loadError ? filteredFineRecords.map(record => (
               <tr key={record.id}>
                 <td className="admin-fines__id">{record.id}</td>
                 <td>{record.offender}</td>
@@ -368,8 +389,8 @@ export default function AdminFineManagement() {
                   </div>
                 </td>
               </tr>
-            ))}
-            {filteredFineRecords.length === 0 ? (
+            )) : null}
+            {!isLoadingFines && !loadError && filteredFineRecords.length === 0 ? (
               <tr>
                 <td className="admin-fines__empty" colSpan={7}>
                   No fines found for the selected search and filter.

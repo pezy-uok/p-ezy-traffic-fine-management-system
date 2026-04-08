@@ -2,6 +2,7 @@ import {
   createFine as createFineService,
   getFineById as getFineByIdService,
   getFinesByLicense as getFinesByLicenseService,
+  getAllFinesForAdmin as getAllFinesForAdminService,
   getOutdatedFines as getOutdatedFinesService,
   updateFineStatus as updateFineStatusService,
 } from '../services/fineService.js';
@@ -66,6 +67,23 @@ export const getFinesByLicense = async (req, res, next) => {
 export const getOutdatedFines = async (req, res, next) => {
   try {
     const fines = await getOutdatedFinesService();
+
+    return res.status(200).json({
+      success: true,
+      fines,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get all fines for admin dashboard
+ * GET /api/admin/fines
+ */
+export const getAllFinesForAdmin = async (req, res, next) => {
+  try {
+    const fines = await getAllFinesForAdminService();
 
     return res.status(200).json({
       success: true,
