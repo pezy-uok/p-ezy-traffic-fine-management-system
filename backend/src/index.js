@@ -9,6 +9,7 @@ import {
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 dotenv.config();
 const app = express();
@@ -34,6 +35,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/drivers', driverRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Global middleware - must be last
 app.use(notFoundHandler);
