@@ -24,7 +24,7 @@ import AdminDashboard from '../pages/AdminDashboard'
 import AdminFineManagement from '../pages/AdminFineManagement'
 import AdminCriminalRecords from '../pages/AdminCriminalRecords'
 import AdminNewsManagement from '../pages/AdminNewsManagement'
-import AdminRouteGuard from '../components/admin/AdminRouteGuard'
+import AdminAuthGuard from '../components/admin/AdminAuthGuard'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -137,44 +137,44 @@ export const routes: RouteConfig[] = [
   {
     path: '/admin/dashboard',
     element: (
-      <AdminRouteGuard>
+      <AdminAuthGuard>
         <AdminLayout>
           <AdminDashboard sectionName="Dashboard" />
         </AdminLayout>
-      </AdminRouteGuard>
+      </AdminAuthGuard>
     ),
     name: 'Admin Dashboard',
   },
   {
     path: '/admin/fines',
     element: (
-      <AdminRouteGuard>
+      <AdminAuthGuard>
         <AdminLayout>
           <AdminFineManagement />
         </AdminLayout>
-      </AdminRouteGuard>
+      </AdminAuthGuard>
     ),
     name: 'Admin Fines',
   },
   {
     path: '/admin/criminal-records',
     element: (
-      <AdminRouteGuard>
+      <AdminAuthGuard>
         <AdminLayout>
           <AdminCriminalRecords />
         </AdminLayout>
-      </AdminRouteGuard>
+      </AdminAuthGuard>
     ),
     name: 'Admin Criminal Records',
   },
   {
     path: '/admin/news',
     element: (
-      <AdminRouteGuard>
+      <AdminAuthGuard>
         <AdminLayout>
           <AdminNewsManagement />
         </AdminLayout>
-      </AdminRouteGuard>
+      </AdminAuthGuard>
     ),
     name: 'Admin News',
   },
