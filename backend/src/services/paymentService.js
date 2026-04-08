@@ -27,6 +27,93 @@ const generatePayHereHash = (orderId, amount, currency) => {
 };
 
 /**
+ * Generate the expected PayHere webhook signature.
+ * Formula from PayHere notify_url docs:
+ * MD5(merchant_id + order_id + payhere_amount + payhere_currency + status_code + MD5(merchant_secret).toUpperCase()).toUpperCase()
+ */
+const generatePayHereNotifySignature = (merchantId, orderId, amount, currency, statusCode) => {
+  const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
+
+  const hashedSecret = crypto
+    .createHash('md5')
+    .update(merchantSecret)
+    .digest('hex')
+    .toUpperCase();
+
+  return crypto
+    .createHash('md5')
+    .update(`${merchantId}${orderId}${amount}${currency}${statusCode}${hashedSecret}`)
+    .digest('hex')
+    .toUpperCase();
+};
+
+const createPendingPaymentRecords = async (supabase, orderId, fines) => {
+  const paymentRows = fines.map((fine) => ({
+    fine_id: fine.id,
+    amount: parseFloat(fine.amount).toFixed(2),
+    payment_method: 'credit_card',
+    status: 'pending',
+    reference_number: orderId,
+  }));
+
+  const { error } = await supabase.from('payments').insert(paymentRows);
+
+  if (error) {
+    throw {
+      status: 500,
+      message: `Failed to create pending payment records: ${error.message}`,
+    };
+  }
+};
+
+const updateFineStatuses = async (supabase, fineIds) => {
+  const paymentDate = new Date().toISOString().split('T')[0];
+
+  const { error } = await supabase
+    .from('fines')
+    .update({
+      status: 'paid',
+      payment_date: paymentDate,
+      payment_method: 'credit_card',
+    })
+    .in('id', fineIds);
+
+  if (error) {
+    throw {
+      status: 500,
+      message: `Failed to update fine statuses: ${error.message}`,
+    };
+  }
+};
+
+const triggerReceiptGeneration = async ({ orderId, paymentId, fineIds }) => {
+  // Placeholder until a receipt service/module is introduced.
+  console.log('Payment receipt queued', {
+    orderId,
+    paymentId,
+    fineIds,
+  });
+};
+
+const triggerReceiptEmail = async ({ orderId, paymentId, driver }) => {
+  // Placeholder until an email provider is integrated.
+  if (!driver?.email) {
+    console.log('Skipping payment receipt email: driver email not available', {
+      orderId,
+      paymentId,
+      licenseNo: driver?.license_number,
+    });
+    return;
+  }
+
+  console.log('Payment receipt email queued', {
+    orderId,
+    paymentId,
+    email: driver.email,
+  });
+};
+
+/**
  * Initiate a PayHere payment for one or more fines
  *
  * @param {string[]} fineIds   - Array of fine UUIDs to pay
@@ -106,7 +193,10 @@ export const initiatePayment = async (fineIds, licenseNo) => {
   // 8. Generate PayHere hash
   const hash = generatePayHereHash(orderId, totalFormatted, currency);
 
-  // 9. Build PayHere checkout params
+  // 9. Persist pending payment records so the webhook can reconcile by order ID
+  await createPendingPaymentRecords(supabase, orderId, fines);
+
+  // 10. Build PayHere checkout params
   const checkoutParams = {
     sandbox: process.env.PAYHERE_SANDBOX === 'true',
     merchant_id: process.env.PAYHERE_MERCHANT_ID,
@@ -140,5 +230,146 @@ export const initiatePayment = async (fineIds, licenseNo) => {
       phone: driver.phone,
     },
     checkoutParams,
+  };
+};
+
+/**
+ * Handle a PayHere payment notification webhook.
+ *
+ * @param {object} payload - PayHere webhook payload
+ * @returns {object} webhook processing result
+ */
+export const handleWebhook = async (payload) => {
+  const {
+    merchant_id: merchantId,
+    order_id: orderId,
+    payment_id: paymentId,
+    payhere_amount: amount,
+    payhere_currency: currency,
+    status_code: statusCode,
+    md5sig,
+    custom_1: customFineIds,
+    custom_2: licenseNo,
+  } = payload || {};
+
+  if (!merchantId || !orderId || !amount || !currency || statusCode === undefined || !md5sig) {
+    throw {
+      status: 400,
+      message: 'Missing required PayHere webhook fields',
+    };
+  }
+
+  const expectedSignature = generatePayHereNotifySignature(
+    merchantId,
+    orderId,
+    amount,
+    currency,
+    statusCode
+  );
+
+  if (expectedSignature !== md5sig) {
+    throw {
+      status: 400,
+      message: 'Invalid PayHere notification signature',
+    };
+  }
+
+  const supabase = getSupabaseClient();
+  const { data: payments, error: paymentLookupError } = await supabase
+    .from('payments')
+    .select('id, fine_id, status, reference_number')
+    .eq('reference_number', orderId);
+
+  if (paymentLookupError) {
+    throw {
+      status: 500,
+      message: `Failed to find payment records for order ID ${orderId}: ${paymentLookupError.message}`,
+    };
+  }
+
+  if (!payments || payments.length === 0) {
+    throw {
+      status: 404,
+      message: `No payment records found for order ID ${orderId}`,
+    };
+  }
+
+  if (`${statusCode}` !== '2') {
+    const mappedStatus = `${statusCode}` === '0' ? 'pending' : 'failed';
+
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update({
+        status: mappedStatus,
+        transaction_id: paymentId || null,
+      })
+      .eq('reference_number', orderId);
+
+    if (updateError) {
+      throw {
+        status: 500,
+        message: `Failed to update payment status for order ID ${orderId}: ${updateError.message}`,
+      };
+    }
+
+    return {
+      orderId,
+      paymentId: paymentId || null,
+      status: mappedStatus,
+      message: 'Webhook received for non-success payment state',
+    };
+  }
+
+  const alreadyCompleted = payments.every((payment) => payment.status === 'completed');
+  const fineIds = customFineIds
+    ? customFineIds.split(',').map((id) => id.trim()).filter(Boolean)
+    : payments.map((payment) => payment.fine_id).filter(Boolean);
+
+  if (!alreadyCompleted) {
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        transaction_id: paymentId,
+        payment_date: new Date().toISOString(),
+      })
+      .eq('reference_number', orderId);
+
+    if (updateError) {
+      throw {
+        status: 500,
+        message: `Failed to mark payment as completed for order ID ${orderId}: ${updateError.message}`,
+      };
+    }
+
+    if (fineIds.length > 0) {
+      await updateFineStatuses(supabase, fineIds);
+    }
+  }
+
+  let driver = null;
+  if (licenseNo) {
+    const { data: driverData } = await supabase
+      .from('drivers')
+      .select('license_number, email, first_name, last_name')
+      .eq('license_number', licenseNo)
+      .maybeSingle();
+
+    driver = driverData || null;
+  }
+
+  if (!alreadyCompleted) {
+    await triggerReceiptGeneration({ orderId, paymentId, fineIds });
+    await triggerReceiptEmail({ orderId, paymentId, driver });
+  }
+
+  return {
+    orderId,
+    paymentId,
+    fineIds,
+    status: 'completed',
+    message: alreadyCompleted
+      ? 'Webhook already processed for this order'
+      : 'Webhook processed successfully',
   };
 };
