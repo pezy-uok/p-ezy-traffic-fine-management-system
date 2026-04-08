@@ -88,6 +88,31 @@ export const adminAPI = {
 
   getAllCriminals: () => axiosInstance.get('/admin/criminals'),
 
+  getAllOfficers: () => axiosInstance.get('/admin/officers'),
+
+  createOfficer: (payload: {
+    name: string
+    phone: string
+    email?: string
+    badge_number?: string
+    department?: string
+    rank?: string
+    status?: 'active' | 'inactive' | 'suspended'
+  }) => axiosInstance.post('/admin/officers', payload),
+
+  updateOfficer: (officerId: string, payload: {
+    name?: string
+    phone?: string
+    email?: string
+    badge_number?: string
+    department?: string
+    rank?: string
+    status?: 'active' | 'inactive' | 'suspended'
+  }) => axiosInstance.put(`/admin/officers/${officerId}`, payload),
+
+  deleteOfficer: (officerId: string) =>
+    axiosInstance.delete(`/admin/officers/${officerId}`),
+
   getAllNews: () => axiosInstance.get('/admin/news'),
 
   getStats: () => axiosInstance.get<{ success: boolean; stats: AdminDashboardStats }>('/admin/stats'),
