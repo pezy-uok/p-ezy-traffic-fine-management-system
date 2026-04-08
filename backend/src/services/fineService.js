@@ -476,14 +476,26 @@ export const updateFineForAdmin = async (fineId, fineData = {}) => {
   }
 
   if (fineData.status !== undefined) {
-    const { dbStatus, dueDate } = normalizeAdminFineStatus(fineData.status);
+    const { dbStatus } = normalizeAdminFineStatus(fineData.status);
     updatePayload.status = dbStatus;
 
-    if (fineData.status === 'overdue') {
-      updatePayload.due_date = dueDate;
-    } else if (fineData.status === 'pending' && !existingFine.due_date) {
-      const baseDate = updatePayload.issue_date || toIsoDateString(new Date());
-      updatePayload.due_date = addDays(baseDate, 14);
+    // Only update due_date when status is NOT paid
+    if (fineData.status !== 'paid') {
+      if (fineData.status === 'overdue') {
+        const yesterday = new Date();
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+        updatePayload.due_date = yesterday.toISOString().split('T')[0];
+      } else if (fineData.status === 'pending' && !existingFine.due_date) {
+        const baseDate = updatePayload.issue_date || toIsoDateString(new Date());
+        updatePayload.due_date = addDays(baseDate, 14);
+      } else if (fineData.date !== undefined) {
+        // If issue_date was updated, recalculate due_date
+        updatePayload.due_date = addDays(updatePayload.issue_date, 14);
+      }
+    } else if (fineData.status === 'paid') {
+      // When transitioning to paid, record the payment date (same as updateFineStatus)
+      updatePayload.payment_date = new Date().toISOString().split('T')[0];
+      // Don't touch due_date when paid
     }
   }
 
@@ -491,12 +503,15 @@ export const updateFineForAdmin = async (fineId, fineData = {}) => {
     throw new ValidationError('No fields provided to update');
   }
 
+  console.log('Updating fine with payload:', { fineId, updatePayload });
+
   const { error: updateError } = await supabase
     .from('fines')
     .update(updatePayload)
     .eq('id', fineId);
 
   if (updateError) {
+    console.error('Supabase update error:', updateError);
     throw new AppError(`Failed to update fine: ${updateError.message}`, 500);
   }
 
