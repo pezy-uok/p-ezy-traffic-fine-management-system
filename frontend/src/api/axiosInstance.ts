@@ -3,6 +3,15 @@ import type { InternalAxiosRequestConfig } from 'axios'
 
 // Get base URL from environment or use default
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+const AUTH_TOKEN_KEY = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken'
+const REFRESH_TOKEN_KEY = 'refreshToken'
+const ADMIN_USER_KEY = 'adminUser'
+
+const clearAuthStorage = () => {
+  localStorage.removeItem(AUTH_TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  localStorage.removeItem(ADMIN_USER_KEY)
+}
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -17,7 +26,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Add auth token if available
-    const token = localStorage.getItem('authToken')
+    const token = localStorage.getItem(AUTH_TOKEN_KEY)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -40,15 +49,14 @@ axiosInstance.interceptors.response.use(
       const isAuthChallengeRequest =
         requestUrl.includes('/auth/admin-login') ||
         requestUrl.includes('/auth/admin-request-otp') ||
-        requestUrl.includes('/auth/verify-otp')
+        requestUrl.includes('/auth/verify-otp') ||
+        requestUrl.includes('/auth/login')
 
       switch (error.response.status) {
         case 401: {
           // Don't force redirect on failed login attempts.
           if (!isAuthChallengeRequest) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('refreshToken')
-            localStorage.removeItem('adminUser')
+            clearAuthStorage()
             window.location.href = '/admin'
           }
           break
