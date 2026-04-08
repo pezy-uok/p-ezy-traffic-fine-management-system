@@ -319,6 +319,21 @@
   background: #eff3f8;
 }
 
+.admin-news__action-btn--edit:hover {
+  background: #dbeafe;
+  color: #0284c7;
+}
+
+.admin-news__action-btn--delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.admin-news__action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .admin-news__action-btn svg {
   width: 18px;
   height: 18px;
@@ -419,6 +434,26 @@
 .admin-news__modal-form label {
   display: grid;
   gap: 6px;
+}
+
+.admin-news__modal-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-news__check-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.admin-news__check-item input {
+  width: 16px;
+  height: 16px;
 }
 
 .admin-news__modal-form label span {

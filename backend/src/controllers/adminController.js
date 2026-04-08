@@ -69,6 +69,179 @@ export const getAllNewsForAdmin = async (req, res, next) => {
   }
 };
 
+const normalizeNewsPayload = (body) => ({
+  title: String(body.title || '').trim(),
+  content: String(body.content || '').trim(),
+  category: String(body.category || 'general').trim(),
+  featured: Boolean(body.featured),
+  pinned: Boolean(body.pinned),
+  published_at: body.publishedAt || body.published_at || null,
+});
+
+const mapNewsRow = (row, authorMap = {}) => {
+  const publishedAt = row.published_at || row.publishedAt || null;
+  const createdAt = row.created_at || row.createdAt || null;
+  const summary = row.summary || stripHtml(row.content).slice(0, 160);
+  const author = authorMap[row.author_id] || null;
+
+  return {
+    id: row.id,
+    title: row.title || 'Untitled',
+    content: row.content || '',
+    summary,
+    category: row.category || 'general',
+    status: row.status || (publishedAt ? 'published' : 'draft'),
+    featured: Boolean(row.featured),
+    pinned: Boolean(row.pinned),
+    publishedAt,
+    createdAt,
+    author: author ? author.name : row.authorName || row.author_id || 'Unknown Author',
+    authorEmail: author?.email || null,
+  };
+};
+
+export const createNewsForAdmin = async (req, res, next) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { title, content, category, featured, pinned, published_at } = normalizeNewsPayload(req.body);
+    const status = String(req.body.status || 'draft').trim();
+
+    if (!title || !content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title and content are required',
+      });
+    }
+
+    const payload = {
+      title,
+      content,
+      category,
+      featured,
+      pinned,
+      author_id: req.user?.id || null,
+      published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
+    };
+
+    const { data: createdNews, error } = await supabase
+      .from('news')
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to create news: ${error.message}`,
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'News created successfully',
+      news: mapNewsRow(createdNews),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateNewsForAdmin = async (req, res, next) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { newsId } = req.params;
+    const { title, content, category, featured, pinned, published_at } = normalizeNewsPayload(req.body);
+    const status = String(req.body.status || 'draft').trim();
+
+    if (!newsId) {
+      return res.status(400).json({
+        success: false,
+        message: 'News ID is required',
+      });
+    }
+
+    const updatePayload = {
+      title,
+      content,
+      category,
+      featured,
+      pinned,
+      published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
+    };
+
+    const { data: updatedNews, error } = await supabase
+      .from('news')
+      .update(updatePayload)
+      .eq('id', newsId)
+      .select('*')
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to update news: ${error.message}`,
+      });
+    }
+
+    if (!updatedNews) {
+      return res.status(404).json({
+        success: false,
+        message: 'News article not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'News updated successfully',
+      news: mapNewsRow(updatedNews),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteNewsForAdmin = async (req, res, next) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { newsId } = req.params;
+
+    if (!newsId) {
+      return res.status(400).json({
+        success: false,
+        message: 'News ID is required',
+      });
+    }
+
+    const { data: deletedNews, error } = await supabase
+      .from('news')
+      .delete()
+      .eq('id', newsId)
+      .select('id')
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to delete news: ${error.message}`,
+      });
+    }
+
+    if (!deletedNews) {
+      return res.status(404).json({
+        success: false,
+        message: 'News article not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'News deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getDashboardStatsForAdmin = async (req, res, next) => {
   try {
     const supabase = getSupabaseClient();
