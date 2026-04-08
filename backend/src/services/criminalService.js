@@ -378,3 +378,120 @@ export const deleteCriminal = async (criminalId) => {
     criminal_id: criminalId,
   };
 };
+
+/**
+ * Get all active criminals (public view)
+ * Only returns non-deleted, active/wanted criminals
+ * @param {Object} options - Query options
+ * @param {number} options.limit - Limit results (default: 20, max: 100)
+ * @param {number} options.offset - Offset for pagination (default: 0)
+ * @param {boolean} options.wanted - Filter by wanted status (optional)
+ * @param {string} options.search - Search in first_name or last_name (optional)
+ * @returns {Promise<Object>} { criminals: Array, total: number, limit, offset }
+ */
+export const getAllCriminalsPublic = async (options = {}) => {
+  const supabase = getSupabaseClient();
+
+  // Validate and set defaults
+  let limit = options.limit || 20;
+  if (limit > 100) limit = 100;
+  if (limit < 1) limit = 1;
+
+  const offset = options.offset || 0;
+  if (offset < 0) {
+    throw new ValidationError('Offset cannot be negative');
+  }
+
+  let query = supabase.from('criminals').select('*', { count: 'exact' });
+
+  // Only show active and wanted criminals that are not deleted
+  query = query.is('deleted_at', null);
+  query = query.neq('status', 'inactive');
+
+  // Filter by wanted status if provided
+  if (options.wanted === true) {
+    query = query.eq('wanted', true);
+  }
+
+  // Search in first_name or last_name
+  if (options.search) {
+    const searchTerm = `%${options.search}%`;
+    query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm}`);
+  }
+
+  // Order by wanted status first, then by created_at
+  const { data: criminals, error, count } = await query
+    .order('wanted', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    throw new Error(`Failed to fetch criminals: ${error.message}`);
+  }
+
+  return {
+    criminals: (criminals || []).map((criminal) => ({
+      id: criminal.id,
+      firstName: criminal.first_name,
+      lastName: criminal.last_name,
+      status: criminal.status,
+      wanted: criminal.wanted,
+      dangerLevel: criminal.danger_level,
+      gender: criminal.gender,
+      dateOfBirth: criminal.date_of_birth,
+      description: criminal.physical_description,
+      photoUrl: criminal.photo_path,
+      arrestCount: criminal.arrest_count,
+    })),
+    total: count || 0,
+    limit,
+    offset,
+  };
+};
+
+/**
+ * Get a single criminal by ID (public view)
+ * Only returns non-deleted criminals
+ * @param {string} criminalId - Criminal ID (UUID)
+ * @returns {Promise<Object>} Criminal record
+ * @throws {ValidationError} If ID is missing
+ * @throws {NotFoundError} If criminal not found or deleted
+ */
+export const getCriminalByIdPublic = async (criminalId) => {
+  if (!criminalId) {
+    throw new ValidationError('Criminal ID is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  // Get non-deleted criminal only
+  const { data: criminal, error } = await supabase
+    .from('criminals')
+    .select('*')
+    .eq('id', criminalId)
+    .is('deleted_at', null)
+    .single();
+
+  if (error || !criminal) {
+    throw new NotFoundError('Criminal record not found');
+  }
+
+  return {
+    id: criminal.id,
+    firstName: criminal.first_name,
+    lastName: criminal.last_name,
+    dateOfBirth: criminal.date_of_birth,
+    gender: criminal.gender,
+    status: criminal.status,
+    wanted: criminal.wanted,
+    dangerLevel: criminal.danger_level,
+    description: criminal.physical_description,
+    identificationNumber: criminal.identification_number,
+    knownAliases: criminal.known_aliases,
+    arrestedBefore: criminal.arrested_before,
+    arrestCount: criminal.arrest_count,
+    photoUrl: criminal.photo_path,
+    photoUploadedAt: criminal.photo_uploaded_at,
+    createdAt: criminal.created_at,
+  };
+};

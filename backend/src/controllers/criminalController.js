@@ -1,4 +1,4 @@
-import { createCriminal, updateCriminal, getAllCriminals, deleteCriminal, getCriminalById } from '../services/criminalService.js';
+import { createCriminal, updateCriminal, getAllCriminals, deleteCriminal, getCriminalById, getAllCriminalsPublic as getAllCriminalsPublicService, getCriminalByIdPublic as getCriminalByIdPublicService } from '../services/criminalService.js';
 import { deletePhotoFile } from '../middlewares/uploadPhoto.js';
 
 /**
@@ -204,6 +204,68 @@ export const uploadCriminalPhotoRecord = async (req, res, next) => {
     if (req.file) {
       deletePhotoFile(`/uploads/criminals/${req.file.filename}`);
     }
+    next(error);
+  }
+};
+
+/**
+ * Get all active/wanted criminals (public view)
+ * GET /api/criminals
+ * Query parameters:
+ *   - limit: number (default: 20, max: 100)
+ *   - offset: number (default: 0)
+ *   - wanted: boolean (filter by wanted status)
+ *   - search: string (search in first_name/last_name)
+ * Returns: { success, criminals: Array, total, limit, offset }
+ * Public Access: YES
+ */
+export const getAllCriminalsPublic = async (req, res, next) => {
+  try {
+    const queryOptions = {
+      limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+      offset: req.query.offset ? parseInt(req.query.offset) : undefined,
+      wanted: req.query.wanted === 'true' ? true : undefined,
+      search: req.query.search,
+    };
+
+    // Remove undefined values
+    Object.keys(queryOptions).forEach((key) => queryOptions[key] === undefined && delete queryOptions[key]);
+
+    const result = await getAllCriminalsPublicService(queryOptions);
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get a single criminal by ID (public view)
+ * GET /api/criminals/:id
+ * Returns: { success, criminal }
+ * Public Access: YES
+ */
+export const getCriminalByIdPublic = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal ID is required',
+      });
+    }
+
+    const criminal = await getCriminalByIdPublicService(id);
+
+    return res.status(200).json({
+      success: true,
+      criminal,
+    });
+  } catch (error) {
     next(error);
   }
 };

@@ -2,21 +2,43 @@ import express from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 import { uploadCriminalPhoto } from '../middlewares/uploadPhoto.js';
-import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords, deleteCriminalRecord, getCriminalRecord, uploadCriminalPhotoRecord } from '../controllers/criminalController.js';
+import { createCriminalRecord, updateCriminalRecord, getAllCriminalsRecords, deleteCriminalRecord, getCriminalRecord, uploadCriminalPhotoRecord, getAllCriminalsPublic, getCriminalByIdPublic } from '../controllers/criminalController.js';
 
 const router = express.Router();
 
 /**
- * Criminal Management Routes
+ * CRIMINAL ROUTES - Combined Public & Police Officer/Admin
  * Base: /api/criminals
  */
 
+// ============================================================
+// PUBLIC CRIMINAL ROUTES - No Authentication Required
+// ============================================================
+
 /**
  * GET /api/criminals
- * Get all criminals with optional filtering and pagination
- * Protected: requires police_officer role
+ * Get all active/wanted criminals (public view)
+ * Query parameters:
+ *   - limit: number (default: 20, max: 100)
+ *   - offset: number (default: 0)
+ *   - wanted: boolean (filter by wanted status)
+ *   - search: string (search in first_name/last_name)
+ * Returns: { success, criminals: Array, total, limit, offset }
+ * Public Access: YES
  */
-router.get('/', authenticate, authorize('police_officer'), getAllCriminalsRecords);
+router.get('/', getAllCriminalsPublic);
+
+/**
+ * GET /api/criminals/:id
+ * Get a single criminal by ID (public view)
+ * Returns: { success, criminal }
+ * Public Access: YES
+ */
+router.get('/:id', getCriminalByIdPublic);
+
+// ============================================================
+// PROTECTED CRIMINAL ROUTES - Police Officer Authentication
+// ============================================================
 
 /**
  * POST /api/criminals/create
@@ -37,13 +59,6 @@ router.post('/:id/photo',
   uploadCriminalPhoto.single('photo'),
   uploadCriminalPhotoRecord
 );
-
-/**
- * GET /api/criminals/:id
- * Get a criminal record by ID
- * Protected: requires police_officer role
- */
-router.get('/:id', authenticate, authorize('police_officer'), getCriminalRecord);
 
 /**
  * PATCH /api/criminals/:id
