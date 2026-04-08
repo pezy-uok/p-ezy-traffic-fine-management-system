@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { CSSProperties } from 'react'
 import slideOne from '../assets/slider/slide-1.png'
 import slideTwo from '../assets/slider/slide-2.png'
@@ -49,6 +50,7 @@ const servicesData = [
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -154,7 +156,7 @@ export default function Home() {
                 <h3 className="home-police__igp-title">Inspector General of Police</h3>
                 <p className="home-police__igp-role">Attorney-at-Law</p>
                 <p className="home-police__igp-name">Mr. Priyantha Weerasooriya</p>
-                <button type="button" className="home-police__igp-btn">
+                <button type="button" className="home-police__igp-btn" onClick={() => navigate('/igp-profile')}>
                   <span className="home-police__igp-btn-icon">👤</span>
                   Profile
                 </button>
