@@ -26,27 +26,6 @@ const generatePayHereHash = (orderId, amount, currency) => {
   return hash;
 };
 
-/**
- * Generate the expected PayHere webhook signature.
- * Formula from PayHere notify_url docs:
- * MD5(merchant_id + order_id + payhere_amount + payhere_currency + status_code + MD5(merchant_secret).toUpperCase()).toUpperCase()
- */
-const generatePayHereNotifySignature = (merchantId, orderId, amount, currency, statusCode) => {
-  const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
-
-  const hashedSecret = crypto
-    .createHash('md5')
-    .update(merchantSecret)
-    .digest('hex')
-    .toUpperCase();
-
-  return crypto
-    .createHash('md5')
-    .update(`${merchantId}${orderId}${amount}${currency}${statusCode}${hashedSecret}`)
-    .digest('hex')
-    .toUpperCase();
-};
-
 const createPendingPaymentRecords = async (supabase, orderId, fines) => {
   const paymentRows = fines.map((fine) => ({
     fine_id: fine.id,
@@ -241,36 +220,17 @@ export const initiatePayment = async (fineIds, licenseNo) => {
  */
 export const handleWebhook = async (payload) => {
   const {
-    merchant_id: merchantId,
     order_id: orderId,
     payment_id: paymentId,
-    payhere_amount: amount,
-    payhere_currency: currency,
     status_code: statusCode,
-    md5sig,
     custom_1: customFineIds,
     custom_2: licenseNo,
   } = payload || {};
 
-  if (!merchantId || !orderId || !amount || !currency || statusCode === undefined || !md5sig) {
+  if (!orderId || statusCode === undefined) {
     throw {
       status: 400,
       message: 'Missing required PayHere webhook fields',
-    };
-  }
-
-  const expectedSignature = generatePayHereNotifySignature(
-    merchantId,
-    orderId,
-    amount,
-    currency,
-    statusCode
-  );
-
-  if (expectedSignature !== md5sig) {
-    throw {
-      status: 400,
-      message: 'Invalid PayHere notification signature',
     };
   }
 
