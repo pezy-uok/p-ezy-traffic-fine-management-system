@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Swal from 'sweetalert2'
 import { authAPI } from '@/api'
+import '../styles/admin-tailwind.css'
 import './AdminLayout.css'
 
 interface AdminLayoutProps {
@@ -106,8 +107,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <section className="admin-shell" aria-label="Admin dashboard layout">
-      <aside className="admin-shell__sidebar">
+    <section className="admin-shell admin-tw-shell" aria-label="Admin dashboard layout">
+      <aside className="admin-shell__sidebar admin-tw-sidebar">
         <div className="admin-shell__brand">
           <div className="admin-shell__brand-badge" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="presentation" focusable="false">
@@ -163,7 +164,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </button>
       </aside>
 
-      <div className="admin-shell__content">{children}</div>
+      <div className="admin-shell__content admin-tw-content">{children}</div>
     </section>
   )
 }
