@@ -5,7 +5,7 @@
   left: 50%;
   margin-left: -50vw;
   background:
-    radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.14), transparent 26%),
     linear-gradient(180deg, #eef5ff 0%, #e2ebf8 42%, #edf4fc 100%);
   color: #0f172a;
   font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -19,8 +19,8 @@
   gap: 1.5rem;
   align-items: stretch;
   background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.16), transparent 22%),
-    linear-gradient(120deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.96) 55%, rgba(120, 53, 15, 0.92));
+    radial-gradient(circle at top left, rgba(186, 230, 253, 0.18), transparent 22%),
+    linear-gradient(118deg, rgba(2, 132, 199, 0.92), rgba(12, 74, 110, 0.96) 58%, rgba(15, 23, 42, 0.94));
   overflow: hidden;
 }
 
@@ -37,7 +37,7 @@
   text-transform: uppercase;
   letter-spacing: 0.32em;
   font-size: 0.72rem;
-  color: #fde68a;
+  color: #f8fafc;
   font-weight: 800;
 }
 
@@ -84,8 +84,8 @@
 }
 
 .medals__hero-btn.is-primary {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  color: #1f2937;
+  background: #f8fafc;
+  color: #0369a1;
   border-color: transparent;
 }
 
@@ -126,7 +126,7 @@
   height: 8.2rem;
   border-radius: 1rem;
   background:
-    radial-gradient(circle at top, rgba(251, 191, 36, 0.2), transparent 58%),
+    radial-gradient(circle at top, rgba(125, 211, 252, 0.2), transparent 58%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
   border: 1px solid rgba(248, 250, 252, 0.12);
   display: flex;
@@ -147,8 +147,8 @@
   width: fit-content;
   padding: 0.16rem 0.65rem;
   border-radius: 999px;
-  background: rgba(245, 158, 11, 0.18);
-  color: #fde68a;
+  background: rgba(125, 211, 252, 0.16);
+  color: #dbeafe;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 0.68rem;
@@ -187,7 +187,7 @@
   display: block;
   font-size: 2rem;
   font-weight: 800;
-  color: #fbbf24;
+  color: #7dd3fc;
 }
 
 .medals__hero-stat p {
@@ -211,7 +211,7 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(circle at top, rgba(251, 191, 36, 0.24), transparent 58%),
+    radial-gradient(circle at top, rgba(125, 211, 252, 0.24), transparent 58%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
   border: 1px solid rgba(248, 250, 252, 0.12);
 }
