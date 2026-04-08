@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { adminAPI } from '@/api'
 import './AdminFineManagement.css'
 
@@ -33,6 +33,8 @@ export default function AdminFineManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [formValues, setFormValues] = useState<FineRecord>({
     id: '',
     offender: '',
@@ -43,48 +45,48 @@ export default function AdminFineManagement() {
   })
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof FineRecord, string>>>({})
 
-  useEffect(() => {
-    const fetchFines = async () => {
-      try {
-        setIsLoadingFines(true)
-        setLoadError(null)
+  const fetchFines = useCallback(async () => {
+    try {
+      setIsLoadingFines(true)
+      setLoadError(null)
 
-        const response = await adminAPI.getAllFines()
-        const payload = response.data as {
-          fines?: Array<{
-            id: string
-            offender?: string
-            violation?: string
-            amount?: number | string
-            date?: string | null
-            status?: 'paid' | 'pending' | 'overdue'
-          }>
-        }
-
-        const mapped = (payload.fines || []).map((fine) => {
-          const numericAmount = Number(fine.amount || 0)
-
-          return {
-            id: fine.id,
-            offender: fine.offender || 'Unknown Driver',
-            violation: fine.violation || 'N/A',
-            amount: `LKR ${numericAmount.toLocaleString('en-LK')}`,
-            date: fine.date || '-',
-            status: fine.status || 'pending',
-          } as FineRecord
-        })
-
-        setFineRecords(mapped)
-      } catch (error) {
-        console.error('Failed to fetch admin fines:', error)
-        setLoadError('Unable to load fines right now. Please refresh.')
-      } finally {
-        setIsLoadingFines(false)
+      const response = await adminAPI.getAllFines()
+      const payload = response.data as {
+        fines?: Array<{
+          id: string
+          offender?: string
+          violation?: string
+          amount?: number | string
+          date?: string | null
+          status?: 'paid' | 'pending' | 'overdue'
+        }>
       }
-    }
 
-    fetchFines()
+      const mapped = (payload.fines || []).map((fine) => {
+        const numericAmount = Number(fine.amount || 0)
+
+        return {
+          id: fine.id,
+          offender: fine.offender || 'Unknown Driver',
+          violation: fine.violation || 'N/A',
+          amount: `LKR ${numericAmount.toLocaleString('en-LK')}`,
+          date: fine.date || '-',
+          status: fine.status || 'pending',
+        } as FineRecord
+      })
+
+      setFineRecords(mapped)
+    } catch (error) {
+      console.error('Failed to fetch admin fines:', error)
+      setLoadError('Unable to load fines right now. Please refresh.')
+    } finally {
+      setIsLoadingFines(false)
+    }
   }, [])
+
+  useEffect(() => {
+    fetchFines()
+  }, [fetchFines])
 
   const filteredFineRecords = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -201,7 +203,7 @@ export default function AdminFineManagement() {
     return Object.keys(nextErrors).length === 0
   }
 
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!validateForm()) {
@@ -218,13 +220,29 @@ export default function AdminFineManagement() {
     }
 
     if (modalMode === 'edit' && editingFineId) {
-      setFineRecords(previous =>
-        previous.map(record => (record.id === editingFineId ? formattedRecord : record)),
-      )
-    } else {
-      setFineRecords(previous => [formattedRecord, ...previous])
+      try {
+        setIsSaving(true)
+        setLoadError(null)
+
+        await adminAPI.updateFine(editingFineId, {
+          violation: formattedRecord.violation,
+          amount: numericAmount,
+          date: formattedRecord.date,
+          status: formattedRecord.status,
+        })
+
+        await fetchFines()
+        closeFineModal()
+      } catch (error) {
+        console.error('Failed to update fine:', error)
+        setLoadError('Unable to update fine right now. Please try again.')
+      } finally {
+        setIsSaving(false)
+      }
+      return
     }
 
+    setFineRecords(previous => [formattedRecord, ...previous])
     closeFineModal()
   }
 
@@ -242,13 +260,24 @@ export default function AdminFineManagement() {
     setFineToDelete(null)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!fineToDelete) {
       return
     }
 
-    setFineRecords(previous => previous.filter(record => record.id !== fineToDelete.id))
-    setFineToDelete(null)
+    try {
+      setIsDeleting(true)
+      setLoadError(null)
+
+      await adminAPI.deleteFine(fineToDelete.id)
+      await fetchFines()
+      setFineToDelete(null)
+    } catch (error) {
+      console.error('Failed to delete fine:', error)
+      setLoadError('Unable to delete fine right now. Please try again.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -437,6 +466,7 @@ export default function AdminFineManagement() {
                   value={formValues.id}
                   onChange={event => updateFormValue('id', event.target.value)}
                   placeholder="F006"
+                  disabled={modalMode === 'edit'}
                   aria-invalid={Boolean(formErrors.id)}
                 />
                 {formErrors.id ? <span className="admin-fines__field-error">{formErrors.id}</span> : null}
@@ -449,6 +479,7 @@ export default function AdminFineManagement() {
                   value={formValues.offender}
                   onChange={event => updateFormValue('offender', event.target.value)}
                   placeholder="Offender name"
+                  disabled={modalMode === 'edit'}
                   aria-invalid={Boolean(formErrors.offender)}
                 />
                 {formErrors.offender ? <span className="admin-fines__field-error">{formErrors.offender}</span> : null}
@@ -505,8 +536,8 @@ export default function AdminFineManagement() {
 
               <div className="admin-fines__modal-actions">
                 <button type="button" className="admin-fines__btn-secondary" onClick={closeFineModal}>Cancel</button>
-                <button type="submit" className="admin-fines__btn-primary">
-                  {modalMode === 'edit' ? 'Update Fine' : 'Save Fine'}
+                <button type="submit" className="admin-fines__btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : modalMode === 'edit' ? 'Update Fine' : 'Save Fine'}
                 </button>
               </div>
             </form>
@@ -532,7 +563,9 @@ export default function AdminFineManagement() {
 
             <div className="admin-fines__modal-actions">
               <button type="button" className="admin-fines__btn-secondary" onClick={closeDeleteDialog}>Cancel</button>
-              <button type="button" className="admin-fines__btn-danger" onClick={handleConfirmDelete}>Delete Fine</button>
+              <button type="button" className="admin-fines__btn-danger" onClick={handleConfirmDelete} disabled={isDeleting}>
+                {isDeleting ? 'Deleting...' : 'Delete Fine'}
+              </button>
             </div>
           </div>
         </div>

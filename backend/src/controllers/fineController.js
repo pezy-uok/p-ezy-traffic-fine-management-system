@@ -3,6 +3,8 @@ import {
   getFineById as getFineByIdService,
   getFinesByLicense as getFinesByLicenseService,
   getAllFinesForAdmin as getAllFinesForAdminService,
+  updateFineForAdmin as updateFineForAdminService,
+  deleteFineForAdmin as deleteFineForAdminService,
   getOutdatedFines as getOutdatedFinesService,
   updateFineStatus as updateFineStatusService,
 } from '../services/fineService.js';
@@ -88,6 +90,42 @@ export const getAllFinesForAdmin = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       fines,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update a fine from admin panel
+ * PATCH /api/admin/fines/:fineId
+ */
+export const updateFineForAdmin = async (req, res, next) => {
+  try {
+    const { fineId } = req.params;
+    const fine = await updateFineForAdminService(fineId, req.body);
+
+    return res.status(200).json({
+      success: true,
+      fine,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Delete a fine from admin panel
+ * DELETE /api/admin/fines/:fineId
+ */
+export const deleteFineForAdmin = async (req, res, next) => {
+  try {
+    const { fineId } = req.params;
+    const result = await deleteFineForAdminService(fineId);
+
+    return res.status(200).json({
+      success: true,
+      ...result,
     });
   } catch (error) {
     next(error);

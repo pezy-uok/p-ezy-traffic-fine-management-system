@@ -80,6 +80,12 @@ export const dashboardAPI = {
 export const adminAPI = {
   getAllFines: () => axiosInstance.get('/admin/fines'),
 
+  updateFine: (fineId: string, payload: { violation?: string; amount?: number; date?: string; status?: 'paid' | 'pending' | 'overdue' }) =>
+    axiosInstance.patch(`/admin/fines/${fineId}`, payload),
+
+  deleteFine: (fineId: string) =>
+    axiosInstance.delete(`/admin/fines/${fineId}`),
+
   getAllCriminals: () => axiosInstance.get('/admin/criminals'),
 
   getAllNews: () => axiosInstance.get('/admin/news'),
