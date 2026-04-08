@@ -138,7 +138,43 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </div>      
+      </div>
+
+      {/* Inspector General Section */}
+      <div className="home-police__igp-wrapper">
+        <div className="home-police__container">
+          <div className="home-police__igp-container">
+            <div className="home-police__igp-content">
+              <div className="home-police__igp-card">
+                <div className="home-police__igp-seal">
+                  <svg viewBox="0 0 100 100" className="home-police__igp-seal-icon">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#0284c7" strokeWidth="2"/>
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#0284c7" strokeWidth="1"/>
+                    <path d="M50 15 L65 35 L85 35 L70 48 L78 68 L50 55 L22 68 L30 48 L15 35 L35 35 Z" fill="#0284c7"/>
+                    <text x="50" y="85" fontSize="6" textAnchor="middle" fill="#0284c7" fontWeight="bold">SRI LANKA</text>
+                  </svg>
+                </div>
+                <h3 className="home-police__igp-title">Inspector General of Police</h3>
+                <p className="home-police__igp-role">Attorney-at-Law</p>
+                <p className="home-police__igp-name">Mr. Priyantha Weerasooriya</p>
+                <button type="button" className="home-police__igp-btn">
+                  <span className="home-police__igp-btn-icon">👤</span>
+                  Profile
+                </button>
+              </div>
+            </div>
+            <div className="home-police__igp-image-section">
+              <div className="home-police__igp-image-placeholder">
+                <svg viewBox="0 0 300 400" className="home-police__igp-image-icon">
+                  <rect width="300" height="400" fill="#e2e8f0" rx="8"/>
+                  <circle cx="150" cy="120" r="50" fill="#cbd5e1"/>
+                  <ellipse cx="150" cy="250" rx="60" ry="80" fill="#cbd5e1"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
