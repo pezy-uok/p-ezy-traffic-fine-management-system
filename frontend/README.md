@@ -9,6 +9,7 @@ Admin portal frontend built with React, Vite, and TypeScript.
 - TypeScript 5
 - React Router
 - Axios
+- Tailwind CSS 4
 
 ## Prerequisites
 
@@ -71,3 +72,21 @@ npm run preview
 - `src/api` — axios instance and API wrappers
 - `src/config` — route and app config
 - `src/types` — TypeScript interfaces
+
+## Tailwind CSS (Admin Portal)
+
+Tailwind is installed and configured with PostCSS.
+
+Configuration files:
+
+- `tailwind.config.js`
+- `postcss.config.js`
+- `src/index.css`
+- `src/styles/admin-tailwind.css`
+
+Admin Tailwind layer:
+
+- `src/styles/admin-tailwind.css` defines admin-specific Tailwind component classes.
+- It is imported in `src/layouts/AdminLayout.tsx` and applied to the admin shell/sidebar/content.
+
+If you add a new admin page, prefer Tailwind utility classes or the reusable classes in `src/styles/admin-tailwind.css`.
