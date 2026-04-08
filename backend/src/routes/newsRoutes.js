@@ -79,12 +79,12 @@ router.get('/admin/:id', authenticate, authorize('admin'), getNewsByIdForAdmin);
 router.post('/admin/create', authenticate, authorize('admin'), createNewsForAdmin);
 
 /**
- * PUT /api/news/admin/:id
- * Update a news article
+ * PATCH /api/news/admin/:id
+ * Update a news article (partial update)
  * Body: { title, content, category, status, featured, pinned, summary }
  * Protected: requires admin role
  */
-router.put('/admin/:id', authenticate, authorize('admin'), updateNewsForAdmin);
+router.patch('/admin/:id', authenticate, authorize('admin'), updateNewsForAdmin);
 
 /**
  * DELETE /api/news/admin/:id
