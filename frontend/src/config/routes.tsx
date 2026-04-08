@@ -18,13 +18,7 @@ import FieldForceHeadquarters from '../pages/divisions/FieldForceHeadquarters'
 import MountedDivision from '../pages/divisions/MountedDivision'
 import PoliceCadetDivision from '../pages/divisions/PoliceCadetDivision'
 import TrafficRoadSafetyDivision from '../pages/divisions/TrafficRoadSafetyDivision'
-import AdminLogin from '../pages/AdminLogin'
-import AdminLayout from '../layouts/AdminLayout'
-import AdminDashboard from '../pages/AdminDashboard'
-import AdminFineManagement from '../pages/AdminFineManagement'
-import AdminCriminalRecords from '../pages/AdminCriminalRecordsLive'
-import AdminNewsManagement from '../pages/AdminNewsManagement'
-import AdminAuthGuard from '../components/admin/AdminAuthGuard'
+import { adminRoutes } from './adminRoutes'
 import NotFound from '../pages/NotFound'
 
 export interface RouteConfig {
@@ -129,55 +123,7 @@ export const routes: RouteConfig[] = [
     element: <FinePayFailure />,
     name: 'Fine Pay Failure',
   },
-  {
-    path: '/admin',
-    element: <AdminLogin />,
-    name: 'Admin Login',
-  },
-  {
-    path: '/admin/dashboard',
-    element: (
-      <AdminAuthGuard>
-        <AdminLayout>
-          <AdminDashboard sectionName="Dashboard" />
-        </AdminLayout>
-      </AdminAuthGuard>
-    ),
-    name: 'Admin Dashboard',
-  },
-  {
-    path: '/admin/fines',
-    element: (
-      <AdminAuthGuard>
-        <AdminLayout>
-          <AdminFineManagement />
-        </AdminLayout>
-      </AdminAuthGuard>
-    ),
-    name: 'Admin Fines',
-  },
-  {
-    path: '/admin/criminal-records',
-    element: (
-      <AdminAuthGuard>
-        <AdminLayout>
-          <AdminCriminalRecords />
-        </AdminLayout>
-      </AdminAuthGuard>
-    ),
-    name: 'Admin Criminal Records',
-  },
-  {
-    path: '/admin/news',
-    element: (
-      <AdminAuthGuard>
-        <AdminLayout>
-          <AdminNewsManagement />
-        </AdminLayout>
-      </AdminAuthGuard>
-    ),
-    name: 'Admin News',
-  },
+  ...adminRoutes,
   {
     path: '/*',
     element: <NotFound />,
