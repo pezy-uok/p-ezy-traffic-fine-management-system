@@ -88,6 +88,40 @@ export const adminAPI = {
 
   getAllCriminals: () => axiosInstance.get('/admin/criminals'),
 
+  getCriminalById: (criminalId: string) => axiosInstance.get(`/admin/criminals/${criminalId}`),
+
+  createCriminal: (payload: {
+    first_name: string
+    last_name: string
+    date_of_birth?: string | null
+    gender?: string | null
+    physical_description?: string | null
+    identification_number?: string | null
+    status?: 'active' | 'inactive' | 'deceased' | 'deported' | 'arrested'
+    wanted?: boolean
+    danger_level?: string | null
+    known_aliases?: string[] | string | null
+    arrested_before?: boolean
+    arrest_count?: number
+  }) => axiosInstance.post('/admin/criminals/create', payload),
+
+  updateCriminal: (criminalId: string, payload: {
+    first_name?: string
+    last_name?: string
+    date_of_birth?: string | null
+    gender?: string | null
+    physical_description?: string | null
+    identification_number?: string | null
+    status?: 'active' | 'inactive' | 'deceased' | 'deported' | 'arrested'
+    wanted?: boolean
+    danger_level?: string | null
+    known_aliases?: string[] | string | null
+    arrested_before?: boolean
+    arrest_count?: number
+  }) => axiosInstance.patch(`/admin/criminals/${criminalId}`, payload),
+
+  deleteCriminal: (criminalId: string) => axiosInstance.delete(`/admin/criminals/${criminalId}/permanent`),
+
   createNews: (payload: {
     title: string
     content: string
