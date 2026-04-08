@@ -7,9 +7,11 @@ type ArticleStatus = 'published' | 'draft' | 'scheduled'
 interface NewsArticle {
   id: string
   title: string
+  content: string
   summary: string
   author: string
   date: string
+  publishedAt: string
   status: ArticleStatus
   category: string
   featured: boolean
@@ -24,6 +26,26 @@ const statusLabel: Record<ArticleStatus, string> = {
 }
 
 type StatusFilter = 'all' | ArticleStatus
+
+interface NewsFormValues {
+  title: string
+  content: string
+  category: string
+  status: ArticleStatus
+  featured: boolean
+  pinned: boolean
+  publishedAt: string
+}
+
+const initialFormValues: NewsFormValues = {
+  title: '',
+  content: '',
+  category: 'general',
+  status: 'draft',
+  featured: false,
+  pinned: false,
+  publishedAt: '',
+}
 
 const formatDate = (value: string) => {
   if (!value) return '-'
@@ -41,6 +63,12 @@ export default function AdminNewsManagementLive() {
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingNewsId, setEditingNewsId] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
+  const [formValues, setFormValues] = useState<NewsFormValues>(initialFormValues)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const fetchNews = async () => {
     try {
@@ -52,8 +80,8 @@ export default function AdminNewsManagementLive() {
         news?: Array<{
           id: string
           title?: string
-          summary?: string
           content?: string
+          summary?: string
           author?: string
           publishedAt?: string | null
           createdAt?: string | null
@@ -72,8 +100,10 @@ export default function AdminNewsManagementLive() {
         return {
           id: article.id,
           title: article.title || 'Untitled',
+          content: article.content || article.summary || '',
           summary: summary.length > 140 ? `${summary.slice(0, 140).trim()}...` : summary,
           author: article.author || 'Unknown Author',
+          publishedAt: rawDate,
           date: formatDate(rawDate),
           status: (article.status as ArticleStatus) || (article.publishedAt ? 'published' : 'draft'),
           category: article.category || 'general',
@@ -136,6 +166,94 @@ export default function AdminNewsManagementLive() {
     setIsFilterMenuOpen(false)
   }
 
+  const openAddModal = () => {
+    setEditingNewsId(null)
+    setFormValues(initialFormValues)
+    setFormError(null)
+    setIsModalOpen(true)
+  }
+
+  const openEditModal = (article: NewsArticle) => {
+    setEditingNewsId(article.id)
+    setFormValues({
+      title: article.title,
+      content: article.content,
+      category: article.category,
+      status: article.status,
+      featured: article.featured,
+      pinned: article.pinned,
+        publishedAt: article.publishedAt ? article.publishedAt.slice(0, 16) : '',
+    })
+    setFormError(null)
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    if (isSaving) return
+    setIsModalOpen(false)
+    setEditingNewsId(null)
+  }
+
+  const updateForm = <K extends keyof NewsFormValues>(field: K, value: NewsFormValues[K]) => {
+    setFormValues(previous => ({ ...previous, [field]: value }))
+    if (formError) setFormError(null)
+  }
+
+  const handleSaveNews = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!formValues.title.trim() || !formValues.content.trim()) {
+      setFormError('Title and content are required.')
+      return
+    }
+
+    try {
+      setIsSaving(true)
+      setFormError(null)
+
+      const payload = {
+        title: formValues.title.trim(),
+        content: formValues.content.trim(),
+        category: formValues.category.trim() || 'general',
+        status: formValues.status,
+        featured: formValues.featured,
+        pinned: formValues.pinned,
+        publishedAt: formValues.publishedAt ? new Date(formValues.publishedAt).toISOString() : null,
+      }
+
+      if (editingNewsId) {
+        await adminAPI.updateNews(editingNewsId, payload)
+      } else {
+        await adminAPI.createNews(payload)
+      }
+
+      await fetchNews()
+      setIsModalOpen(false)
+      setEditingNewsId(null)
+    } catch (error) {
+      console.error('Failed to save news:', error)
+      setFormError(editingNewsId ? 'Unable to update news right now. Please try again.' : 'Unable to create news right now. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteNews = async (article: NewsArticle) => {
+    const confirmed = window.confirm(`Delete news article \"${article.title}\"? This action cannot be undone.`)
+    if (!confirmed) return
+
+    try {
+      setIsDeletingId(article.id)
+      await adminAPI.deleteNews(article.id)
+      await fetchNews()
+    } catch (error) {
+      console.error('Failed to delete news:', error)
+      window.alert('Unable to delete news right now. Please try again.')
+    } finally {
+      setIsDeletingId(null)
+    }
+  }
+
   return (
     <section className="admin-news" aria-label="News management page">
       <header className="admin-news__header">
@@ -144,11 +262,11 @@ export default function AdminNewsManagementLive() {
           <p>Fetched live from GET /api/admin/news</p>
         </div>
 
-        <button type="button" className="admin-news__add-btn" onClick={fetchNews}>
+        <button type="button" className="admin-news__add-btn" onClick={openAddModal}>
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M11 5h2v14h-2V5Zm-6 6h14v2H5v-2Z" fill="currentColor" />
           </svg>
-          <span>Refresh</span>
+          <span>Add</span>
         </button>
       </header>
 
@@ -260,6 +378,19 @@ export default function AdminNewsManagementLive() {
                     <span>{article.views ?? 0}</span>
                     <small>Views</small>
                   </div>
+
+                    <div className="admin-news__actions">
+                      <button type="button" className="admin-news__action-btn admin-news__action-btn--edit" onClick={() => openEditModal(article)} aria-label={`Edit ${article.title}`}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm14.71-9.04a1 1 0 0 0 0-1.41l-1.5-1.5a1 1 0 0 0-1.41 0l-1.12 1.12 3.75 3.75 1.28-1.96Z" fill="currentColor" />
+                        </svg>
+                      </button>
+                      <button type="button" className="admin-news__action-btn admin-news__action-btn--delete" onClick={() => handleDeleteNews(article)} aria-label={`Delete ${article.title}`} disabled={isDeletingId === article.id}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path d="M6 7h12v2H6V7Zm2 3h8l-.67 9.33A2 2 0 0 1 13.34 21H10.66a2 2 0 0 1-1.99-1.67L8 10Zm3-6h2l1 1h4v2H4V5h4l1-1Z" fill="currentColor" />
+                        </svg>
+                      </button>
+                    </div>
                 </div>
               </article>
             ))
@@ -291,6 +422,86 @@ export default function AdminNewsManagementLive() {
           <strong>{totalViews.toLocaleString('en-LK')}</strong>
         </article>
       </section>
+
+      {isModalOpen ? (
+        <div className="admin-news__modal-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-news-modal-title">
+          <div className="admin-news__modal">
+            <div className="admin-news__modal-header">
+              <h3 id="admin-news-modal-title">{editingNewsId ? 'Edit News Article' : 'Add News Article'}</h3>
+              <button type="button" className="admin-news__modal-close" onClick={closeModal} aria-label="Close">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <form className="admin-news__modal-form" onSubmit={handleSaveNews}>
+              <label>
+                <span>Title</span>
+                <input type="text" value={formValues.title} onChange={event => updateForm('title', event.target.value)} />
+              </label>
+
+              <label>
+                <span>Content</span>
+                <textarea value={formValues.content} onChange={event => updateForm('content', event.target.value)} />
+              </label>
+
+              <div className="admin-news__modal-grid">
+                <label>
+                  <span>Category</span>
+                  <input type="text" value={formValues.category} onChange={event => updateForm('category', event.target.value)} />
+                </label>
+
+                <label>
+                  <span>Status</span>
+                  <select value={formValues.status} onChange={event => updateForm('status', event.target.value as ArticleStatus)}>
+                    <option value="draft">Draft</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="published">Published</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Published At</span>
+                  <input type="datetime-local" value={formValues.publishedAt} onChange={event => updateForm('publishedAt', event.target.value)} />
+                </label>
+
+                <label>
+                  <span>Flags</span>
+                  <div className="admin-news__modal-flags">
+                    <label className="admin-news__check-item">
+                      <input type="checkbox" checked={formValues.featured} onChange={event => updateForm('featured', event.target.checked)} />
+                      <span>Featured</span>
+                    </label>
+                    <label className="admin-news__check-item">
+                      <input type="checkbox" checked={formValues.pinned} onChange={event => updateForm('pinned', event.target.checked)} />
+                      <span>Pinned</span>
+                    </label>
+                  </div>
+                </label>
+              </div>
+
+              <div className="admin-news__modal-flags">
+                <label className="admin-news__check-item">
+                  <input type="checkbox" checked={formValues.featured} onChange={event => updateForm('featured', event.target.checked)} />
+                  <span>Featured</span>
+                </label>
+                <label className="admin-news__check-item">
+                  <input type="checkbox" checked={formValues.pinned} onChange={event => updateForm('pinned', event.target.checked)} />
+                  <span>Pinned</span>
+                </label>
+              </div>
+
+              {formError ? <small>{formError}</small> : null}
+
+              <div className="admin-news__modal-actions">
+                <button type="button" className="admin-news__modal-btn is-muted" onClick={closeModal} disabled={isSaving}>Cancel</button>
+                <button type="submit" className="admin-news__modal-btn is-primary" disabled={isSaving}>{isSaving ? 'Saving...' : (editingNewsId ? 'Update News' : 'Create News')}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
