@@ -784,6 +784,13 @@
   filter: drop-shadow(0 4px 8px rgba(2, 132, 199, 0.2));
 }
 
+.home-police__igp-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(2, 132, 199, 0.2));
+}
+
 .home-police__igp-title {
   margin: 0 0 0.5rem 0;
   font-size: 1.8rem;
@@ -857,6 +864,13 @@
 .home-police__igp-image-icon {
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+.home-police__igp-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
