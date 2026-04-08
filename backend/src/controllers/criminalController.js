@@ -106,6 +106,37 @@ export const getAllCriminalsRecords = async (req, res, next) => {
 };
 
 /**
+ * Get all criminals for admin dashboard
+ * GET /api/admin/criminals
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, criminals: Array, total, limit, offset }
+ */
+export const getAllCriminalsForAdmin = async (req, res, next) => {
+  try {
+    const queryOptions = {
+      limit: req.query.limit ? parseInt(req.query.limit) : 1000,
+      offset: req.query.offset ? parseInt(req.query.offset) : 0,
+      status: req.query.status,
+      wanted: req.query.wanted === 'true' ? true : req.query.wanted === 'false' ? false : undefined,
+      search: req.query.search,
+      orderBy: req.query.orderBy,
+      orderDirection: req.query.orderDirection,
+    };
+
+    Object.keys(queryOptions).forEach(key => queryOptions[key] === undefined && delete queryOptions[key]);
+
+    const result = await getAllCriminals(queryOptions);
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Delete a criminal record (soft delete)
  * DELETE /api/criminals/:id
  * Protected: requires authenticate + authorize('police_officer')
