@@ -64,6 +64,12 @@
   align-items: center;
   gap: 10px;
   padding: 0 12px;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.admin-criminals__search-wrap:focus-within {
+  border-color: #3c82f6;
+  background: #ffffff;
 }
 
 .admin-criminals__search-wrap svg {
@@ -84,6 +90,10 @@
   color: #9ca3af;
 }
 
+.admin-criminals__filter-wrap {
+  position: relative;
+}
+
 .admin-criminals__filter-btn {
   height: 48px;
   border: 1px solid #cfd8e3;
@@ -96,15 +106,17 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.admin-criminals__filter-btn:hover {
+  background: #eef2f7;
+  border-color: #bcc7d6;
 }
 
 .admin-criminals__filter-btn svg {
   width: 20px;
   height: 20px;
-}
-
-.admin-criminals__filter-wrap {
-  position: relative;
 }
 
 .admin-criminals__filter-menu {
@@ -153,7 +165,7 @@
 
 .admin-criminals__table {
   width: 100%;
-  min-width: 1020px;
+  min-width: 1120px;
   border-collapse: collapse;
 }
 
@@ -191,8 +203,10 @@
   font-weight: 700;
 }
 
-.admin-criminals__severity {
-  min-width: 90px;
+.admin-criminals__severity,
+.admin-criminals__wanted,
+.admin-criminals__status {
+  min-width: 96px;
   height: 30px;
   padding: 0 12px;
   border-radius: 999px;
@@ -201,6 +215,7 @@
   justify-content: center;
   font-size: 0.9rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .admin-criminals__severity.is-critical {
@@ -223,19 +238,6 @@
   color: #1d9150;
 }
 
-.admin-criminals__wanted {
-  min-width: 110px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .admin-criminals__wanted.is-yes {
   background: #f8dbdb;
   color: #ba3333;
@@ -246,61 +248,43 @@
   color: #1d9150;
 }
 
-.admin-criminals__status {
-  min-width: 140px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.admin-criminals__status.is-open {
-  background: #f8dbdb;
-  color: #ba3333;
-}
-
-.admin-criminals__status.is-closed {
+.admin-criminals__status.is-active {
   background: #d8f2e2;
   color: #1d9150;
 }
 
-.admin-criminals__status.is-under-investigation {
-  background: #c9e8ff;
-  color: #0c62c0;
+.admin-criminals__status.is-inactive {
+  background: #eceff3;
+  color: #6b7280;
+}
+
+.admin-criminals__status.is-deceased,
+.admin-criminals__status.is-deported {
+  background: #f8dbdb;
+  color: #ba3333;
 }
 
 .admin-criminals__actions {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: flex-end;
   gap: 8px;
+  padding-left: 8px;
 }
 
 .admin-criminals__action-btn {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 0;
-  border-radius: 6px;
   background: transparent;
   color: #111827;
   display: inline-grid;
   place-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  border-radius: 6px;
 }
 
-.admin-criminals__action-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-.admin-criminals__action-btn--view:hover {
-  background: #e0e7ff;
-  color: #4f46e5;
+.admin-criminals__action-btn:hover {
+  background: #eff3f8;
 }
 
 .admin-criminals__action-btn--edit:hover {
@@ -311,6 +295,16 @@
 .admin-criminals__action-btn--delete:hover {
   background: #fee2e2;
   color: #dc2626;
+}
+
+.admin-criminals__action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-criminals__action-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .admin-criminals__summary {
@@ -349,42 +343,35 @@
   color: #d03434;
 }
 
-.admin-criminals__summary-card strong.is-orange {
-  color: #ff8533;
-}
-
-.admin-criminals__summary-card strong.is-green {
-  color: #16a34a;
-}
-
 .admin-criminals__modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
-  display: grid;
-  place-items: center;
-  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 60;
   padding: 18px;
+  overflow-y: auto;
 }
 
 .admin-criminals__modal {
-  width: min(100%, 560px);
+  width: min(100%, 640px);
   background: #ffffff;
   border: 1px solid #d6dde7;
   border-radius: 12px;
   box-shadow: 0 24px 44px rgba(15, 23, 42, 0.24);
   padding: 18px;
-}
-
-.admin-criminals__modal--compact {
-  width: min(100%, 460px);
+  max-height: calc(100vh - 36px);
+  display: flex;
+  flex-direction: column;
 }
 
 .admin-criminals__modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .admin-criminals__modal-header h3 {
@@ -410,140 +397,116 @@
   height: 18px;
 }
 
-.admin-criminals__modal-body {
-  padding: 12px 0;
-}
-
-.admin-criminals__modal-body p {
-  margin: 0;
-  color: #475569;
-  font-size: 0.97rem;
-  line-height: 1.6;
-}
-
 .admin-criminals__modal-form {
   display: grid;
   gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .admin-criminals__modal-form label {
   display: grid;
   gap: 6px;
-  font-size: 0.92rem;
+}
+
+.admin-criminals__modal-form label span {
   color: #334155;
+  font-size: 0.92rem;
   font-weight: 600;
+}
+
+.admin-criminals__modal-form input,
+.admin-criminals__modal-form textarea,
+.admin-criminals__modal-form select {
+  border: 1px solid #ccd7e5;
+  border-radius: 8px;
+  background: #f9fbfe;
+  color: #374151;
+  font-size: 0.94rem;
+  font-family: inherit;
+  outline: 0;
 }
 
 .admin-criminals__modal-form input,
 .admin-criminals__modal-form select {
   height: 42px;
-  border: 1px solid #ccd7e5;
-  border-radius: 9px;
-  background: #f8fafc;
-  color: #1f2937;
-  font-size: 0.95rem;
   padding: 0 12px;
-  outline: none;
+}
+
+.admin-criminals__modal-form textarea {
+  resize: vertical;
+  min-height: 104px;
+  padding: 10px 12px;
 }
 
 .admin-criminals__modal-form input:focus,
+.admin-criminals__modal-form textarea:focus,
 .admin-criminals__modal-form select:focus {
-  border-color: #2290e8;
-  box-shadow: 0 0 0 3px rgba(34, 144, 232, 0.18);
+  border-color: #3c82f6;
+  box-shadow: 0 0 0 3px rgba(60, 130, 246, 0.12);
 }
 
-.admin-criminals__modal-form input:disabled,
-.admin-criminals__modal-form select:disabled {
-  background: #f0f1f3;
-  color: #6b7280;
-  cursor: not-allowed;
-}
-
-.admin-criminals__modal-form input[aria-invalid='true'] {
-  border-color: #d03434;
-  background: #fff5f5;
-}
-
-.admin-criminals__field-error {
-  color: #d03434;
-  font-size: 0.82rem;
-  line-height: 1.25;
-  font-weight: 500;
-}
-
-.admin-criminals__detail-grid {
+.admin-criminals__modal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
+  gap: 12px;
 }
 
-.admin-criminals__detail-item {
-  border: 1px solid #e4e9f0;
-  border-radius: 9px;
-  padding: 10px 12px;
-  background: #f8fafc;
+.admin-criminals__modal-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.admin-criminals__detail-item span {
-  display: block;
-  color: #64748b;
-  font-size: 0.82rem;
-  margin-bottom: 4px;
+.admin-criminals__check-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
-.admin-criminals__detail-item strong {
-  color: #1f2937;
-  font-size: 0.96rem;
+.admin-criminals__check-item input {
+  width: 16px;
+  height: 16px;
 }
 
-.admin-criminals__modal-actions--detail {
-  grid-column: 1 / -1;
-  margin-top: 2px;
+.admin-criminals__form-error {
+  color: #d03434;
+  font-size: 0.8rem;
 }
 
 .admin-criminals__modal-actions {
-  margin-top: 6px;
+  margin-top: 4px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.admin-criminals__btn-secondary,
-.admin-criminals__btn-primary {
-  height: 40px;
-  border-radius: 9px;
-  padding: 0 14px;
-  font-size: 0.92rem;
+.admin-criminals__modal-btn {
+  min-width: 120px;
+  height: 42px;
+  border-radius: 8px;
+  font-size: 0.94rem;
   font-weight: 600;
   cursor: pointer;
 }
 
-.admin-criminals__btn-secondary {
-  border: 1px solid #cad5e3;
-  background: #f8fafc;
-  color: #374151;
+.admin-criminals__modal-btn.is-muted {
+  border: 1px solid #cfd8e3;
+  background: #ffffff;
+  color: #334155;
 }
 
-.admin-criminals__btn-primary {
+.admin-criminals__modal-btn.is-primary {
   border: 0;
-  background: #203968;
+  background: #1d4f91;
   color: #ffffff;
 }
 
-.admin-criminals__btn-danger {
-  height: 40px;
-  border: 0;
-  border-radius: 9px;
-  padding: 0 14px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: #cf3e3e;
-  color: #ffffff;
-}
-
-.admin-criminals__btn-danger:hover {
-  background: #b93333;
+.admin-criminals__modal-btn.is-primary:hover {
+  background: #163f73;
 }
 
 @media (max-width: 1024px) {
@@ -555,24 +518,45 @@
 @media (max-width: 960px) {
   .admin-criminals__header {
     flex-direction: column;
-    align-items: flex-start;
   }
-}
 
-@media (max-width: 640px) {
+  .admin-criminals__add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .admin-criminals__toolbar {
     grid-template-columns: 1fr;
   }
 
   .admin-criminals__filter-btn {
-    width: fit-content;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-criminals__modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-criminals__modal {
+    width: min(100%, 560px);
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-criminals__header h2 {
+    font-size: 1.6rem;
   }
 
   .admin-criminals__summary {
     grid-template-columns: 1fr;
   }
 
-  .admin-criminals__detail-grid {
-    grid-template-columns: 1fr;
+  .admin-criminals__modal-actions {
+    flex-direction: column;
+  }
+
+  .admin-criminals__modal-btn {
+    width: 100%;
   }
 }
