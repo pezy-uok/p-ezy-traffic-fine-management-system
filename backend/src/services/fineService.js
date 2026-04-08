@@ -304,6 +304,52 @@ export const getAllFinesForAdmin = async () => {
   });
 };
 
+export const getFineByIdForAdmin = async (fineId) => {
+  if (!fineId) {
+    throw new ValidationError('fineId is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  const { data: fine, error } = await supabase
+    .from('fines')
+    .select(`
+      id,
+      amount,
+      reason,
+      status,
+      issue_date,
+      due_date,
+      created_at,
+      driver_id,
+      drivers(first_name, last_name)
+    `)
+    .eq('id', fineId)
+    .single();
+
+  if (error || !fine) {
+    throw new NotFoundError('Fine not found');
+  }
+
+  const todayIso = new Date().toISOString().split('T')[0];
+  const isPaid = fine.status === 'paid';
+  const isOverdue = !isPaid && fine.due_date && fine.due_date < todayIso;
+  const normalizedStatus = isPaid ? 'paid' : isOverdue ? 'overdue' : 'pending';
+  const driver = fine.drivers || {};
+
+  return {
+    id: fine.id,
+    offender: `${driver.first_name || ''} ${driver.last_name || ''}`.trim() || 'Unknown Driver',
+    violation: fine.reason || 'N/A',
+    amount: Number(fine.amount || 0),
+    date: fine.issue_date || (fine.created_at ? fine.created_at.split('T')[0] : null),
+    status: normalizedStatus,
+    raw_status: fine.status,
+    due_date: fine.due_date,
+    driver_id: fine.driver_id,
+  };
+};
+
 const normalizeAdminFineStatus = (status) => {
   if (status === 'paid') {
     return { dbStatus: 'paid', dueDate: null };
