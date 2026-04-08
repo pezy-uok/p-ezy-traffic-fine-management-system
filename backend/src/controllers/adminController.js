@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '../config/supabaseClient.js';
 import { getAllFinesForAdmin as getAllFinesForAdminService } from '../services/fineService.js';
 import { getAllCriminals as getAllCriminalsService } from '../services/criminalService.js';
+import { ValidationError, ConflictError, NotFoundError } from '../utils/errors.js';
 
 const stripHtml = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 
@@ -183,6 +184,530 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
         },
         generatedAt: now.toISOString(),
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * ADMIN CRIMINAL MANAGEMENT - FULL CRUD
+ * Admins can view, create, update, delete, and restore criminal records
+ */
+
+/**
+ * Get all criminals including deleted (admin view)
+ * GET /api/admin/criminals
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, criminals: Array, total, includesDeleted: true }
+ */
+export const getAllCriminalsAdmin = async (req, res, next) => {
+  try {
+    const supabase = getSupabaseClient();
+
+    // Validate and set defaults
+    let limit = req.query.limit ? parseInt(req.query.limit) : 50;
+    if (limit > 1000) limit = 1000;
+    if (limit < 1) limit = 1;
+
+    const offset = req.query.offset ? parseInt(req.query.offset) : 0;
+    if (offset < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Offset cannot be negative',
+      });
+    }
+
+    const orderBy = req.query.orderBy || 'created_at';
+    const orderDirection = req.query.orderDirection === 'asc' ? 'asc' : 'desc';
+    const includeDeleted = req.query.includeDeleted === 'true';
+
+    let query = supabase.from('criminals').select('*', { count: 'exact' });
+
+    // Filter by deletion status if requested
+    if (!includeDeleted) {
+      query = query.is('deleted_at', null);
+    }
+
+    // Apply filters
+    if (req.query.status) {
+      query = query.eq('status', req.query.status);
+    }
+
+    if (req.query.wanted !== undefined) {
+      const wanted = req.query.wanted === 'true' ? true : req.query.wanted === 'false' ? false : undefined;
+      if (wanted !== undefined) {
+        query = query.eq('wanted', wanted);
+      }
+    }
+
+    if (req.query.search) {
+      const searchTerm = `%${req.query.search}%`;
+      query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm}`);
+    }
+
+    // Apply deleted filter if only showing deleted
+    if (req.query.showDeletedOnly === 'true') {
+      query = query.not('deleted_at', 'is', null);
+    }
+
+    const { data: criminals, error, count } = await query
+      .order(orderBy, { ascending: orderDirection === 'asc' })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to fetch criminals: ${error.message}`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      criminals: criminals.map((c) => ({
+        id: c.id,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        identification_number: c.identification_number,
+        status: c.status,
+        wanted: c.wanted,
+        danger_level: c.danger_level,
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+        deleted_at: c.deleted_at,
+      })),
+      total: count,
+      limit,
+      offset,
+      includesDeleted,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get a criminal by ID (admin view - includes deleted)
+ * GET /api/admin/criminals/:id
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, criminal }
+ */
+export const getCriminalByIdAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const supabase = getSupabaseClient();
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal ID is required',
+      });
+    }
+
+    const { data: criminal, error } = await supabase
+      .from('criminals')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !criminal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Criminal not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      criminal: {
+        id: criminal.id,
+        first_name: criminal.first_name,
+        last_name: criminal.last_name,
+        date_of_birth: criminal.date_of_birth,
+        gender: criminal.gender,
+        physical_description: criminal.physical_description,
+        identification_number: criminal.identification_number,
+        status: criminal.status,
+        wanted: criminal.wanted,
+        danger_level: criminal.danger_level,
+        known_aliases: criminal.known_aliases,
+        arrested_before: criminal.arrested_before,
+        arrest_count: criminal.arrest_count,
+        created_at: criminal.created_at,
+        updated_at: criminal.updated_at,
+        deleted_at: criminal.deleted_at,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Create a criminal record (admin)
+ * POST /api/admin/criminals/create
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, criminal }
+ */
+export const createCriminalAdmin = async (req, res, next) => {
+  try {
+    const { first_name, last_name, ...otherData } = req.body;
+
+    if (!first_name || !last_name) {
+      return res.status(400).json({
+        success: false,
+        message: 'First name and last name are required',
+      });
+    }
+
+    const supabase = getSupabaseClient();
+
+    // Check for duplicate identification_number
+    if (otherData.identification_number) {
+      const { data: existing } = await supabase
+        .from('criminals')
+        .select('id')
+        .eq('identification_number', otherData.identification_number)
+        .single();
+
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: 'Criminal with this identification number already exists',
+        });
+      }
+    }
+
+    const newCriminal = {
+      first_name,
+      last_name,
+      date_of_birth: otherData.date_of_birth || null,
+      gender: otherData.gender || null,
+      physical_description: otherData.physical_description || null,
+      identification_number: otherData.identification_number || null,
+      status: otherData.status || 'active',
+      wanted: otherData.wanted || false,
+      danger_level: otherData.danger_level || null,
+      known_aliases: otherData.known_aliases || null,
+      arrested_before: otherData.arrested_before || false,
+      arrest_count: otherData.arrest_count || 0,
+    };
+
+    const { data: criminal, error } = await supabase
+      .from('criminals')
+      .insert([newCriminal])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to create criminal: ${error.message}`,
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      criminal: {
+        id: criminal.id,
+        first_name: criminal.first_name,
+        last_name: criminal.last_name,
+        date_of_birth: criminal.date_of_birth,
+        gender: criminal.gender,
+        physical_description: criminal.physical_description,
+        identification_number: criminal.identification_number,
+        status: criminal.status,
+        wanted: criminal.wanted,
+        danger_level: criminal.danger_level,
+        known_aliases: criminal.known_aliases,
+        arrested_before: criminal.arrested_before,
+        arrest_count: criminal.arrest_count,
+        created_at: criminal.created_at,
+        updated_at: criminal.updated_at,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update a criminal record (admin)
+ * PATCH /api/admin/criminals/:id
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, criminal }
+ */
+export const updateCriminalAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal ID is required',
+      });
+    }
+
+    const supabase = getSupabaseClient();
+
+    // Check if criminal exists
+    const { data: existing } = await supabase
+      .from('criminals')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: 'Criminal not found',
+      });
+    }
+
+    // Check for duplicate identification_number if being updated
+    if (updateData.identification_number) {
+      const { data: duplicate } = await supabase
+        .from('criminals')
+        .select('id')
+        .eq('identification_number', updateData.identification_number)
+        .neq('id', id)
+        .single();
+
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          message: 'This identification number is already assigned to another criminal',
+        });
+      }
+    }
+
+    // Build update payload (only provided fields)
+    const updatePayload = {};
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] !== undefined) {
+        updatePayload[key] = updateData[key];
+      }
+    });
+
+    const { data: criminal, error } = await supabase
+      .from('criminals')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to update criminal: ${error.message}`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      criminal: {
+        id: criminal.id,
+        first_name: criminal.first_name,
+        last_name: criminal.last_name,
+        date_of_birth: criminal.date_of_birth,
+        gender: criminal.gender,
+        physical_description: criminal.physical_description,
+        identification_number: criminal.identification_number,
+        status: criminal.status,
+        wanted: criminal.wanted,
+        danger_level: criminal.danger_level,
+        known_aliases: criminal.known_aliases,
+        arrested_before: criminal.arrested_before,
+        arrest_count: criminal.arrest_count,
+        created_at: criminal.created_at,
+        updated_at: criminal.updated_at,
+        deleted_at: criminal.deleted_at,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Soft delete a criminal record (admin)
+ * DELETE /api/admin/criminals/:id
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, message, criminal_id, deleted_at }
+ */
+export const deleteCriminalAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal ID is required',
+      });
+    }
+
+    const supabase = getSupabaseClient();
+
+    // Check if criminal exists
+    const { data: existing } = await supabase
+      .from('criminals')
+      .select('id, deleted_at')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: 'Criminal not found',
+      });
+    }
+
+    if (existing.deleted_at) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal record is already deleted',
+      });
+    }
+
+    // Soft delete
+    const deletedAt = new Date().toISOString();
+    const { error } = await supabase
+      .from('criminals')
+      .update({ deleted_at: deletedAt })
+      .eq('id', id);
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to delete criminal: ${error.message}`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Criminal record deleted successfully',
+      criminal_id: id,
+      deleted_at: deletedAt,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Restore a soft-deleted criminal record (admin only)
+ * PATCH /api/admin/criminals/:id/restore
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, message, criminal_id }
+ */
+export const restoreCriminalAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal ID is required',
+      });
+    }
+
+    const supabase = getSupabaseClient();
+
+    // Check if criminal exists and is deleted
+    const { data: existing } = await supabase
+      .from('criminals')
+      .select('id, deleted_at')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: 'Criminal not found',
+      });
+    }
+
+    if (!existing.deleted_at) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal record is not deleted',
+      });
+    }
+
+    // Restore (clear deleted_at)
+    const { error } = await supabase
+      .from('criminals')
+      .update({ deleted_at: null })
+      .eq('id', id);
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to restore criminal: ${error.message}`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Criminal record restored successfully',
+      criminal_id: id,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Permanent delete a criminal record (admin only - irreversible)
+ * DELETE /api/admin/criminals/:id/permanent
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, message, criminal_id }
+ */
+export const hardDeleteCriminalAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Criminal ID is required',
+      });
+    }
+
+    const supabase = getSupabaseClient();
+
+    // Check if criminal exists
+    const { data: existing } = await supabase
+      .from('criminals')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: 'Criminal not found',
+      });
+    }
+
+    // Permanently delete
+    const { error } = await supabase
+      .from('criminals')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: `Failed to permanently delete criminal: ${error.message}`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Criminal record permanently deleted (irreversible)',
+      criminal_id: id,
     });
   } catch (error) {
     next(error);
