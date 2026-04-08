@@ -12,12 +12,6 @@ import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
-import criminalRoutes from './routes/criminalRoutes.js';
-import newsRoutes from './routes/newsRoutes.js';
-import fineRoutes from './routes/fineRoutes.js';
-import tipRoutes from './routes/tipRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
-import adminCriminalRoutes from './routes/adminCriminalRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -56,12 +50,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/criminals', criminalRoutes);
-app.use('/api/news', newsRoutes);
-app.use('/api/fines', fineRoutes);
-app.use('/api/tips', tipRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/admin/criminals', adminCriminalRoutes);
 
 // Global middleware - must be last
 app.use(notFoundHandler);
