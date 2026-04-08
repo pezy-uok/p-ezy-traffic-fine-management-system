@@ -78,6 +78,8 @@ export const dashboardAPI = {
 
 export const adminAPI = {
   getAllFines: () => axiosInstance.get('/admin/fines'),
+
+  getAllCriminals: () => axiosInstance.get('/admin/criminals'),
 }
 
 export default axiosInstance
