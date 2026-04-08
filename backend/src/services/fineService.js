@@ -304,6 +304,127 @@ export const getAllFinesForAdmin = async () => {
   });
 };
 
+const normalizeAdminFineStatus = (status) => {
+  if (status === 'paid') {
+    return { dbStatus: 'paid', dueDate: null };
+  }
+
+  if (status === 'overdue') {
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    return { dbStatus: 'unpaid', dueDate: yesterday.toISOString().split('T')[0] };
+  }
+
+  return { dbStatus: 'unpaid', dueDate: null };
+};
+
+export const updateFineForAdmin = async (fineId, fineData = {}) => {
+  if (!fineId) {
+    throw new ValidationError('fineId is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  const { data: existingFine, error: existingFineError } = await supabase
+    .from('fines')
+    .select('id, due_date')
+    .eq('id', fineId)
+    .single();
+
+  if (existingFineError || !existingFine) {
+    throw new NotFoundError('Fine not found');
+  }
+
+  const updatePayload = {};
+
+  if (fineData.violation !== undefined) {
+    const reason = String(fineData.violation || '').trim();
+    if (!reason) {
+      throw new ValidationError('violation is required');
+    }
+    updatePayload.reason = reason;
+  }
+
+  if (fineData.amount !== undefined) {
+    const amount = Number(fineData.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new ValidationError('amount must be a positive number');
+    }
+    updatePayload.amount = amount;
+  }
+
+  if (fineData.date !== undefined) {
+    const issueDate = toIsoDateString(fineData.date);
+    if (!issueDate) {
+      throw new ValidationError('date must be a valid date');
+    }
+    updatePayload.issue_date = issueDate;
+  }
+
+  if (fineData.status !== undefined) {
+    const { dbStatus, dueDate } = normalizeAdminFineStatus(fineData.status);
+    updatePayload.status = dbStatus;
+
+    if (fineData.status === 'overdue') {
+      updatePayload.due_date = dueDate;
+    } else if (fineData.status === 'pending' && !existingFine.due_date) {
+      const baseDate = updatePayload.issue_date || toIsoDateString(new Date());
+      updatePayload.due_date = addDays(baseDate, 14);
+    }
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    throw new ValidationError('No fields provided to update');
+  }
+
+  const { error: updateError } = await supabase
+    .from('fines')
+    .update(updatePayload)
+    .eq('id', fineId);
+
+  if (updateError) {
+    throw new AppError(`Failed to update fine: ${updateError.message}`, 500);
+  }
+
+  return { id: fineId, ...updatePayload };
+};
+
+export const deleteFineForAdmin = async (fineId) => {
+  if (!fineId) {
+    throw new ValidationError('fineId is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  // Prefer hard delete. If schema uses soft delete constraints, fallback to soft delete.
+  const deleteResult = await supabase
+    .from('fines')
+    .delete()
+    .eq('id', fineId)
+    .select('id')
+    .single();
+
+  if (!deleteResult.error && deleteResult.data) {
+    return { id: fineId, deleted: true };
+  }
+
+  const { data: softDeleted, error: softDeleteError } = await supabase
+    .from('fines')
+    .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+    .eq('id', fineId)
+    .select('id')
+    .single();
+
+  if (softDeleteError || !softDeleted) {
+    throw new AppError(
+      `Failed to delete fine: ${deleteResult.error?.message || softDeleteError?.message || 'Unknown error'}`,
+      500
+    );
+  }
+
+  return { id: fineId, deleted: true };
+};
+
 export const updateFineStatus = async () => {
   return notImplemented('updateFineStatus');
 };
