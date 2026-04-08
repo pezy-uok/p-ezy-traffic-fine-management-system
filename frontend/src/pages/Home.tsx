@@ -4,6 +4,8 @@ import slideOne from '../assets/slider/slide-1.png'
 import slideTwo from '../assets/slider/slide-2.png'
 import slideThree from '../assets/slider/slide-3.png'
 import serviceBg from '../assets/service-bg.jpg'
+import policeLogo from '../assets/plogo.png'
+import igpImage from '../assets/igp.png'
 import NavBar from '../components/NavBar'
 import './Home.css'
 
@@ -138,7 +140,34 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </div>      
+      </div>
+
+      {/* Inspector General Section */}
+      <div className="home-police__igp-wrapper">
+        <div className="home-police__container">
+          <div className="home-police__igp-container">
+            <div className="home-police__igp-content">
+              <div className="home-police__igp-card">
+                <div className="home-police__igp-seal">
+                  <img src={policeLogo} alt="Sri Lanka Police Logo" className="home-police__igp-logo-img" />
+                </div>
+                <h3 className="home-police__igp-title">Inspector General of Police</h3>
+                <p className="home-police__igp-role">Attorney-at-Law</p>
+                <p className="home-police__igp-name">Mr. Priyantha Weerasooriya</p>
+                <button type="button" className="home-police__igp-btn">
+                  <span className="home-police__igp-btn-icon">👤</span>
+                  Profile
+                </button>
+              </div>
+            </div>
+            <div className="home-police__igp-image-section">
+              <div className="home-police__igp-image-placeholder">
+                <img src={igpImage} alt="Inspector General of Police" className="home-police__igp-photo" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   )
 }

@@ -471,6 +471,125 @@ export const deleteFineForAdmin = async (fineId) => {
   return { id: fineId, deleted: true };
 };
 
-export const updateFineStatus = async () => {
-  return notImplemented('updateFineStatus');
+export const updateFineStatus = async (fineId, newStatus, authUser) => {
+  if (!fineId) {
+    throw new ValidationError('fineId is required');
+  }
+
+  if (!newStatus) {
+    throw new ValidationError('newStatus is required');
+  }
+
+  if (!authUser || !authUser.id) {
+    throw new ValidationError('authUser with id is required');
+  }
+
+  const supabase = getSupabaseClient();
+
+  // Fetch the fine
+  const { data: fine, error: fineError } = await supabase
+    .from('fines')
+    .select('id, status, driver_id, amount, reason, issue_date')
+    .eq('id', fineId)
+    .single();
+
+  if (fineError || !fine) {
+    throw new NotFoundError('Fine not found');
+  }
+
+  const currentStatus = fine.status;
+
+  // PEZY-410: Validate status transitions
+  // Valid transitions:
+  // - unpaid -> paid (when payment received)
+  // - unpaid -> outdated (when 30 days overdue)
+  // - outdated -> paid (if paid after becoming outdated)
+  const validTransitions = {
+    unpaid: ['paid', 'outdated'],
+    paid: [], // paid is terminal state
+    outdated: ['paid'], // outdated can only become paid
+    pending: ['paid', 'outdated'], // support legacy 'pending' status
+  };
+
+  const allowedTransitions = validTransitions[currentStatus] || [];
+
+  if (!allowedTransitions.includes(newStatus)) {
+    throw new AppError(
+      `Cannot transition from status '${currentStatus}' to '${newStatus}'. Allowed transitions: ${allowedTransitions.join(', ')}`,
+      409
+    );
+  }
+
+  // Update fine status
+  const updatePayload = {
+    status: newStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  // If transitioning to paid, record the payment date
+  if (newStatus === 'paid') {
+    updatePayload.payment_date = new Date().toISOString().split('T')[0];
+  }
+
+  const { data: updatedFine, error: updateError } = await supabase
+    .from('fines')
+    .update(updatePayload)
+    .eq('id', fineId)
+    .select('*')
+    .single();
+
+  if (updateError || !updatedFine) {
+    throw new AppError(`Failed to update fine status: ${updateError?.message || 'Unknown error'}`, 500);
+  }
+
+  // Get driver info for audit log
+  const { data: driver, error: driverError } = await supabase
+    .from('drivers')
+    .select('id, license_number, first_name, last_name')
+    .eq('id', fine.driver_id)
+    .single();
+
+  // Create audit log entry
+  const auditLogPayload = {
+    user_id: authUser.id,
+    user_role: authUser.role || 'officer',
+    license_number: driver?.license_number || null,
+    driver_id: fine.driver_id,
+    action: 'update',
+    entity_type: 'Fine',
+    entity_id: fineId,
+    entity_name: `Fine-${fineId.slice(0, 8)}`,
+    field_name: 'status',
+    old_value: currentStatus,
+    new_value: newStatus,
+    change_summary: `Fine status changed from ${currentStatus} to ${newStatus}. Amount: ${fine.amount}. Reason: ${fine.reason}`,
+  };
+
+  const { error: auditError } = await supabase.from('audit_logs').insert([auditLogPayload]);
+
+  if (auditError) {
+    // Log the audit error but don't fail the main operation
+    console.error(`Failed to create audit log for fine status update: ${auditError.message}`);
+  }
+
+  // Return the updated fine
+  return {
+    id: updatedFine.id,
+    driver_id: updatedFine.driver_id,
+    license_number: driver?.license_number || null,
+    driver_name: driver ? `${driver.first_name || ''} ${driver.last_name || ''}`.trim() : null,
+    issued_by_officer_id: updatedFine.issued_by_officer_id,
+    amount: updatedFine.amount,
+    reason: updatedFine.reason,
+    violation_code: updatedFine.violation_code,
+    location: updatedFine.location,
+    vehicle_registration: updatedFine.vehicle_registration,
+    status: updatedFine.status,
+    issue_date: updatedFine.issue_date,
+    due_date: updatedFine.due_date,
+    payment_date: updatedFine.payment_date,
+    payment_method: updatedFine.payment_method,
+    created_at: updatedFine.created_at,
+    updated_at: updatedFine.updated_at,
+  };
 };
