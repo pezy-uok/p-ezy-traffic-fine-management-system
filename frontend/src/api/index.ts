@@ -10,6 +10,7 @@ import type {
   UserListResponse,
   UpdateProfileRequest,
   DashboardStats,
+  AdminDashboardStats,
   ChartData,
   AnalyticsPeriod,
 } from '@/types'
@@ -82,6 +83,8 @@ export const adminAPI = {
   getAllCriminals: () => axiosInstance.get('/admin/criminals'),
 
   getAllNews: () => axiosInstance.get('/admin/news'),
+
+  getStats: () => axiosInstance.get<{ success: boolean; stats: AdminDashboardStats }>('/admin/stats'),
 }
 
 export default axiosInstance

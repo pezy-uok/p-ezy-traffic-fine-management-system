@@ -5,6 +5,13 @@
   font-weight: 700;
 }
 
+.admin-dashboard__error {
+  margin: 0 0 14px;
+  color: #b42318;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .admin-dashboard__activity-list {
   display: grid;
 }
