@@ -3,6 +3,7 @@ import {
   getFineById as getFineByIdService,
   getFinesByLicense as getFinesByLicenseService,
   getAllFinesForAdmin as getAllFinesForAdminService,
+  getFineByIdForAdmin as getFineByIdForAdminService,
   updateFineForAdmin as updateFineForAdminService,
   deleteFineForAdmin as deleteFineForAdminService,
   getOutdatedFines as getOutdatedFinesService,
@@ -90,6 +91,24 @@ export const getAllFinesForAdmin = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       fines,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get a fine by ID from admin panel
+ * GET /api/admin/fines/:fineId
+ */
+export const getFineByIdForAdmin = async (req, res, next) => {
+  try {
+    const { fineId } = req.params;
+    const fine = await getFineByIdForAdminService(fineId);
+
+    return res.status(200).json({
+      success: true,
+      fine,
     });
   } catch (error) {
     next(error);
