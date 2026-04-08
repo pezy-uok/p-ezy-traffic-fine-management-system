@@ -80,6 +80,8 @@ export const adminAPI = {
   getAllFines: () => axiosInstance.get('/admin/fines'),
 
   getAllCriminals: () => axiosInstance.get('/admin/criminals'),
+
+  getAllNews: () => axiosInstance.get('/admin/news'),
 }
 
 export default axiosInstance
