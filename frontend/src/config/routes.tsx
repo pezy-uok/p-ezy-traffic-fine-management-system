@@ -4,6 +4,7 @@ import Dashboard from '../pages/Dashboard'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
 import NewsAwareness from '../pages/NewsAwareness'
+import IGPProfile from '../pages/IGPProfile'
 import FinePay from '../pages/FinePay'
 import FinePayOutstanding from '../pages/FinePayOutstanding'
 import FinePaySuccess from '../pages/FinePaySuccess'
@@ -102,6 +103,11 @@ export const routes: RouteConfig[] = [
     path: '/news',
     element: <NewsAwareness />,
     name: 'News & Awareness',
+  },
+  {
+    path: '/igp-profile',
+    element: <IGPProfile />,
+    name: 'IGP Profile',
   },
   {
     path: '/fine-pay',
