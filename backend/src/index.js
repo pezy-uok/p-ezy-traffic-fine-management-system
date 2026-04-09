@@ -11,7 +11,9 @@ import {
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
+import criminalRoutes from './routes/criminalRoutes.js';
+import fineRoutes from './routes/fineRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -49,7 +51,9 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/drivers', driverRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api/criminals', criminalRoutes);
+app.use('/api/fines', fineRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Global middleware - must be last
 app.use(notFoundHandler);

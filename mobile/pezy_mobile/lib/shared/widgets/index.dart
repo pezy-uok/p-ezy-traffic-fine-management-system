@@ -3,3 +3,4 @@ export 'pezy_app_bar.dart';
 export 'pezy_bottom_navigation_bar.dart';
 export 'pezy_button.dart';
 export 'pezy_text_field.dart';
+export 'connectivity_status_banner.dart';

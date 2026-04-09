@@ -18,7 +18,7 @@ final criminalPhotoUploadProvider = FutureProvider.family<Map<String, dynamic>, 
 
 class ImageUploadService {
   final ImagePicker _picker = ImagePicker();
-  static const String baseUrl = 'http://localhost:5000/api/criminals';
+  static const String baseUrl = 'http://127.0.0.1:8000/api/criminals';
 
   /// Pick image from camera
   Future<File?> pickImageFromCamera() async {
