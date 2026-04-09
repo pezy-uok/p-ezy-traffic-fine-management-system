@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../../data/services/fine_api_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Model for new fine form state
 class NewFineFormState {
@@ -88,49 +91,100 @@ class NewFineFormState {
 
 /// Notifier for managing new fine form state
 class NewFineNotifier extends StateNotifier<NewFineFormState> {
-  NewFineNotifier() : super(const NewFineFormState());
+  final Dio _dio;
+  
+  NewFineNotifier({Dio? dio})
+      : _dio = dio ?? Dio(),
+        super(const NewFineFormState());
 
   /// Update license number
   void setLicenseNo(String licenseNo) {
     state = state.copyWith(licenseNo: licenseNo, errorMessage: null);
   }
 
-  /// Submit license number and fetch user details
+  /// Submit license number and fetch user details from backend
   Future<void> submitLicenseNo() async {
-    if (state.licenseNo.isEmpty) {
-      state = state.copyWith(errorMessage: 'Please enter license number');
+    // Validate license number format
+    final licenseValidation = _validateLicenseNumber(state.licenseNo);
+    if (licenseValidation != null) {
+      state = state.copyWith(errorMessage: licenseValidation);
       return;
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // Simulate API call to fetch user details by license number
-      await Future.delayed(const Duration(seconds: 1));
+      print('\n╔════════════════════════════════════════╗');
+      print('║  NEW FINE: LICENSE NUMBER LOOKUP        ║');
+      print('╠════════════════════════════════════════╣');
+      print('║ License: ${state.licenseNo}');
+      print('╚════════════════════════════════════════╝\n');
 
-      // Mock response - in production, this would be an API call
-      final mockUserData = _getMockUserData(state.licenseNo);
+      // Create API service and fetch driver details
+      final apiService = FineApiService(dio: _dio);
+      final response = await apiService.getDriverByLicenseNumber(state.licenseNo);
 
-      if (mockUserData == null) {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: 'Driver not found for this license number',
-        );
-        return;
-      }
+      // Check if driver has any overdue fines
+      bool isOverdue = _hasOverdueFines(response.fines);
+
+      print('✅ Driver found: ${response.driver.driverName}');
+      print('   Overdue: $isOverdue');
+      print('   Active fines: ${response.fines.length}\n');
 
       state = state.copyWith(
-        userName: mockUserData['name'],
-        isOverdue: mockUserData['isOverdue'] ?? false,
+        userName: response.driver.driverName,
+        isOverdue: isOverdue,
         isSubmitted: true,
         isLoading: false,
+        errorMessage: null,
       );
     } catch (e) {
+      print('❌ Error: $e\n');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Error: ${e.toString()}',
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
       );
     }
+  }
+
+  /// Validate license number format
+  /// Returns error message if invalid, null if valid
+  String? _validateLicenseNumber(String licenseNo) {
+    if (licenseNo.isEmpty) {
+      return 'Please enter license number';
+    }
+
+    if (licenseNo.length < 4) {
+      return 'License number must be at least 4 characters';
+    }
+
+    if (licenseNo.length > 20) {
+      return 'License number is too long (max 20 characters)';
+    }
+
+    // Check for valid characters (alphanumeric and hyphens only)
+    if (!RegExp(r'^[A-Za-z0-9\-]+$').hasMatch(licenseNo)) {
+      return 'License number can only contain letters, numbers, and hyphens';
+    }
+
+    return null; // Valid
+  }
+
+  /// Check if any fines are overdue (past due date)
+  bool _hasOverdueFines(List<FineInfo> fines) {
+    if (fines.isEmpty) return false;
+
+    final today = DateTime.now();
+    // Check for unpaid fines with due date in the past
+    return fines.any((fine) {
+      if (fine.status != 'unpaid') return false;
+      try {
+        final dueDate = DateTime.parse(fine.dueDate);
+        return dueDate.isBefore(today);
+      } catch (_) {
+        return false;
+      }
+    });
   }
 
   /// Reset the form to initial state
@@ -186,8 +240,10 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
 
   /// Validate amounts match and submit fine
   Future<void> submitFine() async {
-    if (state.date.isEmpty) {
-      state = state.copyWith(errorMessage: 'Please select a date');
+    // Validate date
+    final dateValidation = _validateDate(state.date);
+    if (dateValidation != null) {
+      state = state.copyWith(errorMessage: dateValidation);
       return;
     }
 
@@ -196,13 +252,17 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
       return;
     }
 
-    if (state.reason.isEmpty) {
-      state = state.copyWith(errorMessage: 'Please enter reason');
+    // Validate reason
+    final reasonValidation = _validateReason(state.reason);
+    if (reasonValidation != null) {
+      state = state.copyWith(errorMessage: reasonValidation);
       return;
     }
 
-    if (state.amount.isEmpty) {
-      state = state.copyWith(errorMessage: 'Please enter amount');
+    // Validate amount
+    final amountValidation = _validateAmount(state.amount);
+    if (amountValidation != null) {
+      state = state.copyWith(errorMessage: amountValidation);
       return;
     }
 
@@ -242,29 +302,114 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
     }
   }
 
-  /// Mock data for testing - replace with actual API call
-  /// Simulates 404 error for certain license number patterns
-  Map<String, dynamic>? _getMockUserData(String licenseNo) {
-    if (licenseNo.isEmpty) {
-      return null;
+  /// Validate date format (DD/MM/YYYY)
+  /// Returns error message if invalid, null if valid
+  String? _validateDate(String date) {
+    if (date.isEmpty) {
+      return 'Please enter date (DD/MM/YYYY)';
     }
 
-    // Simulate 404 (driver not found) for specific test patterns
-    // License numbers starting with '000' or '999' will return not found
-    if (licenseNo.startsWith('000') || licenseNo.startsWith('999')) {
-      return null; // Simulates 404 - driver not found
+    // Check format DD/MM/YYYY
+    if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(date)) {
+      return 'Date must be in DD/MM/YYYY format';
     }
 
-    // Valid lookup - return mock user data
-    return {
-      'name': 'John Doe',
-      'isOverdue': licenseNo.length > 10, // Mock: longer license numbers are overdue
-    };
+    final parts = date.split('/');
+    final day = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+
+    if (day == null || month == null || year == null) {
+      return 'Date contains invalid numbers';
+    }
+
+    // Validate ranges
+    if (day < 1 || day > 31) {
+      return 'Day must be between 1 and 31';
+    }
+
+    if (month < 1 || month > 12) {
+      return 'Month must be between 1 and 12';
+    }
+
+    if (year < 1900 || year > DateTime.now().year + 10) {
+      return 'Year must be between 1900 and ${DateTime.now().year + 10}';
+    }
+
+    // Try parsing as DateTime to validate actual date
+    try {
+      final parsedDate = DateTime(year, month, day);
+      
+      // Check if date is in future
+      if (parsedDate.isAfter(DateTime.now())) {
+        return 'Date cannot be in the future';
+      }
+    } catch (e) {
+      return 'Invalid date (e.g., Feb 30)';
+    }
+
+    return null; // Valid
+  }
+
+  /// Validate reason text
+  /// Returns error message if invalid, null if valid
+  String? _validateReason(String reason) {
+    if (reason.isEmpty) {
+      return 'Please enter reason for fine';
+    }
+
+    if (reason.length < 5) {
+      return 'Reason must be at least 5 characters';
+    }
+
+    if (reason.length > 500) {
+      return 'Reason must not exceed 500 characters';
+    }
+
+    return null; // Valid
+  }
+
+  /// Validate amount value
+  /// Returns error message if invalid, null if valid
+  String? _validateAmount(String amount) {
+    if (amount.isEmpty) {
+      return 'Please enter amount';
+    }
+
+    final parsedAmount = double.tryParse(amount);
+    if (parsedAmount == null) {
+      return 'Amount must be a valid number';
+    }
+
+    if (parsedAmount <= 0) {
+      return 'Amount must be greater than 0';
+    }
+
+    if (parsedAmount > 999999) {
+      return 'Amount must not exceed 999,999';
+    }
+
+    // Check decimal places (max 2)
+    if (amount.contains('.')) {
+      final decimalPlaces = amount.split('.')[1].length;
+      if (decimalPlaces > 2) {
+        return 'Amount can have maximum 2 decimal places';
+      }
+    }
+
+    return null; // Valid
   }
 }
+
+/// Riverpod provider for new fine API service
+final fineApiServiceProvider = Provider<FineApiService>((ref) {
+  final authenticatedDio = ref.watch(authenticatedDioProvider);
+  return FineApiService(dio: authenticatedDio);
+});
 
 /// Riverpod provider for new fine form state
 final newFineProvider =
     StateNotifierProvider<NewFineNotifier, NewFineFormState>((ref) {
-  return NewFineNotifier();
+  final authenticatedDio = ref.watch(authenticatedDioProvider);
+  return NewFineNotifier(dio: authenticatedDio);
 });

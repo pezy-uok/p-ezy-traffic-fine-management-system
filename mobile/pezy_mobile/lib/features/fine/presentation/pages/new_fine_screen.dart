@@ -83,6 +83,72 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
       opacity: _fadeAnimation,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
+        bottomNavigationBar: formState.isSubmitted
+            ? Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 6,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Back button
+                    Expanded(
+                      child: PezyButton(
+                        label: 'Back',
+                        variant: PezyButtonVariant.outlined,
+                        onPressed: () {
+                          if (formState.isSubmitted) {
+                            // Reset form to license input step
+                            notifier.reset();
+                          }
+                        },
+                        textStyle: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    // Submit/Send button
+                    Expanded(
+                      child: PezyButton(
+                        label: !formState.isOverdue ? 'Send' : 'Close',
+                        variant: PezyButtonVariant.filled,
+                        backgroundColor: AppColors.accentRed,
+                        textColor: Colors.white,
+                        isLoading: formState.isLoading,
+                        isDisabled: formState.isLoading ||
+                            (formState.isOverdue || !formState.isFormValid),
+                        onPressed: (formState.isLoading ||
+                                (formState.isOverdue ||
+                                    !formState.isFormValid))
+                            ? null
+                            : () {
+                                if (!formState.isOverdue) {
+                                  // Submit fine details
+                                  notifier.submitFine();
+                                } else {
+                                  // Close on overdue
+                                  notifier.reset();
+                                }
+                              },
+                        textStyle: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : null,
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -222,6 +288,31 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                   ),
                 ],
 
+                // Submit button for license input (only shown before submission)
+                if (!formState.isSubmitted) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    width: double.infinity,
+                    child: PezyButton(
+                      label: 'Submit',
+                      variant: PezyButtonVariant.filled,
+                      backgroundColor: AppColors.accentRed,
+                      textColor: Colors.white,
+                      isLoading: formState.isLoading,
+                      isDisabled: formState.licenseNo.isEmpty || formState.isLoading,
+                      onPressed: formState.licenseNo.isEmpty || formState.isLoading
+                          ? null
+                          : () {
+                              notifier.submitLicenseNo();
+                            },
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+
                 // User name field (shown after submission)
                 if (formState.isSubmitted) ...[
                   const SizedBox(height: AppSpacing.sectionGap),
@@ -330,7 +421,7 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                                   value,
                                   style: const TextStyle(
                                     fontSize: 14,
-                                    color: Colors.black87,
+                                    color: Color.fromARGB(221, 255, 255, 255),
                                   ),
                                 ),
                               );
@@ -525,42 +616,7 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                   ),
                 ],
 
-                // Submit button
-                const SizedBox(height: AppSpacing.sectionGap),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: PezyButton(
-                    onPressed: (formState.isLoading ||
-                            (!formState.isSubmitted
-                                ? false
-                                : formState.isOverdue ||
-                                    !formState.isFormValid))
-                        ? null
-                        : () {
-                            if (!formState.isSubmitted) {
-                              // First step: submit license number
-                              notifier.submitLicenseNo();
-                            } else if (!formState.isOverdue) {
-                              // Second step: submit fine details
-                              notifier.submitFine();
-                            }
-                          },
-                    label: !formState.isSubmitted
-                        ? 'Submit'
-                        : !formState.isOverdue
-                            ? 'Submit'
-                            : 'Back',
-                    variant: PezyButtonVariant.outlined,
-                    isLoading: formState.isLoading,
-                    isDisabled: formState.isSubmitted &&
-                        !formState.isOverdue &&
-                        !formState.isFormValid,
-                    textStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                const SizedBox(height: AppSpacing.lg),
               ],
             ),
           ),
