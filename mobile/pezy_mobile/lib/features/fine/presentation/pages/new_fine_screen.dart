@@ -22,6 +22,14 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  
+  // Preserve controllers across rebuilds
+  late TextEditingController _licenseController;
+  late TextEditingController _nameController;
+  late TextEditingController _reasonController;
+  late TextEditingController _amountController;
+  late TextEditingController _amountConfirmController;
+  late TextEditingController _extraAmountController;
 
   @override
   void initState() {
@@ -34,18 +42,45 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
+    
+    // Initialize controllers
+    _licenseController = TextEditingController();
+    _nameController = TextEditingController();
+    _reasonController = TextEditingController();
+    _amountController = TextEditingController();
+    _amountConfirmController = TextEditingController();
+    _extraAmountController = TextEditingController();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _licenseController.dispose();
+    _nameController.dispose();
+    _reasonController.dispose();
+    _amountController.dispose();
+    _amountConfirmController.dispose();
+    _extraAmountController.dispose();
     super.dispose();
+  }
+  
+  /// Sync controllers with state whenever state changes
+  void _syncControllers(NewFineFormState formState) {
+    _licenseController.text = formState.licenseNo;
+    _nameController.text = formState.userName ?? '';
+    _reasonController.text = formState.reason;
+    _amountController.text = formState.amount;
+    _amountConfirmController.text = formState.amountConfirm;
+    _extraAmountController.text = formState.extraAmount;
   }
 
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(newFineProvider);
     final notifier = ref.read(newFineProvider.notifier);
+    
+    // Sync controllers with state
+    _syncControllers(formState);
 
     // Handle success - show toast and navigate
     ref.listen(newFineProvider, (previous, next) {
@@ -105,8 +140,8 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                         variant: PezyButtonVariant.outlined,
                         onPressed: () {
                           if (formState.isSubmitted) {
-                            // Reset form to license input step
-                            notifier.reset();
+                            // Go back to license input step (keep lookup data)
+                            notifier.goBackToLicenseStep();
                           }
                         },
                         textStyle: const TextStyle(
@@ -230,7 +265,7 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                 PezyTextField(
                   label: 'License No',
                   hint: 'License No',
-                  controller: _LicenseTextController(formState.licenseNo),
+                  controller: _licenseController,
                   onChanged: (value) {
                     notifier.setLicenseNo(value);
                   },
@@ -319,7 +354,7 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                   PezyTextField(
                     label: 'Driver Name',
                     hint: 'Driver Name',
-                    controller: _NameTextController(formState.userName ?? ''),
+                    controller: _nameController,
                     enabled: false,
                     keyboardType: TextInputType.text,
                     variant: PezyTextFieldVariant.outlined,
@@ -357,29 +392,103 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                     ),
                     child: Column(
                       children: [
-                        // Date field
-                        PezyTextField(
-                          label: 'Date',
-                          hint: 'DD / MM / YYYY',
-                          controller: _DateTextController(formState.date),
-                          onChanged: (value) {
-                            notifier.setDate(value);
-                          },
-                          enabled: true,
-                          keyboardType: TextInputType.text,
-                          variant: PezyTextFieldVariant.outlined,
-                          borderRadius: 12,
-                          labelColor: Colors.black54,
-                          hintTextColor: Colors.grey.shade600,
-                          textColor: Colors.black87,
-                          labelStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          hintStyle: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
+                        // Date picker field
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Date',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: () async {
+                                // Parse current date or use today
+                                DateTime initialDate = DateTime.now();
+                                if (formState.date.isNotEmpty) {
+                                  try {
+                                    final parts = formState.date.split('/');
+                                    if (parts.length == 3) {
+                                      initialDate = DateTime(
+                                        int.parse(parts[2]),
+                                        int.parse(parts[1]),
+                                        int.parse(parts[0]),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    initialDate = DateTime.now();
+                                  }
+                                }
+
+                                final selectedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: initialDate,
+                                  firstDate: DateTime(1900),
+                                  lastDate: DateTime.now(),
+                                  builder: (BuildContext context, Widget? child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: AppColors.accentRed,
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                          onSurface: Colors.black87,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+
+                                if (selectedDate != null) {
+                                  final formattedDate =
+                                      '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
+                                  notifier.setDate(formattedDate);
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      formState.date.isEmpty
+                                          ? 'Select a date'
+                                          : formState.date,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: formState.date.isEmpty
+                                            ? Colors.grey.shade600
+                                            : Colors.black87,
+                                        fontWeight: formState.date.isEmpty
+                                            ? FontWeight.w400
+                                            : FontWeight.w500,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.calendar_today,
+                                      color: AppColors.accentRed,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: AppSpacing.lg),
 
@@ -397,7 +506,7 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                               'Select Fine Type',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey.shade600,
+                                color: const Color.fromARGB(255, 103, 103, 103),
                               ),
                             ),
                             value: formState.fineType.isEmpty ? null : formState.fineType,
@@ -421,7 +530,7 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                                   value,
                                   style: const TextStyle(
                                     fontSize: 14,
-                                    color: Color.fromARGB(221, 255, 255, 255),
+                                    color: Color.fromARGB(221, 0, 0, 0),
                                   ),
                                 ),
                               );
@@ -434,7 +543,7 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                         PezyTextField(
                           label: 'Reason',
                           hint: 'Enter reason for fine',
-                          controller: _ReasonTextController(formState.reason),
+                          controller: _reasonController,
                           onChanged: (value) {
                             notifier.setReason(value);
                           },
@@ -461,12 +570,16 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                         PezyTextField(
                           label: 'Amount',
                           hint: 'Amount',
-                          controller: _AmountTextController(formState.amount),
+                          controller: _amountController,
                           onChanged: (value) {
                             notifier.setAmount(value);
                           },
                           enabled: true,
                           keyboardType: TextInputType.number,
+                          inputFormatter: (value) {
+                            // Only allow digits and single decimal point
+                            return value.replaceAll(RegExp(r'[^0-9.]'), '');
+                          },
                           variant: PezyTextFieldVariant.outlined,
                           borderRadius: 12,
                           labelColor: Colors.black54,
@@ -487,12 +600,16 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                         PezyTextField(
                           label: 'Re-enter Amount',
                           hint: 'Re-enter Amount',
-                          controller: _AmountConfirmTextController(formState.amountConfirm),
+                          controller: _amountConfirmController,
                           onChanged: (value) {
                             notifier.setAmountConfirm(value);
                           },
                           enabled: true,
                           keyboardType: TextInputType.number,
+                          inputFormatter: (value) {
+                            // Only allow digits and single decimal point
+                            return value.replaceAll(RegExp(r'[^0-9.]'), '');
+                          },
                           variant: PezyTextFieldVariant.outlined,
                           borderRadius: 12,
                           labelColor: Colors.black54,
@@ -513,12 +630,16 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
                         PezyTextField(
                           label: 'Extra Amount (Optional)',
                           hint: 'Extra Amount',
-                          controller: _ExtraAmountTextController(formState.extraAmount),
+                          controller: _extraAmountController,
                           onChanged: (value) {
                             notifier.setExtraAmount(value);
                           },
                           enabled: true,
                           keyboardType: TextInputType.number,
+                          inputFormatter: (value) {
+                            // Only allow digits and single decimal point
+                            return value.replaceAll(RegExp(r'[^0-9.]'), '');
+                          },
                           variant: PezyTextFieldVariant.outlined,
                           borderRadius: 12,
                           labelColor: Colors.black54,
@@ -624,39 +745,4 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
       ),
     );
   }
-}
-
-/// Simple text controller wrapper to manage state synchronization
-class _LicenseTextController extends TextEditingController {
-  _LicenseTextController(String initialValue) : super(text: initialValue);
-}
-
-/// Simple text controller wrapper for name field
-class _NameTextController extends TextEditingController {
-  _NameTextController(String initialValue) : super(text: initialValue);
-}
-
-/// Simple text controller wrapper for date field
-class _DateTextController extends TextEditingController {
-  _DateTextController(String initialValue) : super(text: initialValue);
-}
-
-/// Simple text controller wrapper for amount field
-class _AmountTextController extends TextEditingController {
-  _AmountTextController(String initialValue) : super(text: initialValue);
-}
-
-/// Simple text controller wrapper for amount confirmation field
-class _AmountConfirmTextController extends TextEditingController {
-  _AmountConfirmTextController(String initialValue) : super(text: initialValue);
-}
-
-/// Simple text controller wrapper for reason field
-class _ReasonTextController extends TextEditingController {
-  _ReasonTextController(String initialValue) : super(text: initialValue);
-}
-
-/// Simple text controller wrapper for extra amount field
-class _ExtraAmountTextController extends TextEditingController {
-  _ExtraAmountTextController(String initialValue) : super(text: initialValue);
 }

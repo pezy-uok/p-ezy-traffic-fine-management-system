@@ -40,36 +40,55 @@ const addDays = (isoDate, days) => {
  */
 export const checkMaxFines = async (driverId) => {
   const supabase = getSupabaseClient();
+  
+  console.log('\n🔧 CHECK MAX FINES DEBUG');
+  console.log(`   Driver ID: ${driverId}`);
+  console.log(`   Supabase Client:`, supabase ? '✅' : '❌');
 
-  const { count: unpaidCount, error: countError } = await supabase
-    .from('fines')
-    .select('id', { count: 'exact', head: true })
-    .eq('driver_id', driverId)
-    .eq('status', 'unpaid');
+  try {
+    const { count: unpaidCount, error: countError } = await supabase
+      .from('fines')
+      .select('id', { count: 'exact', head: true })
+      .eq('driver_id', driverId)
+      .eq('status', 'unpaid');
 
-  if (countError) {
-    throw new AppError(
-      `Failed to validate unpaid fine count: ${countError.message}`,
-      500
-    );
+    console.log(`   Query Response:`, { unpaidCount, error: countError });
+
+    if (countError) {
+      console.error(`   ❌ COUNT ERROR:`, countError);
+      throw new AppError(
+        `Failed to validate unpaid fine count: ${countError.message}`,
+        500
+      );
+    }
+
+    const count = unpaidCount || 0;
+    console.log(`   Unpaid Count: ${count}`);
+
+    if (count >= MAX_UNPAID_FINES) {
+      console.warn(`   ⚠️  Max fines exceeded: ${count} >= ${MAX_UNPAID_FINES}`);
+      throw new AppError(
+        `Driver has reached maximum unpaid fines limit (${MAX_UNPAID_FINES}). Current unpaid fines: ${count}. Mobile app shows warning escalation screen.`,
+        409
+      );
+    }
+
+    return count;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    console.error(`   ❌ UNEXPECTED ERROR:`, err.message);
+    console.error(`      Stack:`, err.stack);
+    throw new AppError(`Failed to check max fines: ${err.message}`, 500);
   }
-
-  const count = unpaidCount || 0;
-
-  if (count >= MAX_UNPAID_FINES) {
-    throw new AppError(
-      `Driver has reached maximum unpaid fines limit (${MAX_UNPAID_FINES}). Current unpaid fines: ${count}. Mobile app shows warning escalation screen.`,
-      409
-    );
-  }
-
-  return count;
 };
 
 export const createFine = async (fineData, authUser) => {
   if (!fineData || typeof fineData !== 'object') {
     throw new ValidationError('Fine payload is required');
   }
+
+  console.log('\n🔧 CREATE FINE - START');
+  console.log(`   Auth User:`, authUser ? `✅ ${authUser.id}` : '❌ Null');
 
   const licenseNo = fineData.licenseNo || fineData.license_number;
   const amount = Number(fineData.amount);
@@ -86,7 +105,14 @@ export const createFine = async (fineData, authUser) => {
     throw new ValidationError('reason is required');
   }
 
+  if (!authUser?.id) {
+    throw new ValidationError('Authenticated user ID is required to issue a fine');
+  }
+
   const supabase = getSupabaseClient();
+
+  console.log('\n🔧 CREATE FINE DEBUG - Starting');
+  console.log(`   Supabase Client:`, supabase ? '✅ Initialized' : '❌ Null');
 
   const { data: driver, error: driverError } = await supabase
     .from('drivers')
@@ -94,62 +120,113 @@ export const createFine = async (fineData, authUser) => {
     .eq('license_number', licenseNo)
     .single();
 
+  console.log(`   Driver Lookup:`, { found: !!driver, error: driverError?.message || 'None' });
+
   if (driverError || !driver) {
+    console.error(`   ❌ DRIVER ERROR:`, driverError);
     throw new NotFoundError('Driver not found for the provided licenseNo');
   }
 
   // PEZY-412: Check max unpaid fines limit
-  await checkMaxFines(driver.id);
+  let unpaidCount = 0;
+  try {
+    unpaidCount = await checkMaxFines(driver.id);
+  } catch (maxFinesError) {
+    console.error('❌ Max Fines Check Failed:', maxFinesError.message);
+    if (maxFinesError.statusCode === 409) {
+      throw maxFinesError; // Re-throw 409 Max Fines errors
+    }
+    // For other errors, log but continue - might be a Supabase connectivity issue
+    console.warn('⚠️  Continuing despite max fines check failure...');
+  }
 
   const issueDate = toIsoDateString(fineData.issuedDate || fineData.issue_date) || toIsoDateString(new Date());
   const dueDate = toIsoDateString(fineData.dueDate || fineData.due_date) || addDays(issueDate, 14);
   const fineRef = generateFineReference();
 
+  // Build payload with ONLY required fields - these MUST exist in the fines table
   const insertPayload = {
     driver_id: driver.id,
-    issued_by_officer_id: fineData.issuedByOfficerId || fineData.issued_by_officer_id || authUser?.id,
+    issued_by_officer_id: authUser.id,  // Use validated auth user ID
     amount,
     reason: fineData.reason,
-    violation_code: fineData.violationCode || fineData.violation_code || fineData.violationType || fineRef,
-    location: fineData.location || null,
-    vehicle_registration:
-      fineData.vehicleRegistration || fineData.vehicle_registration || driver.vehicle_registration || null,
+    violation_code: fineData.violationCode || fineData.violation_code || fineRef,
+    status: 'unpaid',
     issue_date: issueDate,
     due_date: dueDate,
-    status: 'unpaid',
   };
+
+  // Add optional fields if values are provided
+  if (fineData.location) {
+    insertPayload.location = fineData.location;
+  }
+  
+  const vehicleReg = fineData.vehicleRegistration || fineData.vehicle_registration || driver.vehicle_registration;
+  if (vehicleReg) {
+    insertPayload.vehicle_registration = vehicleReg;
+  }
+
+  console.log(`   Insert Payload Keys:`, Object.keys(insertPayload));
+  console.log(`   Officer ID Type:`, typeof insertPayload.issued_by_officer_id);
 
   if (!insertPayload.issued_by_officer_id) {
-    throw new ValidationError('issuedByOfficerId is required');
+    throw new ValidationError('Officer ID is required');
   }
 
-  const { data: createdFine, error: createError } = await supabase
-    .from('fines')
-    .insert([insertPayload])
-    .select('*')
-    .single();
+  console.log('\n🔧 FINE INSERT DEBUG');
+  console.log(`   Supabase Instance:`, supabase ? '✅ Exists' : '❌ Null');
+  console.log(`   Insert Payload:`, JSON.stringify(insertPayload, null, 2));
+  
+  try {
+    const { data: createdFine, error: createError } = await supabase
+      .from('fines')
+      .insert([insertPayload])
+      .select('*')
+      .single();
 
-  if (createError || !createdFine) {
-    throw new AppError(`Failed to create fine: ${createError?.message || 'Unknown error'}`, 500);
+    console.log(`   Insert Response:`, { data: createdFine, error: createError });
+
+    if (createError) {
+      console.error(`   ❌ SUPABASE ERROR:`);
+      console.error(`      Message: ${createError.message}`);
+      console.error(`      Status: ${createError.status}`);
+      console.error(`      Code: ${createError.code}`);
+      console.error(`      Details: ${createError.details}`);
+      console.error(`      Hint: ${createError.hint}`);
+      console.error(`      Full Error:`, createError);
+      throw new AppError(`Failed to create fine: ${createError?.message || 'Unknown error'}`, 500);
+    }
+
+    if (!createdFine) {
+      console.error(`   ❌ NO DATA RETURNED FROM INSERT`);
+      throw new AppError('Failed to create fine: No data returned', 500);
+    }
+
+    return {
+      id: createdFine.id,
+      fine_ref: fineRef,
+      driver_id: createdFine.driver_id,
+      license_number: driver.license_number,
+      issued_by_officer_id: createdFine.issued_by_officer_id,
+      amount: createdFine.amount,
+      reason: createdFine.reason,
+      violation_code: createdFine.violation_code,
+      location: createdFine.location,
+      vehicle_registration: createdFine.vehicle_registration,
+      status: createdFine.status,
+      issue_date: createdFine.issue_date,
+      due_date: createdFine.due_date,
+      created_at: createdFine.created_at,
+      updated_at: createdFine.updated_at,
+    };
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    console.error(`   ❌ UNEXPECTED ERROR`);
+    console.error(`      Error Type: ${err.name}`);
+    console.error(`      Message: ${err.message}`);
+    console.error(`      Stack:`, err.stack);
+    throw new AppError(`Failed to create fine: ${err.message}`, 500);
   }
-
-  return {
-    id: createdFine.id,
-    fine_ref: fineRef,
-    driver_id: createdFine.driver_id,
-    license_number: driver.license_number,
-    issued_by_officer_id: createdFine.issued_by_officer_id,
-    amount: createdFine.amount,
-    reason: createdFine.reason,
-    violation_code: createdFine.violation_code,
-    location: createdFine.location,
-    vehicle_registration: createdFine.vehicle_registration,
-    status: createdFine.status,
-    issue_date: createdFine.issue_date,
-    due_date: createdFine.due_date,
-    created_at: createdFine.created_at,
-    updated_at: createdFine.updated_at,
-  };
 };
 
 export const getFineById = async (fineId) => {

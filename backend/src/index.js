@@ -7,6 +7,7 @@ import { initializeDatabase } from './config/database.js';
 import {
   initializeSupabaseClient,
   testSupabaseConnection,
+  getSupabaseClient,
 } from './config/supabaseClient.js';
 import { initializeFineScheduler } from './jobs/fineScheduler.js';
 import userRoutes from './routes/userRoutes.js';
@@ -46,6 +47,41 @@ app.use((req, res, next) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Backend server is running' });
+});
+
+app.get('/api/health/supabase', (req, res) => {
+  try {
+    const supabase = initializeSupabaseClient() || getSupabaseClient();
+    console.log('\n🔍 SUPABASE HEALTH CHECK');
+    console.log(`   Client Instance:`, supabase ? '✅' : '❌');
+    
+    if (!supabase) {
+      return res.status(500).json({ 
+        status: 'ERROR', 
+        message: 'Supabase client not initialized',
+        env: {
+          urlSet: !!process.env.SUPABASE_URL,
+          keySet: !!process.env.SUPABASE_SERVICE_ROLE_KEY 
+        }
+      });
+    }
+    
+    res.json({ 
+      status: 'OK', 
+      message: 'Supabase client initialized',
+      env: {
+        urlSet: !!process.env.SUPABASE_URL,
+        keySet: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        url: process.env.SUPABASE_URL ? 'Set' : 'Not set'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Health Check Error:', error);
+    res.status(500).json({ 
+      status: 'ERROR', 
+      message: error.message 
+    });
+  }
 });
 
 app.get('/', (req, res) => {
