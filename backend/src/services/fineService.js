@@ -218,6 +218,7 @@ export const getFinesByLicense = async (licenseNo) => {
 
   const supabase = getSupabaseClient();
 
+  // Step 1: Get driver by license number
   const { data: driver, error: driverError } = await supabase
     .from('drivers')
     .select('id, license_number, first_name, last_name')
@@ -228,49 +229,31 @@ export const getFinesByLicense = async (licenseNo) => {
     throw new NotFoundError('Driver not found for the provided licenseNo');
   }
 
-  // PEZY-408 requires filtering with isDeleted=false and sorting by issuedDate DESC.
-  // Current schema in this project uses snake_case and may not always include is_deleted,
-  // so we prefer it when present and gracefully fallback when missing.
-  let fines = null;
-
-  const finesWithSoftDeleteFilter = await supabase
+  // Step 2: Get fines for this driver (can be empty array)
+  const { data: fines, error: finesError } = await supabase
     .from('fines')
     .select('*')
     .eq('driver_id', driver.id)
-    .eq('is_deleted', false)
     .order('issue_date', { ascending: false });
 
-  if (!finesWithSoftDeleteFilter.error) {
-    fines = finesWithSoftDeleteFilter.data || [];
-  } else {
-    const { data: fallbackFines, error: fallbackError } = await supabase
-      .from('fines')
-      .select('*')
-      .eq('driver_id', driver.id)
-      .order('issue_date', { ascending: false });
-
-    if (fallbackError) {
-      throw new AppError(`Failed to fetch fines by licenseNo: ${fallbackError.message}`, 500);
-    }
-
-    fines = (fallbackFines || []).filter((fine) => {
-      if (typeof fine.is_deleted === 'boolean') {
-        return fine.is_deleted === false;
-      }
-
-      if (fine.deleted_at !== undefined) {
-        return fine.deleted_at === null;
-      }
-
-      return true;
-    });
+  if (finesError) {
+    throw new AppError(`Failed to fetch fines by licenseNo: ${finesError.message}`, 500);
   }
 
-  return fines.map((fine) => ({
+  // Step 3: Prepare driver info
+  const driverName = `${driver.first_name || ''} ${driver.last_name || ''}`.trim();
+  const driverInfo = {
+    driver_id: driver.id,
+    license_number: driver.license_number,
+    driver_name: driverName,
+  };
+
+  // Step 4: Map fines with driver info
+  const mappedFines = (fines || []).map((fine) => ({
     id: fine.id,
     driver_id: fine.driver_id,
     license_number: driver.license_number,
-    driver_name: `${driver.first_name || ''} ${driver.last_name || ''}`.trim(),
+    driver_name: driverName,
     issued_by_officer_id: fine.issued_by_officer_id,
     amount: fine.amount,
     reason: fine.reason,
@@ -285,6 +268,12 @@ export const getFinesByLicense = async (licenseNo) => {
     created_at: fine.created_at,
     updated_at: fine.updated_at,
   }));
+
+  // Step 5: Return both driver info and fines
+  return {
+    driver: driverInfo,
+    fines: mappedFines,
+  };
 };
 
 export const getOutdatedFines = async () => {

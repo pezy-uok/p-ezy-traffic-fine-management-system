@@ -52,11 +52,12 @@ export const getFineById = async (req, res, next) => {
 export const getFinesByLicense = async (req, res, next) => {
   try {
     const { licenseNo } = req.params;
-    const fines = await getFinesByLicenseService(licenseNo);
+    const result = await getFinesByLicenseService(licenseNo);
 
     return res.status(200).json({
       success: true,
-      fines,
+      driver: result.driver,
+      fines: result.fines,
     });
   } catch (error) {
     next(error);
