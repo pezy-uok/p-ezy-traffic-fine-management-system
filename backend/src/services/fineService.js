@@ -389,14 +389,21 @@ export const getAllFinesForAdmin = async () => {
     .from('fines')
     .select(`
       id,
+      driver_id,
+      issued_by_officer_id,
       amount,
       reason,
+      violation_code,
+      location,
+      vehicle_registration,
       status,
       issue_date,
       due_date,
+      payment_date,
+      payment_method,
       created_at,
-      driver_id,
-      drivers(first_name, last_name)
+      updated_at,
+      drivers(id, license_number, first_name, last_name)
     `)
     .order('created_at', { ascending: false });
 
@@ -404,25 +411,28 @@ export const getAllFinesForAdmin = async () => {
     throw new AppError(`Failed to fetch fines: ${error.message}`, 500);
   }
 
-  const todayIso = new Date().toISOString().split('T')[0];
-
   return (fines || []).map((fine) => {
-    const isPaid = fine.status === 'paid';
-    const isOverdue = !isPaid && fine.due_date && fine.due_date < todayIso;
-    const normalizedStatus = isPaid ? 'paid' : isOverdue ? 'overdue' : 'pending';
     const driver = fine.drivers || {};
-    const offender = `${driver.first_name || ''} ${driver.last_name || ''}`.trim() || 'Unknown Driver';
+    const driverName = driver ? `${driver.first_name || ''} ${driver.last_name || ''}`.trim() : null;
 
     return {
       id: fine.id,
-      offender,
-      violation: fine.reason || 'N/A',
-      amount: Number(fine.amount || 0),
-      date: fine.issue_date || (fine.created_at ? fine.created_at.split('T')[0] : null),
-      status: normalizedStatus,
-      raw_status: fine.status,
-      due_date: fine.due_date,
       driver_id: fine.driver_id,
+      license_number: driver.license_number || null,
+      driver_name: driverName,
+      issued_by_officer_id: fine.issued_by_officer_id,
+      amount: fine.amount,
+      reason: fine.reason,
+      violation_code: fine.violation_code,
+      location: fine.location,
+      vehicle_registration: fine.vehicle_registration,
+      status: fine.status,
+      issue_date: fine.issue_date,
+      due_date: fine.due_date,
+      payment_date: fine.payment_date,
+      payment_method: fine.payment_method,
+      created_at: fine.created_at,
+      updated_at: fine.updated_at,
     };
   });
 };
@@ -438,14 +448,21 @@ export const getFineByIdForAdmin = async (fineId) => {
     .from('fines')
     .select(`
       id,
+      driver_id,
+      issued_by_officer_id,
       amount,
       reason,
+      violation_code,
+      location,
+      vehicle_registration,
       status,
       issue_date,
       due_date,
+      payment_date,
+      payment_method,
       created_at,
-      driver_id,
-      drivers(first_name, last_name)
+      updated_at,
+      drivers(id, license_number, first_name, last_name)
     `)
     .eq('id', fineId)
     .single();
@@ -454,22 +471,27 @@ export const getFineByIdForAdmin = async (fineId) => {
     throw new NotFoundError('Fine not found');
   }
 
-  const todayIso = new Date().toISOString().split('T')[0];
-  const isPaid = fine.status === 'paid';
-  const isOverdue = !isPaid && fine.due_date && fine.due_date < todayIso;
-  const normalizedStatus = isPaid ? 'paid' : isOverdue ? 'overdue' : 'pending';
   const driver = fine.drivers || {};
+  const driverName = driver ? `${driver.first_name || ''} ${driver.last_name || ''}`.trim() : null;
 
   return {
     id: fine.id,
-    offender: `${driver.first_name || ''} ${driver.last_name || ''}`.trim() || 'Unknown Driver',
-    violation: fine.reason || 'N/A',
-    amount: Number(fine.amount || 0),
-    date: fine.issue_date || (fine.created_at ? fine.created_at.split('T')[0] : null),
-    status: normalizedStatus,
-    raw_status: fine.status,
-    due_date: fine.due_date,
     driver_id: fine.driver_id,
+    license_number: driver.license_number || null,
+    driver_name: driverName,
+    issued_by_officer_id: fine.issued_by_officer_id,
+    amount: fine.amount,
+    reason: fine.reason,
+    violation_code: fine.violation_code,
+    location: fine.location,
+    vehicle_registration: fine.vehicle_registration,
+    status: fine.status,
+    issue_date: fine.issue_date,
+    due_date: fine.due_date,
+    payment_date: fine.payment_date,
+    payment_method: fine.payment_method,
+    created_at: fine.created_at,
+    updated_at: fine.updated_at,
   };
 };
 
