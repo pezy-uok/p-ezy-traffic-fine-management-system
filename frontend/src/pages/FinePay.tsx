@@ -89,7 +89,7 @@ export default function FinePay() {
       // Call API to fetch driver's fines
       const response = await fineAPI.getDriverFines(licenseNumber)
       
-      if (response.data.success && response.data.fines) {
+      if (response.data.success && response.data.driver) {
         // Check for suspension warning
         if (suspendedLicenseNumbers.has(licenseNumber)) {
           setShowSuspensionWarning(true)
@@ -99,10 +99,11 @@ export default function FinePay() {
           setLicenseWarning('')
         }
 
-        // Navigate with fines data
+        // Navigate with driver and fines data
         navigate('/fine-pay/outstanding', {
           state: {
-            fines: response.data.fines,
+            driver: response.data.driver,
+            fines: response.data.fines || [],
             licenseNumber,
             suspensionReminder: suspendedLicenseNumbers.has(licenseNumber) ? suspensionWarningMessage : undefined,
           },

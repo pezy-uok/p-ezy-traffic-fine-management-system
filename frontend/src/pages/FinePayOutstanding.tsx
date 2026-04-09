@@ -6,9 +6,16 @@ import finePayBg from '../assets/slider/slide-1.png'
 import './Home.css'
 import './FinePayOutstanding.css'
 
+type DriverInfo = {
+  driver_id: string
+  driver_name: string
+  license_number: string
+}
+
 type FinePayLocationState = {
   suspensionReminder?: string
   licenseNumber?: string
+  driver?: DriverInfo
   fines?: any[]
 }
 
@@ -34,6 +41,11 @@ export default function FinePayOutstanding() {
   const navigate = useNavigate()
   const location = useLocation()
   const reminderState = location.state as FinePayLocationState | null
+  
+  // Get driver info from location state
+  const driverInfo = reminderState?.driver
+  const driverName = driverInfo?.driver_name || 'Driver'
+  const licenseNumber = driverInfo?.license_number || reminderState?.licenseNumber || 'N/A'
   
   // Get fines from location state or use empty array
   const apieFines = reminderState?.fines || []
@@ -66,10 +78,6 @@ export default function FinePayOutstanding() {
 
     navigate('/fine-pay/success')
   }
-
-  // Get driver info from first fine
-  const driverName = apieFines.length > 0 ? apieFines[0].driver_name : 'Driver'
-  const licenseNumber = reminderState?.licenseNumber || 'N/A'
 
   // If no fines found, show empty state
   if (apieFines.length === 0) {

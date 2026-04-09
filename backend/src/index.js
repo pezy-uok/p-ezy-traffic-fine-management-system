@@ -14,6 +14,7 @@ import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
 import criminalRoutes from './routes/criminalRoutes.js';
 import fineRoutes from './routes/fineRoutes.js';
+import publicFineRoutes from './routes/publicFineRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import newsRoutes from './routes/newsRoutes.js';
 import tipRoutes from './routes/tipRoutes.js';
@@ -51,6 +52,10 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the System Development Backend API' });
 });
 
+// 🔓 PUBLIC ROUTES (No Authentication Required)
+app.use('/api/public-fines', publicFineRoutes);
+
+// 🔒 PROTECTED ROUTES (Authentication Required)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/drivers', driverRoutes);
