@@ -258,9 +258,13 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
     const supabase = getSupabaseClient();
     const now = new Date();
 
+    // ===== FETCH ALL DATA IN PARALLEL =====
     let fineRecords = [];
     let criminalRecordsList = [];
     let newsRows = [];
+    let driverRows = [];
+    let officerRows = [];
+    let appealRows = [];
 
     try {
       fineRecords = await getAllFinesForAdminService();
@@ -291,11 +295,40 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
       console.error('Failed to load admin news for dashboard stats:', error.message);
     }
 
+    try {
+      const driverResult = await supabase.from('drivers').select('*');
+      if (!driverResult.error) {
+        driverRows = driverResult.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load drivers for stats:', error.message);
+    }
+
+    try {
+      const officerResult = await supabase.from('officers').select('*');
+      if (!officerResult.error) {
+        officerRows = officerResult.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load officers for stats:', error.message);
+    }
+
+    try {
+      const appealResult = await supabase.from('appeals').select('*');
+      if (!appealResult.error) {
+        appealRows = appealResult.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load appeals for stats:', error.message);
+    }
+
+    // ===== CALCULATE TIME PERIODS =====
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7);
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
 
+    // ===== CORE METRICS =====
     const totalFines = fineRecords.length;
     const criminalRecords = criminalRecordsList.length;
     const activeCases = fineRecords.filter((fine) => fine.status !== 'paid').length;
@@ -310,6 +343,59 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
     }).length;
     const wantedCriminals = criminalRecordsList.filter((criminal) => Boolean(criminal.wanted)).length;
 
+    // ===== DRIVER STATISTICS =====
+    const totalDrivers = driverRows.length;
+    const driversWithPendingFines = new Set(
+      fineRecords
+        .filter((fine) => fine.status !== 'paid' && fine.driver_license)
+        .map((fine) => fine.driver_license)
+    ).size;
+
+    // ===== PAYMENT METRICS =====
+    const totalRevenue = fineRecords
+      .filter((fine) => fine.status === 'paid')
+      .reduce((sum, fine) => sum + (parseFloat(fine.amount) || 0), 0);
+    const paidFines = fineRecords.filter((fine) => fine.status === 'paid').length;
+    const pendingPayments = fineRecords.filter((fine) => fine.status === 'pending').length;
+    const paymentSuccessRate = totalFines > 0 ? Math.round((paidFines / totalFines) * 100) : 0;
+    const averageFineAmount = totalFines > 0 ? totalRevenue / paidFines : 0;
+
+    // ===== OFFICER PERFORMANCE =====
+    const totalOfficers = officerRows.length;
+    const finesByOfficer = {};
+    fineRecords.forEach((fine) => {
+      const officerId = fine.officer_id || 'unassigned';
+      finesByOfficer[officerId] = (finesByOfficer[officerId] || 0) + 1;
+    });
+    const topOfficerEntry = Object.entries(finesByOfficer).sort(([, a], [, b]) => b - a)[0];
+    const topOfficerFines = topOfficerEntry ? topOfficerEntry[1] : 0;
+
+    // ===== FINE STATUS BREAKDOWN =====
+    const fineStatusBreakdown = {
+      paid: paidFines,
+      pending: pendingPayments,
+      appealed: fineRecords.filter((fine) => fine.status === 'appealed').length,
+      cancelled: fineRecords.filter((fine) => fine.status === 'cancelled').length,
+      suspended: fineRecords.filter((fine) => fine.status === 'suspended').length,
+    };
+
+    // ===== APPEAL STATISTICS =====
+    const totalAppeals = appealRows.length;
+    const approvedAppeals = appealRows.filter((appeal) => appeal.status === 'approved').length;
+    const rejectedAppeals = appealRows.filter((appeal) => appeal.status === 'rejected').length;
+    const pendingAppeals = appealRows.filter((appeal) => appeal.status === 'pending').length;
+
+    // ===== RECIDIVIST ANALYSIS =====
+    const driverFineCount = {};
+    fineRecords.forEach((fine) => {
+      const license = fine.driver_license;
+      if (license) {
+        driverFineCount[license] = (driverFineCount[license] || 0) + 1;
+      }
+    });
+    const recidivistDrivers = Object.values(driverFineCount).filter((count) => count > 3).length;
+
+    // ===== DASHBOARD CARDS =====
     const cards = [
       {
         id: 'totalFines',
@@ -345,6 +431,7 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
       },
     ];
 
+    // ===== QUICK STATS =====
     const quickStats = [
       { label: 'Avg Fines/Week', value: formatCount(finesThisWeek), tone: 'blue' },
       { label: 'Pending Cases', value: formatCount(activeCases), tone: 'red' },
@@ -357,6 +444,8 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
       stats: {
         cards,
         quickStats,
+
+        // Core Summary
         summary: {
           totalFines,
           criminalRecords,
@@ -366,6 +455,49 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
           newRecords,
           wantedCriminals,
         },
+
+        // Driver Statistics
+        drivers: {
+          total: totalDrivers,
+          withPendingFines: driversWithPendingFines,
+          recidivists: recidivistDrivers,
+        },
+
+        // Payment Metrics
+        payments: {
+          totalRevenue: Math.round(totalRevenue * 100) / 100,
+          paidFines,
+          pendingPayments,
+          successRate: paymentSuccessRate,
+          averageFineAmount: Math.round(averageFineAmount * 100) / 100,
+        },
+
+        // Officer Performance
+        officers: {
+          total: totalOfficers,
+          topOfficerFines,
+          averageFinesPerOfficer: totalOfficers > 0 ? Math.round(totalFines / totalOfficers) : 0,
+        },
+
+        // Fine Analytics
+        fineStatus: fineStatusBreakdown,
+
+        // Appeal Statistics
+        appeals: {
+          total: totalAppeals,
+          approved: approvedAppeals,
+          rejected: rejectedAppeals,
+          pending: pendingAppeals,
+          approvalRate: totalAppeals > 0 ? Math.round((approvedAppeals / totalAppeals) * 100) : 0,
+        },
+
+        // System Health
+        system: {
+          dataRecords: totalFines + criminalRecords,
+          pendingActions: activeCases + pendingAppeals,
+          systemHealth: 'operational',
+        },
+
         generatedAt: now.toISOString(),
       },
     });
