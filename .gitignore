@@ -13,8 +13,6 @@ __pycache__/
 *.pyc
 
 # Environment files
-.env
-.env.local
 .env.*.local
 *.env
 
@@ -63,3 +61,4 @@ README*.md
 *_GUIDE.md
 *_REFERENCE.md
 *_SCHEMA.sql
+config.bat
