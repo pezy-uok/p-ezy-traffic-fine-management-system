@@ -143,7 +143,7 @@ class LoginScreen extends ConsumerWidget {
                               onChanged: loginNotifier.setEmail,
                               onTap: () => loginNotifier.markEmailTouched(),
                               style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.textPrimary,
+                                color: const Color.fromARGB(255, 255, 255, 255),
                               ),
                               decoration: InputDecoration(
                                 hintText: 'officer@example.com or 12345',
@@ -213,38 +213,38 @@ class LoginScreen extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.sectionGap),
 
                       // Info Banner
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentRed.withValues(alpha: 0.08),
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.cornerRadius),
-                          border: Border.all(
-                            color: AppColors.accentRed.withValues(alpha: 0.15),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: AppColors.accentRed,
-                              size: 18,
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            Expanded(
-                              child: Text(
-                                '🔧 Development Mode: Use any email and OTP will be mocked',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Container(
+                      //   padding: const EdgeInsets.all(AppSpacing.md),
+                      //   decoration: BoxDecoration(
+                      //     color: AppColors.accentRed.withValues(alpha: 0.08),
+                      //     borderRadius:
+                      //         BorderRadius.circular(AppSpacing.cornerRadius),
+                      //     border: Border.all(
+                      //       color: AppColors.accentRed.withValues(alpha: 0.15),
+                      //     ),
+                      //   ),
+                      //   child: Row(
+                      //     children: [
+                      //       Icon(
+                      //         Icons.info_outline,
+                      //         color: AppColors.accentRed,
+                      //         size: 18,
+                      //       ),
+                      //       const SizedBox(width: AppSpacing.md),
+                      //       Expanded(
+                      //         child: Text(
+                      //           '🔧 Development Mode: Use any email and OTP will be mocked',
+                      //           style: AppTextStyles.bodySmall.copyWith(
+                      //             color: AppColors.textSecondary,
+                      //             height: 1.4,
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
 
-                      // Error Message
+                      // // Error Message
                       if (loginState.error != null)
                         Padding(
                           padding: const EdgeInsets.only(top: AppSpacing.md),
@@ -332,69 +332,69 @@ class LoginScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.sectionGap),
 
                 // Footer Links
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Registration coming soon'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Register here',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.accentRed,
-                          fontWeight: FontWeight.w700,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     Text(
+                //       "Don't have an account? ",
+                //       style: AppTextStyles.bodySmall.copyWith(
+                //         color: AppColors.textSecondary,
+                //       ),
+                //     ),
+                //     GestureDetector(
+                //       onTap: () {
+                //         ScaffoldMessenger.of(context).showSnackBar(
+                //           const SnackBar(
+                //             content: Text('Registration coming soon'),
+                //             duration: Duration(seconds: 2),
+                //           ),
+                //         );
+                //       },
+                //       child: Text(
+                //         'Register here',
+                //         style: AppTextStyles.bodySmall.copyWith(
+                //           color: AppColors.accentRed,
+                //           fontWeight: FontWeight.w700,
+                //           decoration: TextDecoration.underline,
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
 
                 const SizedBox(height: AppSpacing.sectionGap),
 
                 // Development Guide
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
-                    border: Border.all(
-                      color: Colors.blue.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '📝 Quick Test Guide:',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color: Colors.blue[900],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        '1. Use @pezy.gov email (e.g., officer.bandara@pezy.gov)\n2. Click Request OTP\n3. Enter any 6-digit code (e.g., 123456)\n4. You\'ll be logged in!',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Container(
+                //   padding: const EdgeInsets.all(AppSpacing.md),
+                //   decoration: BoxDecoration(
+                //     color: Colors.blue.withValues(alpha: 0.08),
+                //     borderRadius: BorderRadius.circular(AppSpacing.cornerRadius),
+                //     border: Border.all(
+                //       color: Colors.blue.withValues(alpha: 0.15),
+                //     ),
+                //   ),
+                //   child: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       Text(
+                //         '📝 Quick Test Guide:',
+                //         style: AppTextStyles.labelMedium.copyWith(
+                //           color: Colors.blue[900],
+                //           fontWeight: FontWeight.w600,
+                //         ),
+                //       ),
+                //       const SizedBox(height: AppSpacing.sm),
+                //       Text(
+                //         '1. Use @pezy.gov email (e.g., officer.bandara@pezy.gov)\n2. Click Request OTP\n3. Enter any 6-digit code (e.g., 123456)\n4. You\'ll be logged in!',
+                //         style: AppTextStyles.bodySmall.copyWith(
+                //           color: AppColors.textSecondary,
+                //           height: 1.6,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
               ],
             ),
           ),
