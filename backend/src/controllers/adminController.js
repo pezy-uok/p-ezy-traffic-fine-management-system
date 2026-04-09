@@ -1,6 +1,15 @@
 import { getSupabaseClient } from '../config/supabaseClient.js';
 import { getAllFinesForAdmin as getAllFinesForAdminService } from '../services/fineService.js';
 import { getAllCriminals as getAllCriminalsService } from '../services/criminalService.js';
+import {
+  getAllAuditLogs,
+  getAuditLogById,
+  getCriticalAuditLogs,
+  getFailedAuditLogs,
+  getAuditLogsByUser,
+  getAuditLogsByDriver,
+  getAuditLogsByEntity,
+} from '../services/auditLogService.js';
 import { ValidationError, ConflictError, NotFoundError } from '../utils/errors.js';
 
 const stripHtml = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
@@ -885,6 +894,181 @@ export const hardDeleteCriminalAdmin = async (req, res, next) => {
       criminal_id: id,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * AUDIT LOG MANAGEMENT - READONLY
+ * Admins can view audit logs to track system activity and changes
+ */
+
+/**
+ * Get all audit logs with optional filtering and pagination
+ * GET /api/admin/audit-logs
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters:
+ *   - limit (default: 50, max: 500)
+ *   - offset (default: 0)
+ *   - userId, action, entityType, severity, status, licenseNumber (optional filters)
+ *   - startDate, endDate (ISO format for date range)
+ *   - sortBy (default: 'timestamp')
+ *   - sortOrder ('asc' or 'desc', default: 'desc')
+ * Returns: { success, auditLogs: Array, total, limit, offset }
+ */
+export const getAuditLogsForAdmin = async (req, res, next) => {
+  try {
+    const result = await getAllAuditLogs(req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get a single audit log entry by ID
+ * GET /api/admin/audit-logs/:id
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, auditLog: Object }
+ */
+export const getAuditLogByIdForAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Audit log ID is required',
+      });
+    }
+
+    const auditLog = await getAuditLogById(id);
+
+    return res.status(200).json({
+      success: true,
+      auditLog,
+    });
+  } catch (error) {
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get audit logs for a specific user
+ * GET /api/admin/audit-logs/user/:userId
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters: limit, offset, sortBy, sortOrder
+ * Returns: { success, auditLogs: Array, total }
+ */
+export const getAuditLogsByUserForAdmin = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    const result = await getAuditLogsByUser(userId, req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get critical severity audit logs
+ * GET /api/admin/audit-logs/critical
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters: limit, offset, startDate, endDate
+ * Returns: { success, auditLogs: Array, total }
+ */
+export const getCriticalAuditLogsForAdmin = async (req, res, next) => {
+  try {
+    const result = await getCriticalAuditLogs(req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get failed action audit logs
+ * GET /api/admin/audit-logs/failed
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters: limit, offset, startDate, endDate
+ * Returns: { success, auditLogs: Array, total }
+ */
+export const getFailedAuditLogsForAdmin = async (req, res, next) => {
+  try {
+    const result = await getFailedAuditLogs(req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     next(error);
   }
 };
