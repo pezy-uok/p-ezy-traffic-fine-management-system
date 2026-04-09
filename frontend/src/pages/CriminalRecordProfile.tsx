@@ -1,11 +1,10 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import Swal from 'sweetalert2'
 import pLogo from '../assets/plogo.png'
-import { tipAPI } from '../api'
-import { findCriminalRecord } from '../data/criminalRecords'
+import { tipAPI, criminalAPI } from '../api'
 import './CriminalRecordProfile.css'
 
 interface TipFormState {
@@ -30,12 +29,52 @@ const defaultTipState: TipFormState = {
 
 const profileMenuLinks = ['Home', 'About Us', 'Fine Pay', 'Criminal Records', 'Division', 'Downloads', 'Library', 'Survey']
 
+interface CriminalDetail {
+  id: string
+  name: string
+  alias: string
+  badgeLabel: string
+  gender: string | null
+  dateOfBirth: string | null
+  description: string | null
+  dangerLevel: string | null
+  knownAliases: string[] | null
+  arrestCount: number
+  photoUrl: string | null
+  createdAt: string
+}
+
 export default function CriminalRecordProfile() {
   const { recordId } = useParams()
   const navigate = useNavigate()
-  const record = recordId ? findCriminalRecord(recordId) : undefined
+  const [record, setRecord] = useState<CriminalDetail | null>(null)
+  const [loading, setLoading] = useState(true)
   const [tipForm, setTipForm] = useState<TipFormState>(defaultTipState)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!recordId) return
+    criminalAPI.getById(recordId)
+      .then(res => {
+        const c = res.data.criminal
+        setRecord({
+          id: c.id,
+          name: `${c.firstName} ${c.lastName}`.trim(),
+          alias: c.knownAliases?.[0] ?? `${c.lastName?.toUpperCase()}`,
+          badgeLabel: c.wanted ? 'WANTED' : c.status === 'arrested' ? 'ARRESTED' : 'UNIDENTIFIED',
+          gender: c.gender ?? null,
+          dateOfBirth: c.dateOfBirth ?? null,
+          description: c.description ?? null,
+          dangerLevel: c.dangerLevel ?? null,
+          knownAliases: c.knownAliases ?? null,
+          arrestCount: c.arrestCount ?? 0,
+          photoUrl: c.photoUrl ?? null,
+          createdAt: c.createdAt,
+        })
+      })
+      .catch(() => setRecord(null))
+      .finally(() => setLoading(false))
+  }, [recordId])
 
   const handleTipFieldChange = (field: keyof TipFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = field === 'anonymous' ? (event.target as HTMLInputElement).checked : event.target.value
@@ -125,52 +164,69 @@ export default function CriminalRecordProfile() {
           &#8592; Back to All Records
         </button>
 
-        {record ? (
+        {loading && <p>Loading...</p>}
+
+        {!loading && record ? (
           <div className="record-profile__grid">
             <article className="record-profile__card">
               <div className="record-profile__photo">
-                <img src={record.photoUrl} alt={`Portrait of ${record.name}`} />
+                {record.photoUrl
+                  ? <img src={record.photoUrl} alt={`Portrait of ${record.name}`} />
+                  : <div className="record-profile__photo-placeholder">{record.name.charAt(0)}</div>
+                }
                 <span className="record-profile__status">{record.badgeLabel}</span>
               </div>
               <div className="record-profile__card-body">
                 <p className="record-profile__alias">{record.alias}</p>
                 <h2>{record.name}</h2>
-                <p className="record-profile__crime">{record.crime}</p>
-                <p className="record-profile__summary">{record.summary}</p>
+                {record.dangerLevel && <p className="record-profile__crime">Danger Level: {record.dangerLevel}</p>}
 
                 <div className="record-profile__identifiers">
+                  {record.gender && (
+                    <div>
+                      <span>GENDER</span>
+                      <strong>{record.gender}</strong>
+                    </div>
+                  )}
+                  {record.dateOfBirth && (
+                    <div>
+                      <span>DATE OF BIRTH</span>
+                      <strong>{new Date(record.dateOfBirth).toLocaleDateString('en-GB')}</strong>
+                    </div>
+                  )}
                   <div>
-                    <span>AGE</span>
-                    <strong>{record.stats.age}</strong>
-                  </div>
-                  <div>
-                    <span>HEIGHT</span>
-                    <strong>{record.stats.height}</strong>
-                  </div>
-                  <div>
-                    <span>WEIGHT</span>
-                    <strong>{record.stats.weight}</strong>
+                    <span>ARRESTS</span>
+                    <strong>{record.arrestCount}</strong>
                   </div>
                 </div>
               </div>
             </article>
 
             <div className="record-profile__details">
-              <section className="record-profile__panel">
-                <h3>Physical Description</h3>
-                <p>{record.physicalDescription}</p>
-              </section>
+              {record.description && (
+                <section className="record-profile__panel">
+                  <h3>Physical Description</h3>
+                  <p>{record.description}</p>
+                </section>
+              )}
+
+              {record.knownAliases && record.knownAliases.length > 0 && (
+                <section className="record-profile__panel">
+                  <h3>Known Aliases</h3>
+                  <ul>
+                    {record.knownAliases.map((alias, i) => (
+                      <li key={i}><p>{alias}</p></li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               <section className="record-profile__panel">
-                <h3>Last Known Activity</h3>
+                <h3>Record Information</h3>
                 <ul>
                   <li>
-                    <span>LAST SEEN LOCATION</span>
-                    <p>{record.lastKnownLocation}</p>
-                  </li>
-                  <li>
-                    <span>DATE OF SIGHTING</span>
-                    <p>{new Date(record.lastSeenOn).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <span>RECORD ADDED</span>
+                    <p>{new Date(record.createdAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   </li>
                 </ul>
               </section>
@@ -278,7 +334,7 @@ export default function CriminalRecordProfile() {
               </section>
             </div>
           </div>
-        ) : (
+        ) : !loading && (
           <div className="record-profile__empty">
             <p>Record not found.</p>
             <button type="button" onClick={handleGoBack}>

@@ -194,4 +194,12 @@ export const tipAPI = {
     axiosInstance.post('/tips/submit', payload),
 }
 
+export const criminalAPI = {
+  getAll: (params?: { limit?: number; offset?: number; search?: string; wanted?: boolean }) =>
+    axiosInstance.get('/criminals', { params }),
+
+  getById: (id: string) =>
+    axiosInstance.get(`/criminals/${id}`),
+}
+
 export default axiosInstance
