@@ -224,9 +224,22 @@ export default function FinePayOutstanding() {
           </div>
 
           <footer className="fine-pay-outstanding-footer" aria-label="Payment summary">
-            <div>
-              <span>{selectedFineIds.length} fines selected</span>
-              <strong>{formatCurrency(totalAmount)}</strong>
+            <div className="fine-pay-outstanding-footer__content">
+              <div className="fine-pay-outstanding-footer__section">
+                <span className="fine-pay-outstanding-footer__label">Fines Selected</span>
+                <strong className="fine-pay-outstanding-footer__count">
+                  {selectedFineIds.length} / {reminderState.fines.length}
+                </strong>
+              </div>
+
+              <div className="fine-pay-outstanding-footer__divider" aria-hidden="true" />
+
+              <div className="fine-pay-outstanding-footer__section">
+                <span className="fine-pay-outstanding-footer__label">Total Amount</span>
+                <strong className="fine-pay-outstanding-footer__amount">
+                  {formatCurrency(totalAmount)}
+                </strong>
+              </div>
             </div>
 
             <button
@@ -234,8 +247,13 @@ export default function FinePayOutstanding() {
               className="fine-pay-outstanding-footer__button"
               onClick={handlePayNow}
               disabled={selectedFineIds.length === 0}
+              aria-label={
+                selectedFineIds.length === 0
+                  ? 'Select fines to pay'
+                  : `Pay now for ${selectedFineIds.length} fine${selectedFineIds.length === 1 ? '' : 's'}`
+              }
             >
-              Pay Now
+              {selectedFineIds.length === 0 ? 'Select Fines to Pay' : 'Pay Now'}
             </button>
           </footer>
         </div>
