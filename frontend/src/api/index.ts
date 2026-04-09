@@ -196,18 +196,19 @@ export const newsAPI = {
     axiosInstance.get('/news', { params }),
 }
 
-export const tipAPI = {
-  submitTip: (payload: {
-    title: string
-    description: string
-    category: string
-    location: string
-    dateTime: string
-    contactEmail?: string
-    isAnonymous?: boolean
-  }) => axiosInstance.post('/tips/submit', payload),
+export interface SubmitTipPayload {
+  title: string
+  description: string
+  category: string
+  location: string
+  dateTime: string
+  contactEmail?: string
+  isAnonymous: boolean
+}
 
-  getTipStatus: (tipReference: string) => axiosInstance.get(`/tips/${tipReference}/status`),
+export const tipAPI = {
+  submit: (payload: SubmitTipPayload) =>
+    axiosInstance.post('/tips/submit', payload),
 }
 
 export default axiosInstance

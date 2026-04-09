@@ -405,7 +405,8 @@
 }
 
 .records-tip__field input,
-.records-tip__field textarea {
+.records-tip__field textarea,
+.records-tip__field select {
   border: 0;
   border-radius: 1rem;
   padding: 0.85rem 1rem;
@@ -414,12 +415,68 @@
   background: rgba(255, 255, 255, 0.92);
   box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.1);
   resize: vertical;
+  appearance: none;
+  cursor: pointer;
 }
 
 .records-tip__field input:focus,
-.records-tip__field textarea:focus {
+.records-tip__field textarea:focus,
+.records-tip__field select:focus {
   outline: 2px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.25);
+}
+
+.records-tip__datepicker-wrapper {
+  width: 100%;
+}
+
+.records-tip__datepicker-input {
+  width: 100%;
+  border: 0;
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.1);
+  cursor: pointer;
+}
+
+.records-tip__datepicker-input:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.25);
+}
+
+.records-tip__field .react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__header {
+  background: linear-gradient(135deg, #e11d48, #8b5cf6);
+  border-bottom: none;
+  color: #fff;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker-time__header {
+  color: #fff;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected,
+.react-datepicker__time-list-item--selected {
+  background-color: #e11d48 !important;
+  color: #fff !important;
+}
+
+.react-datepicker__day:hover,
+.react-datepicker__time-list-item:hover {
+  background-color: rgba(225, 29, 72, 0.15) !important;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: #fff;
 }
 
 .records-tip__checkbox {

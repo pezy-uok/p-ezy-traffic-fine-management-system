@@ -230,17 +230,21 @@
 }
 
 .record-profile__form input,
-.record-profile__form textarea {
+.record-profile__form textarea,
+.record-profile__form select {
   border: 0;
   border-radius: 0.85rem;
   padding: 0.85rem 1rem;
   font-size: 0.95rem;
   background: #fff;
   color: #0f172a;
+  appearance: none;
+  cursor: pointer;
 }
 
 .record-profile__form input:focus,
-.record-profile__form textarea:focus {
+.record-profile__form textarea:focus,
+.record-profile__form select:focus {
   outline: 2px solid rgba(239, 68, 68, 0.35);
   box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.25);
 }
@@ -249,6 +253,35 @@
   flex-direction: row !important;
   align-items: center;
   gap: 0.5rem;
+}
+
+.record-profile__datepicker-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #7f1d1d;
+}
+
+.record-profile__datepicker-wrapper,
+.record-profile__datepicker-field .react-datepicker-wrapper {
+  width: 100%;
+}
+
+.record-profile__datepicker-input {
+  width: 100%;
+  border: 0;
+  border-radius: 0.85rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.record-profile__datepicker-input:focus {
+  outline: 2px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.25);
 }
 
 .record-profile__checkbox input {
