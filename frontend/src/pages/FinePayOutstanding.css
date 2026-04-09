@@ -342,47 +342,103 @@
 }
 
 .fine-pay-outstanding-footer {
-  margin-top: 1.15rem;
+  position: sticky;
+  bottom: 1rem;
+  z-index: 40;
+  margin-top: 1.5rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  margin-bottom: -2rem;
+  padding: 1.2rem 1rem;
+  border-radius: 0;
+  background: linear-gradient(135deg, rgba(43, 155, 240, 0.96) 0%, rgba(21, 121, 214, 0.96) 100%);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -4px 12px rgba(19, 32, 53, 0.12), 0 8px 32px rgba(33, 150, 243, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.fine-pay-outstanding-footer__content {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 1rem;
-  padding: 0.8rem 1rem;
-  border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10px 24px rgba(19, 32, 53, 0.1);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.fine-pay-outstanding-footer div {
-  text-align: center;
+.fine-pay-outstanding-footer__section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 8rem;
 }
 
-.fine-pay-outstanding-footer span {
+.fine-pay-outstanding-footer__label {
   display: block;
-  color: #9aa7b8;
+  color: rgba(255, 255, 255, 0.78);
   font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.fine-pay-outstanding-footer strong {
-  color: #132035;
-  font-size: 1rem;
+.fine-pay-outstanding-footer__count {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.fine-pay-outstanding-footer__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 3.2rem;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fine-pay-outstanding-footer__amount {
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.65rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .fine-pay-outstanding-footer__button {
-  min-width: 8.5rem;
-  min-height: 2.3rem;
+  min-width: 9rem;
+  min-height: 2.6rem;
   border: 0;
-  border-radius: 0.55rem;
-  background: linear-gradient(135deg, #2b9bf0 0%, #1579d6 100%);
-  color: #fff;
-  font-size: 0.9rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1579d6;
+  font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.fine-pay-outstanding-footer__button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  background: #ffffff;
+}
+
+.fine-pay-outstanding-footer__button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .fine-pay-outstanding-footer__button:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
+  color: #9ca3af;
 }
 
 @media (max-width: 680px) {
@@ -407,6 +463,24 @@
   }
 
   .fine-pay-outstanding-footer {
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0.8rem;
+  }
+
+  .fine-pay-outstanding-footer__content {
+    width: 100%;
+    margin-bottom: 0.8rem;
+    justify-content: space-around;
+  }
+
+  .fine-pay-outstanding-footer__divider {
+    width: 2px;
+    height: 2.8rem;
+  }
+
+  .fine-pay-outstanding-footer__button {
+    width: 100%;
+    min-width: unset;
   }
 }
