@@ -304,10 +304,10 @@ export const getOutdatedFines = async () => {
   const supabase = getSupabaseClient();
 
   const cutoffDate = new Date();
-  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 30);
+  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 14);
   const cutoffIsoDate = cutoffDate.toISOString().split('T')[0];
 
-  // PEZY-409 expects status=PENDING and issuedDate < now-30d.
+  // PEZY-409 expects status=PENDING and issuedDate < now-14d.
   // Current schema uses status='unpaid' and issue_date, so we support both.
   let fines = null;
 
@@ -589,7 +589,7 @@ export const deleteFineForAdmin = async (fineId) => {
  * 
  * Valid status transitions:
  * - unpaid → paid (when payment received)
- * - unpaid → outdated (when 30 days overdue)
+ * - unpaid → outdated (when 14 days overdue)
  * - outdated → paid (if paid after becoming outdated)
  * - pending → paid or outdated (legacy status support)
  * - paid → NONE (terminal state, cannot change)
@@ -655,7 +655,7 @@ export const updateFineStatus = async (fineId, newStatus, authUser) => {
   // PEZY-410: Validate status transitions
   // Valid transitions:
   // - unpaid -> paid (when payment received)
-  // - unpaid -> outdated (when 30 days overdue)
+  // - unpaid -> outdated (when 14 days overdue)
   // - outdated -> paid (if paid after becoming outdated)
   const validTransitions = {
     unpaid: ['paid', 'outdated'],

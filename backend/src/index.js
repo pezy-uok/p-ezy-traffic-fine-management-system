@@ -8,6 +8,7 @@ import {
   initializeSupabaseClient,
   testSupabaseConnection,
 } from './config/supabaseClient.js';
+import { initializeFineScheduler } from './jobs/fineScheduler.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
@@ -72,6 +73,9 @@ const startServer = async () => {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`✓ Server is running on http://0.0.0.0:${PORT}`);
       console.log(`✓ Access via: http://localhost:${PORT} or http://127.0.0.1:${PORT} or http://192.168.1.62:${PORT}`);
+      
+      // PEZY-414: Initialize fine scheduler
+      initializeFineScheduler();
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);
