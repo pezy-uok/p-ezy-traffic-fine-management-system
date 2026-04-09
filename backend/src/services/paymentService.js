@@ -1,30 +1,5 @@
-import crypto from 'crypto';
 import { getSupabaseClient } from '../config/supabaseClient.js';
-
-/**
- * Generate PayHere payment hash
- * Formula: MD5(merchant_id + order_id + amount + currency + MD5(merchant_secret).toUpperCase()).toUpperCase()
- */
-const generatePayHereHash = (orderId, amount, currency) => {
-  const merchantId = process.env.PAYHERE_MERCHANT_ID;
-  const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
-
-  const hashedSecret = crypto
-    .createHash('md5')
-    .update(merchantSecret)
-    .digest('hex')
-    .toUpperCase();
-
-  const amountFormatted = parseFloat(amount).toFixed(2);
-
-  const hash = crypto
-    .createHash('md5')
-    .update(`${merchantId}${orderId}${amountFormatted}${currency}${hashedSecret}`)
-    .digest('hex')
-    .toUpperCase();
-
-  return hash;
-};
+import { generatePayHereHash, formatAmount } from './paymentUtils.js';
 
 const createPendingPaymentRecords = async (supabase, orderId, fines) => {
   const paymentRows = fines.map((fine) => ({
@@ -220,7 +195,7 @@ export const initiatePayment = async (fineIds, licenseNo) => {
 
   // 6. Sum total amount
   const total = fines.reduce((sum, f) => sum + parseFloat(f.amount), 0);
-  const totalFormatted = total.toFixed(2);
+  const totalFormatted = formatAmount(total);
 
   // 7. Generate unique order ID
   const orderId = `PEZY-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;

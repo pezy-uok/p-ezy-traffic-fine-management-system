@@ -97,6 +97,57 @@
   font-weight: 600;
 }
 
+.fine-pay-card__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-top: 0.35rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  border-left: 4px solid #dc2626;
+  border-radius: 0.55rem;
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.98) 0%, rgba(255, 251, 235, 0.98) 100%);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.fine-pay-card__warning-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.24);
+}
+
+.fine-pay-card__warning-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.fine-pay-card__warning-body h3 {
+  margin: 0;
+  color: #991b1b;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.fine-pay-card__warning-body p {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
 .fine-pay-card__form button {
   margin-top: 0.55rem;
   border: 0;
@@ -133,5 +184,18 @@
   .fine-pay-card p {
     font-size: 0.88rem;
     margin-bottom: 1.15rem;
+  }
+
+  .fine-pay-card__warning {
+    padding: 0.8rem 0.85rem;
+    gap: 0.7rem;
+  }
+
+  .fine-pay-card__warning-body h3 {
+    font-size: 0.86rem;
+  }
+
+  .fine-pay-card__warning-body p {
+    font-size: 0.8rem;
   }
 }

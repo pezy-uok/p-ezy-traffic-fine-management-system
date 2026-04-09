@@ -1,6 +1,7 @@
 /// Authenticated HTTP client with automatic JWT token injection
 /// All requests made through this client will automatically include the access token
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'token_storage_service.dart';
 
 class AuthInterceptor extends Interceptor {
@@ -14,11 +15,28 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    debugPrint('\n╔════════════════════════════════════════╗');
+    debugPrint('║  AUTH INTERCEPTOR: onRequest           ║');
+    debugPrint('╠════════════════════════════════════════╣');
+    debugPrint('║ URL: ${options.path}');
+    debugPrint('║ Method: ${options.method}');
+    
     final accessToken = await _tokenStorage.getAccessToken();
+
+    debugPrint('║ Token Found: ${accessToken != null ? '✅ YES' : '❌ NO'}');
+    if (accessToken != null) {
+      debugPrint('║ Token Length: ${accessToken.length}');
+      debugPrint('║ Token Prefix: ${accessToken.substring(0, 30)}...');
+    }
 
     if (accessToken != null && accessToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $accessToken';
+      debugPrint('║ Authorization Header: ✅ ADDED');
+    } else {
+      debugPrint('║ Authorization Header: ❌ NOT ADDED (token is null/empty)');
     }
+    
+    debugPrint('╚════════════════════════════════════════╝\n');
 
     return handler.next(options);
   }
@@ -29,9 +47,10 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    debugPrint('\n❌ AUTH INTERCEPTOR ERROR: ${err.response?.statusCode}');
     if (err.response?.statusCode == 401) {
       // Token expired or invalid
-      // TODO: Implement token refresh or redirect to login
+      debugPrint('🔄 Clearing tokens due to 401 Unauthorized');
       await _tokenStorage.clearAll();
     }
 
@@ -41,9 +60,15 @@ class AuthInterceptor extends Interceptor {
 
 /// Create authenticated Dio instance with token injection
 Dio createAuthenticatedDio(TokenStorageService tokenStorage) {
+  debugPrint('\n╔════════════════════════════════════════╗');
+  debugPrint('║  Creating Authenticated Dio Instance    ║');
+  debugPrint('╠════════════════════════════════════════╣');
+  debugPrint('║ Base URL: http://localhost:8000/api');
+  debugPrint('╚════════════════════════════════════════╝\n');
+  
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost:3001/api',
+      baseUrl: 'http://localhost:8000/api',
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       contentType: 'application/json',
@@ -56,6 +81,7 @@ Dio createAuthenticatedDio(TokenStorageService tokenStorage) {
 
   // Add auth interceptor
   dio.interceptors.add(AuthInterceptor(tokenStorage));
+  debugPrint('✅ AuthInterceptor added to Dio\n');
 
   return dio;
 }

@@ -14,13 +14,18 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
+  bool _authStatusChecked = false; // Track if we've already checked auth status
+
   @override
   void initState() {
     super.initState();
-    // Check auth status in the background without blocking UI
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAuthStatus();
-    });
+    // Check auth status only once on initial app startup
+    if (!_authStatusChecked) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAuthStatus();
+        _authStatusChecked = true;
+      });
+    }
   }
 
   Future<void> _checkAuthStatus() async {
@@ -37,8 +42,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     // Watch auth state to react to login/logout changes
     final authState = ref.watch(authProvider);
 
+    debugPrint('\n╔════════════════════════════════════════╗');
+    debugPrint('║  APP SHELL: Building                  ║');
+    debugPrint('╠════════════════════════════════════════╣');
+    debugPrint('║ isLoading: ${authState.isLoading}');
+    debugPrint('║ isLoggedIn: ${authState.isLoggedIn}');
+    debugPrint('║ user: ${authState.user?.name ?? "null"}');
+    debugPrint('╚════════════════════════════════════════╝\n');
+
     // Show loading screen while checking authentication
     if (authState.isLoading) {
+      debugPrint('🔄 Showing loading state\n');
       return Scaffold(
         backgroundColor: Colors.white,
         body: Center(
@@ -65,9 +79,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     // Route based on authentication state
     if (authState.isLoggedIn) {
       // User is logged in - show main app
+      debugPrint('✅ Showing MainNavigationScreen\n');
       return const MainNavigationScreen();
     } else {
       // User is not logged in - show login screen
+      debugPrint('❌ Showing LoginScreen\n');
       return const LoginScreen();
     }
   }

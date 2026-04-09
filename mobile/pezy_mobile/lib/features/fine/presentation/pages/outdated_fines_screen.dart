@@ -7,93 +7,194 @@ import '../providers/outdated_fines_provider.dart';
 ///
 /// This screen displays a list of outdated fines with license number,
 /// driver name, and amount due (in red).
-class OutdatedFinesScreen extends ConsumerWidget {
+class OutdatedFinesScreen extends ConsumerStatefulWidget {
   const OutdatedFinesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OutdatedFinesScreen> createState() => _OutdatedFinesScreenState();
+}
+
+class _OutdatedFinesScreenState extends ConsumerState<OutdatedFinesScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final finesState = ref.watch(outdatedFinesProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // PEZY logo
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.screenPaddingVertical,
-              bottom: AppSpacing.lg,
-            ),
-            child: Center(
-              child: Icon(
-                Icons.security,
-                size: 40,
-                color: AppColors.primaryBlack,
-              ),
-            ),
-          ),
-
-          // Black OUTDATED FINES header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenPaddingHorizontal,
-              vertical: 12,
-            ),
-            color: AppColors.primaryBlack,
-            child: Text(
-              'OUTDATED FINES',
-              style: AppTextStyles.titleMedium.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.5,
-                fontSize: 15,
-              ),
-            ),
-          ),
-
-          // Scrollable list of fines
-          Expanded(
-            child: finesState.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : finesState.fines.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No outdated fines',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: Colors.grey[600],
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: CustomScrollView(
+          slivers: [
+            // Modern header with gradient
+            SliverToBoxAdapter(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenPaddingHorizontal,
+                  vertical: AppSpacing.screenPaddingVertical,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.error.withValues(alpha: 0.9),
+                      AppColors.error.withValues(alpha: 0.7),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.error.withValues(alpha: 0.25),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.warning_rounded,
+                            color: Colors.white,
+                            size: 28,
                           ),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.screenPaddingHorizontal,
-                          vertical: AppSpacing.screenPaddingVertical,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'OUTDATED FINES',
+                                style: AppTextStyles.titleMedium.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Pending overdue payments',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        itemCount: finesState.fines.length,
-                        itemBuilder: (context, index) {
-                          final fine = finesState.fines[index];
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                          return _FineCard(
-                            licenseNo: fine.licenseNo,
-                            driverName: fine.driverName,
-                            amount: fine.amount,
-                            onTap: () {
-                              _showFineDetailModal(
-                                context,
-                                fine.licenseNo,
-                                fine.driverName,
-                                fine.amount,
-                              );
-                            },
-                          );
-                        },
+            // Fines list
+            if (finesState.isLoading)
+              SliverFillRemaining(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.accentRed,
+                  ),
+                ),
+              )
+            else if (finesState.fines.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 64,
+                        color: AppColors.success.withValues(alpha: 0.5),
                       ),
-          ),
-        ],
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(
+                        'No outdated fines',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'All fines are up to date',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenPaddingHorizontal,
+                  vertical: AppSpacing.screenPaddingVertical,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final fine = finesState.fines[index];
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: _AnimatedFineCard(
+                          licenseNo: fine.licenseNo,
+                          driverName: fine.driverName,
+                          amount: fine.amount,
+                          index: index,
+                          onTap: () {
+                            _showFineDetailModal(
+                              context,
+                              fine.licenseNo,
+                              fine.driverName,
+                              fine.amount,
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    childCount: finesState.fines.length,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -118,88 +219,152 @@ class OutdatedFinesScreen extends ConsumerWidget {
   }
 }
 
-/// Fine card widget showing license, driver name, and amount
-class _FineCard extends StatelessWidget {
+/// Fine card widget showing license, driver name, and amount with animation
+class _AnimatedFineCard extends StatefulWidget {
   final String licenseNo;
   final String driverName;
   final double amount;
+  final int index;
   final VoidCallback onTap;
 
-  const _FineCard({
+  const _AnimatedFineCard({
     required this.licenseNo,
     required this.driverName,
     required this.amount,
+    required this.index,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.borderColor,
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Left side: License and Driver Name
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // License number in red
-                  Text(
-                    licenseNo,
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color: AppColors.error,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  // Driver name in black
-                  Text(
-                    driverName,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+  State<_AnimatedFineCard> createState() => _AnimatedFineCardState();
+}
 
-            // Right side: Amount in red
-            Text(
-              amount.toStringAsFixed(0),
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.error,
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-              ),
+class _AnimatedFineCardState extends State<_AnimatedFineCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeOut),
+    );
+    // Stagger animation based on index
+    Future.delayed(Duration(milliseconds: 50 * widget.index), () {
+      if (mounted) {
+        _scaleController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.error.withValues(alpha: 0.2),
+              width: 1.5,
             ),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+              BoxShadow(
+                color: AppColors.error.withValues(alpha: 0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Left side: License and Driver Name
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.warning_rounded,
+                          size: 16,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(width: 6),
+                        // License number in red
+                        Text(
+                          widget.licenseNo,
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    // Driver name in black
+                    Text(
+                      widget.driverName,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Right side: Amount in red
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '₹${widget.amount.toStringAsFixed(0)}',
+                  style: AppTextStyles.headlineSmall.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -8,6 +8,7 @@
   margin-right: -50vw;
   padding-bottom: 1.5rem;
   background: #f8fafc;
+  overflow-x: hidden;
 }
 
 .home-police__header {
@@ -224,6 +225,7 @@
   padding: 0;
   width: 100%;
   overflow: hidden;
+  animation: home-fade-up 620ms ease-out both;
 }
 
 .home-police__slide {
@@ -284,6 +286,7 @@
   justify-content: center;
   gap: 0.45rem;
   padding-top: 1rem;
+  animation: home-fade-up 760ms ease-out both;
 }
 
 .home-police__dot {
@@ -320,12 +323,14 @@
   box-sizing: border-box;
   clip-path: none;
   border-radius: 18px;
+  animation: home-overlay-enter 820ms ease-out both;
 }
 
 .home-police__hero-content {
   max-width: 100%;
   color: #fff;
   z-index: 10;
+  animation: home-fade-up 900ms ease-out both;
 }
 
 .home-police__hero-title {
@@ -565,6 +570,7 @@
   justify-content: center;
   padding: 3rem 0;
   box-sizing: border-box;
+  animation: home-fade-up 980ms ease-out both;
 }
 
 .home-police__services-wrapper .home-police__container {
@@ -584,6 +590,7 @@
   font-weight: 700;
   color: #1e293b;
   text-align: center;
+  animation: home-fade-up 1.02s ease-out both;
 }
 
 .home-police__services-subtitle {
@@ -592,6 +599,7 @@
   color: #64748b;
   text-align: center;
   max-width: 600px;
+  animation: home-fade-up 1.1s ease-out both;
 }
 
 .home-police__services-grid {
@@ -614,6 +622,24 @@
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(2, 132, 199, 0.2);
   min-height: 380px;
+  opacity: 0;
+  animation: home-card-enter 620ms ease-out forwards;
+}
+
+.home-police__service-card:nth-child(1) {
+  animation-delay: 1.02s;
+}
+
+.home-police__service-card:nth-child(2) {
+  animation-delay: 1.12s;
+}
+
+.home-police__service-card:nth-child(3) {
+  animation-delay: 1.22s;
+}
+
+.home-police__service-card:nth-child(4) {
+  animation-delay: 1.32s;
 }
 
 .home-police__service-card:hover {
@@ -656,6 +682,347 @@
   transform: translateX(4px);
 }
 
+/* ==========================================================================
+   HOME NEWS SLIDER SECTION
+   ========================================================================== */
+
+.home-police__news-wrapper {
+  width: 100%;
+  padding: 3.5rem 0;
+  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+  box-sizing: border-box;
+  animation: home-fade-up 900ms ease-out both;
+}
+
+.home-police__news-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+}
+
+.home-police__section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.home-police__section-kicker {
+  margin: 0 0 0.45rem 0;
+  color: #0284c7;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.home-police__section-title {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.home-police__section-subtitle {
+  margin: 0.55rem 0 0 0;
+  color: #64748b;
+  max-width: 42rem;
+  line-height: 1.6;
+}
+
+.home-police__section-subtitle--news {
+  max-width: 38rem;
+}
+
+.home-police__news-slider {
+  position: relative;
+  width: 100%;
+}
+
+.home-police__news-ledger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.home-police__news-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-police__news-live-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+  animation: home-live-pulse 1.8s ease-in-out infinite;
+}
+
+.home-police__news-ledger-count {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.home-police__news-viewport {
+  overflow: hidden;
+  border-radius: 28px;
+}
+
+.home-police__news-track {
+  display: flex;
+  width: 100%;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-police__news-card {
+  flex: 0 0 100%;
+  min-height: 19rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.15rem;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.3), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.24), transparent 28%),
+    linear-gradient(135deg, rgba(2, 132, 199, 0.98) 0%, rgba(3, 105, 161, 0.98) 52%, rgba(8, 47, 73, 0.98) 100%);
+  color: #fff;
+  box-shadow: 0 24px 50px rgba(2, 132, 199, 0.18);
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+}
+
+.home-police__news-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.08) 0%, transparent 22%),
+    linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.18) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.home-police__news-card--loading,
+.home-police__news-card--empty {
+  align-items: flex-start;
+}
+
+.home-police__news-card-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.72fr);
+  gap: 1rem;
+  height: 100%;
+}
+
+.home-police__news-card-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.95rem;
+  min-width: 0;
+}
+
+.home-police__news-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.home-police__news-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-police__news-pill--accent {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.home-police__news-pill--muted {
+  background: rgba(15, 23, 42, 0.22);
+}
+
+.home-police__news-meta {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.home-police__news-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 60rem;
+}
+
+.home-police__news-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+}
+
+.home-police__news-summary {
+  margin: 0;
+  max-width: 48rem;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.home-police__news-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 1.25rem 1.1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.home-police__news-rail-label {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.home-police__news-rail-value {
+  color: #fff;
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.home-police__news-rail-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.home-police__news-rail-list div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.home-police__news-rail-list span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-police__news-rail-list strong {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.home-police__news-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+}
+
+.home-police__news-arrow:hover {
+  background: rgba(15, 23, 42, 0.92);
+  transform: translateY(-50%) scale(1.06);
+}
+
+.home-police__news-arrow.is-left {
+  left: -1rem;
+}
+
+.home-police__news-arrow.is-right {
+  right: -1rem;
+}
+
+.home-police__news-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  padding-top: 1rem;
+}
+
+.home-police__news-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: transform 220ms ease, background 220ms ease, width 220ms ease;
+}
+
+.home-police__news-dot:hover {
+  background: #94a3b8;
+  transform: scale(1.1);
+}
+
+.home-police__news-dot.is-active {
+  width: 1.8rem;
+  background: #0284c7;
+}
+
+@keyframes home-live-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35);
+  }
+
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
 @media (max-width: 1200px) {
   .home-police__services-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -665,9 +1032,86 @@
   .home-police__service-card {
     min-height: 360px;
   }
+
+  .home-police__news-arrow.is-left {
+    left: -0.25rem;
+  }
+
+  .home-police__news-arrow.is-right {
+    right: -0.25rem;
+  }
 }
 
 @media (max-width: 768px) {
+  .home-police__news-wrapper {
+    padding: 2.25rem 0;
+  }
+
+  .home-police__news-section {
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  .home-police__section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-police__news-viewport {
+    border-radius: 20px;
+  }
+
+  .home-police__news-card {
+    min-height: 15.5rem;
+    padding: 0.9rem;
+    gap: 0.85rem;
+  }
+
+  .home-police__news-card-shell {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .home-police__news-rail {
+    padding: 0.95rem 0.9rem;
+    border-radius: 16px;
+  }
+
+  .home-police__news-title {
+    font-size: 1.15rem;
+  }
+
+  .home-police__news-summary {
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .home-police__news-arrow {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.5rem;
+  }
+
+  .home-police__news-arrow.is-left {
+    left: 0.35rem;
+  }
+
+  .home-police__news-arrow.is-right {
+    right: 0.35rem;
+  }
+
+  .home-police__news-ledger {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .home-police__news-live {
+    font-size: 0.74rem;
+  }
+
+  .home-police__news-ledger-count {
+    font-size: 0.72rem;
+  }
+
   .home-police__services-title {
     font-size: 1.45rem;
     margin-bottom: 0.6rem;
@@ -709,11 +1153,348 @@
   }
 }
 
+@media (max-width: 520px) {
+  .home-police__news-card {
+    min-height: 16.75rem;
+  }
+
+  .home-police__news-pill {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+}
+
 @keyframes police-slide-fade {
   from {
     opacity: 0.5;
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes home-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-overlay-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-24px) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes home-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-police__slider-wrap,
+  .home-police__dots,
+  .home-police__hero-overlay,
+  .home-police__hero-content,
+  .home-police__services-wrapper,
+  .home-police__news-wrapper,
+  .home-police__services-title,
+  .home-police__services-subtitle,
+  .home-police__news-card,
+  .home-police__service-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============================================================================
+   INSPECTOR GENERAL OF POLICE SECTION
+   ============================================================================ */
+
+.home-police__igp-wrapper {
+  width: 100%;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 4rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-police__igp-wrapper .home-police__container {
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+}
+
+.home-police__igp-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.home-police__igp-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-police__igp-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 3.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(2, 132, 199, 0.15);
+  max-width: 500px;
+  transition: all 300ms ease;
+}
+
+.home-police__igp-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 50px rgba(2, 132, 199, 0.25);
+}
+
+.home-police__igp-seal {
+  width: 120px;
+  height: 120px;
+  margin: 0 0 2rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-police__igp-seal-icon {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 8px rgba(2, 132, 199, 0.2));
+}
+
+.home-police__igp-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(2, 132, 199, 0.2));
+}
+
+.home-police__igp-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #0284c7;
+  line-height: 1.3;
+}
+
+.home-police__igp-role {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.home-police__igp-name {
+  margin: 0 0 2.5rem 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
+.home-police__igp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #fff;
+  border: 2px solid #0284c7;
+  border-radius: 8px;
+  padding: 0.9rem 2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms ease;
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
+}
+
+.home-police__igp-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(2, 132, 199, 0.4);
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+}
+
+.home-police__igp-btn:active {
+  transform: translateY(-1px);
+}
+
+.home-police__igp-btn-icon {
+  font-size: 1.1rem;
+}
+
+.home-police__igp-image-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-police__igp-image-placeholder {
+  width: 320px;
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(2, 132, 199, 0.25);
+  border: 3px solid #0284c7;
+}
+
+.home-police__igp-image-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.home-police__igp-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Responsive Design for IGP Section */
+@media (max-width: 1024px) {
+  .home-police__igp-container {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .home-police__igp-card {
+    padding: 2.5rem 2.5rem;
+  }
+
+  .home-police__igp-title {
+    font-size: 1.5rem;
+  }
+
+  .home-police__igp-name {
+    font-size: 1.15rem;
+  }
+
+  .home-police__igp-image-placeholder {
+    width: 280px;
+    height: 370px;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-police__igp-wrapper {
+    padding: 2.5rem 0;
+  }
+
+  .home-police__igp-wrapper .home-police__container {
+    padding: 0 1rem;
+  }
+
+  .home-police__igp-container {
+    gap: 2rem;
+  }
+
+  .home-police__igp-card {
+    padding: 2rem 1.75rem;
+  }
+
+  .home-police__igp-seal {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1.5rem;
+  }
+
+  .home-police__igp-title {
+    font-size: 1.3rem;
+  }
+
+  .home-police__igp-role {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .home-police__igp-name {
+    font-size: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .home-police__igp-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.85rem;
+    gap: 0.4rem;
+  }
+
+  .home-police__igp-image-placeholder {
+    width: 240px;
+    height: 320px;
+    border-width: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-police__igp-wrapper {
+    padding: 1.5rem 0;
+  }
+
+  .home-police__igp-card {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .home-police__igp-seal {
+    width: 85px;
+    height: 85px;
+    margin-bottom: 1.2rem;
+  }
+
+  .home-police__igp-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .home-police__igp-role {
+    font-size: 0.8rem;
+  }
+
+  .home-police__igp-name {
+    font-size: 0.9rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .home-police__igp-btn {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .home-police__igp-image-placeholder {
+    width: 200px;
+    height: 270px;
   }
 }

@@ -11,11 +11,39 @@ import '../providers/new_fine_provider.dart';
 /// This screen allows users to enter a license number to lookup driver details.
 /// Once submitted, it displays the driver's name and shows a warning if there
 /// are overdue fines.
-class NewFineScreen extends ConsumerWidget {
+class NewFineScreen extends ConsumerStatefulWidget {
   const NewFineScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NewFineScreen> createState() => _NewFineScreenState();
+}
+
+class _NewFineScreenState extends ConsumerState<NewFineScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final formState = ref.watch(newFineProvider);
     final notifier = ref.read(newFineProvider.notifier);
 
@@ -33,10 +61,13 @@ class NewFineScreen extends ConsumerWidget {
                 fontSize: 14,
               ),
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
 
@@ -48,131 +79,96 @@ class NewFineScreen extends ConsumerWidget {
       }
     });
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenPaddingHorizontal,
-            vertical: AppSpacing.screenPaddingVertical,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // PEZY logo
-              Center(
-                child: Icon(
-                  Icons.security,
-                  size: 40,
-                  color: AppColors.primaryBlack,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // NEW FINE header bar
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0A5DA8),
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
-                ),
-                child: Text(
-                  'NEW FINE',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sectionGap),
-
-              // Form title
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: Text(
-                  'ADD NEW FINE',
-                  style: AppTextStyles.headlineSmall.copyWith(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
-              // License number input field
-              PezyTextField(
-                label: 'License No',
-                hint: 'License No',
-                controller: _LicenseTextController(formState.licenseNo),
-                onChanged: (value) {
-                  notifier.setLicenseNo(value);
-                },
-                enabled: !formState.isSubmitted,
-                keyboardType: TextInputType.text,
-                variant: PezyTextFieldVariant.outlined,
-                borderRadius: 12,
-                labelColor: Colors.black54,
-                hintTextColor: Colors.grey.shade600,
-                textColor: Colors.black87,
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                hintStyle: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-
-              // Error message
-              if (formState.errorMessage != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEE2E2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.error,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: AppColors.error,
-                        size: 20,
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenPaddingHorizontal,
+              vertical: AppSpacing.screenPaddingVertical,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Modern header with gradient
+                Center(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.accentRed.withValues(alpha: 0.9),
+                          AppColors.accentRed.withValues(alpha: 0.7),
+                        ],
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(
-                          formState.errorMessage!,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accentRed.withValues(alpha: 0.25),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.receipt,
+                            size: 32,
+                            color: Colors.white,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        Text(
+                          'NEW FINE',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.titleMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
+                const SizedBox(height: AppSpacing.xl),
 
-              // User name field (shown after submission)
-              if (formState.isSubmitted) ...[
-                const SizedBox(height: AppSpacing.sectionGap),
+                // Form title
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: Text(
+                    'ADD NEW FINE',
+                    style: AppTextStyles.headlineSmall.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // License number input field
                 PezyTextField(
-                  label: 'Driver Name',
-                  hint: 'Driver Name',
-                  controller: _NameTextController(formState.userName ?? ''),
-                  enabled: false,
+                  label: 'License No',
+                  hint: 'License No',
+                  controller: _LicenseTextController(formState.licenseNo),
+                  onChanged: (value) {
+                    notifier.setLicenseNo(value);
+                  },
+                  enabled: !formState.isSubmitted,
                   keyboardType: TextInputType.text,
                   variant: PezyTextFieldVariant.outlined,
                   borderRadius: 12,
@@ -188,304 +184,385 @@ class NewFineScreen extends ConsumerWidget {
                     color: Colors.grey.shade600,
                   ),
                 ),
-              ],
 
-              // Fine details form (shown if driver found and not overdue)
-              if (formState.isSubmitted && !formState.isOverdue) ...[
+                // Error message
+                if (formState.errorMessage != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: AppColors.error,
+                          size: 20,
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Text(
+                            formState.errorMessage!,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // User name field (shown after submission)
+                if (formState.isSubmitted) ...[
+                  const SizedBox(height: AppSpacing.sectionGap),
+                  PezyTextField(
+                    label: 'Driver Name',
+                    hint: 'Driver Name',
+                    controller: _NameTextController(formState.userName ?? ''),
+                    enabled: false,
+                    keyboardType: TextInputType.text,
+                    variant: PezyTextFieldVariant.outlined,
+                    borderRadius: 12,
+                    labelColor: Colors.black54,
+                    hintTextColor: Colors.grey.shade600,
+                    textColor: Colors.black87,
+                    labelStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    hintStyle: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+
+                // Fine details form (shown if driver found and not overdue)
+                if (formState.isSubmitted && !formState.isOverdue) ...[
+                  const SizedBox(height: AppSpacing.sectionGap),
+                  // Modern form card wrapper
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // Date field
+                        PezyTextField(
+                          label: 'Date',
+                          hint: 'DD / MM / YYYY',
+                          controller: _DateTextController(formState.date),
+                          onChanged: (value) {
+                            notifier.setDate(value);
+                          },
+                          enabled: true,
+                          keyboardType: TextInputType.text,
+                          variant: PezyTextFieldVariant.outlined,
+                          borderRadius: 12,
+                          labelColor: Colors.black54,
+                          hintTextColor: Colors.grey.shade600,
+                          textColor: Colors.black87,
+                          labelStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Fine Type dropdown
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            hint: Text(
+                              'Select Fine Type',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            value: formState.fineType.isEmpty ? null : formState.fineType,
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                notifier.setFineType(newValue);
+                              }
+                            },
+                            items: <String>[
+                              'Speeding',
+                              'Traffic Signal',
+                              'Parking Violation',
+                              'Lane Change',
+                              'No Helmet',
+                              'Rash Driving',
+                              'Other',
+                            ].map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(
+                                  value,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Reason field
+                        PezyTextField(
+                          label: 'Reason',
+                          hint: 'Enter reason for fine',
+                          controller: _ReasonTextController(formState.reason),
+                          onChanged: (value) {
+                            notifier.setReason(value);
+                          },
+                          enabled: true,
+                          keyboardType: TextInputType.text,
+                          variant: PezyTextFieldVariant.outlined,
+                          borderRadius: 12,
+                          maxLines: 3,
+                          labelColor: Colors.black54,
+                          hintTextColor: Colors.grey.shade600,
+                          textColor: Colors.black87,
+                          labelStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Amount field
+                        PezyTextField(
+                          label: 'Amount',
+                          hint: 'Amount',
+                          controller: _AmountTextController(formState.amount),
+                          onChanged: (value) {
+                            notifier.setAmount(value);
+                          },
+                          enabled: true,
+                          keyboardType: TextInputType.number,
+                          variant: PezyTextFieldVariant.outlined,
+                          borderRadius: 12,
+                          labelColor: Colors.black54,
+                          hintTextColor: Colors.grey.shade600,
+                          textColor: Colors.black87,
+                          labelStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Re-enter Amount field
+                        PezyTextField(
+                          label: 'Re-enter Amount',
+                          hint: 'Re-enter Amount',
+                          controller: _AmountConfirmTextController(formState.amountConfirm),
+                          onChanged: (value) {
+                            notifier.setAmountConfirm(value);
+                          },
+                          enabled: true,
+                          keyboardType: TextInputType.number,
+                          variant: PezyTextFieldVariant.outlined,
+                          borderRadius: 12,
+                          labelColor: Colors.black54,
+                          hintTextColor: Colors.grey.shade600,
+                          textColor: Colors.black87,
+                          labelStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Extra Amount field (optional)
+                        PezyTextField(
+                          label: 'Extra Amount (Optional)',
+                          hint: 'Extra Amount',
+                          controller: _ExtraAmountTextController(formState.extraAmount),
+                          onChanged: (value) {
+                            notifier.setExtraAmount(value);
+                          },
+                          enabled: true,
+                          keyboardType: TextInputType.number,
+                          variant: PezyTextFieldVariant.outlined,
+                          borderRadius: 12,
+                          labelColor: Colors.black54,
+                          hintTextColor: Colors.grey.shade600,
+                          textColor: Colors.black87,
+                          labelStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Amount mismatch error
+                if (formState.isSubmitted &&
+                    !formState.isOverdue &&
+                    formState.amount.isNotEmpty &&
+                    formState.amountConfirm.isNotEmpty &&
+                    !formState.amountsMatch) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: AppColors.error,
+                          size: 20,
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Text(
+                            'Amounts do not match',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Overdue warning
+                if (formState.isSubmitted && formState.isOverdue) ...[
+                  const SizedBox(height: AppSpacing.sectionGap),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_rounded,
+                          color: AppColors.error,
+                          size: 24,
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Text(
+                            'Warning: This driver has overdue fines',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Submit button
                 const SizedBox(height: AppSpacing.sectionGap),
-                // Date field
-                PezyTextField(
-                  label: 'Date',
-                  hint: 'DD / MM / YYYY',
-                  controller: _DateTextController(formState.date),
-                  onChanged: (value) {
-                    notifier.setDate(value);
-                  },
-                  enabled: true,
-                  keyboardType: TextInputType.text,
-                  variant: PezyTextFieldVariant.outlined,
-                  borderRadius: 12,
-                  labelColor: Colors.black54,
-                  hintTextColor: Colors.grey.shade600,
-                  textColor: Colors.black87,
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Fine Type dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    underline: const SizedBox(),
-                    hint: Text(
-                      'Select Fine Type',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: PezyButton(
+                    onPressed: (formState.isLoading ||
+                            (!formState.isSubmitted
+                                ? false
+                                : formState.isOverdue ||
+                                    !formState.isFormValid))
+                        ? null
+                        : () {
+                            if (!formState.isSubmitted) {
+                              // First step: submit license number
+                              notifier.submitLicenseNo();
+                            } else if (!formState.isOverdue) {
+                              // Second step: submit fine details
+                              notifier.submitFine();
+                            }
+                          },
+                    label: !formState.isSubmitted
+                        ? 'Submit'
+                        : !formState.isOverdue
+                            ? 'Submit'
+                            : 'Back',
+                    variant: PezyButtonVariant.outlined,
+                    isLoading: formState.isLoading,
+                    isDisabled: formState.isSubmitted &&
+                        !formState.isOverdue &&
+                        !formState.isFormValid,
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
-                    value: formState.fineType.isEmpty ? null : formState.fineType,
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        notifier.setFineType(newValue);
-                      }
-                    },
-                    items: <String>[
-                      'Speeding',
-                      'Traffic Signal',
-                      'Parking Violation',
-                      'Lane Change',
-                      'No Helmet',
-                      'Rash Driving',
-                      'Other',
-                    ].map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Reason field
-                PezyTextField(
-                  label: 'Reason',
-                  hint: 'Enter reason for fine',
-                  controller: _ReasonTextController(formState.reason),
-                  onChanged: (value) {
-                    notifier.setReason(value);
-                  },
-                  enabled: true,
-                  keyboardType: TextInputType.text,
-                  variant: PezyTextFieldVariant.outlined,
-                  borderRadius: 12,
-                  maxLines: 3,
-                  labelColor: Colors.black54,
-                  hintTextColor: Colors.grey.shade600,
-                  textColor: Colors.black87,
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Amount field
-                PezyTextField(
-                  label: 'Amount',
-                  hint: 'Amount',
-                  controller: _AmountTextController(formState.amount),
-                  onChanged: (value) {
-                    notifier.setAmount(value);
-                  },
-                  enabled: true,
-                  keyboardType: TextInputType.number,
-                  variant: PezyTextFieldVariant.outlined,
-                  borderRadius: 12,
-                  labelColor: Colors.black54,
-                  hintTextColor: Colors.grey.shade600,
-                  textColor: Colors.black87,
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Re-enter Amount field
-                PezyTextField(
-                  label: 'Re-enter Amount',
-                  hint: 'Re-enter Amount',
-                  controller: _AmountConfirmTextController(formState.amountConfirm),
-                  onChanged: (value) {
-                    notifier.setAmountConfirm(value);
-                  },
-                  enabled: true,
-                  keyboardType: TextInputType.number,
-                  variant: PezyTextFieldVariant.outlined,
-                  borderRadius: 12,
-                  labelColor: Colors.black54,
-                  hintTextColor: Colors.grey.shade600,
-                  textColor: Colors.black87,
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Extra Amount field (optional)
-                PezyTextField(
-                  label: 'Extra Amount (Optional)',
-                  hint: 'Extra Amount',
-                  controller: _ExtraAmountTextController(formState.extraAmount),
-                  onChanged: (value) {
-                    notifier.setExtraAmount(value);
-                  },
-                  enabled: true,
-                  keyboardType: TextInputType.number,
-                  variant: PezyTextFieldVariant.outlined,
-                  borderRadius: 12,
-                  labelColor: Colors.black54,
-                  hintTextColor: Colors.grey.shade600,
-                  textColor: Colors.black87,
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
                   ),
                 ),
               ],
-
-              // Amount mismatch error
-              if (formState.isSubmitted &&
-                  !formState.isOverdue &&
-                  formState.amount.isNotEmpty &&
-                  formState.amountConfirm.isNotEmpty &&
-                  !formState.amountsMatch) ...[
-                const SizedBox(height: AppSpacing.md),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEE2E2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.error,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: AppColors.error,
-                        size: 20,
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(
-                          'Amounts do not match',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Overdue warning
-              if (formState.isSubmitted && formState.isOverdue) ...[
-                const SizedBox(height: AppSpacing.sectionGap),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEE2E2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.error,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.warning_rounded,
-                        color: AppColors.error,
-                        size: 24,
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(
-                          'Warning: This driver has overdue fines',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Submit button
-              const SizedBox(height: AppSpacing.sectionGap),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: PezyButton(
-                  onPressed: (formState.isLoading ||
-                          (!formState.isSubmitted
-                              ? false
-                              : formState.isOverdue ||
-                                  !formState.isFormValid))
-                      ? null
-                      : () {
-                          if (!formState.isSubmitted) {
-                            // First step: submit license number
-                            notifier.submitLicenseNo();
-                          } else if (!formState.isOverdue) {
-                            // Second step: submit fine details
-                            notifier.submitFine();
-                          }
-                        },
-                  label: !formState.isSubmitted
-                      ? 'Submit'
-                      : !formState.isOverdue
-                          ? 'Submit'
-                          : 'Back',
-                  variant: PezyButtonVariant.outlined,
-                  isLoading: formState.isLoading,
-                  isDisabled: formState.isSubmitted &&
-                      !formState.isOverdue &&
-                      !formState.isFormValid,
-                  textStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

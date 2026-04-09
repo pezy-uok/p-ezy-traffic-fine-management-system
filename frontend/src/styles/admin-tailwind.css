@@ -1,0 +1,42 @@
+@layer base {
+  :root {
+    --admin-bg: #f3f6fb;
+    --admin-surface: #ffffff;
+    --admin-sidebar: #213864;
+    --admin-sidebar-accent: #2ea6ea;
+    --admin-text: #2f3642;
+    --admin-muted: #6b7280;
+  }
+}
+
+@layer components {
+  .admin-tw-shell {
+    min-height: 100vh;
+    background: #f1f5f9;
+  }
+
+  .admin-tw-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  }
+
+  .admin-tw-content {
+    color: #1f2937;
+  }
+
+  .admin-tw-panel {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  }
+
+  .admin-tw-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+}
