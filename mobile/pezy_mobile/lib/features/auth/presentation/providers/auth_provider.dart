@@ -7,6 +7,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/auth_api_service.dart';
 import '../../data/services/token_storage_service.dart';
 import '../../data/services/auth_interceptor.dart';
+import '../../../../core/utils/jwt_utils.dart';
 
 /// User data model
 class AuthUser {
@@ -250,6 +251,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     debugPrint('✅ Auth state updated: isLoading=false, isLoggedIn=true\n');
+  }
+
+  /// Check if token has expired and auto-logout if needed
+  Future<void> checkTokenExpiry() async {
+    if (!state.isLoggedIn || state.accessToken == null) {
+      return; // Not logged in, nothing to check
+    }
+
+    final token = state.accessToken!;
+    final isExpired = JwtUtils.isTokenExpired(token);
+
+    if (isExpired) {
+      debugPrint('\n╔════════════════════════════════════════╗');
+      debugPrint('║  AUTO-LOGOUT: Token Expired            ║');
+      debugPrint('╠════════════════════════════════════════╣');
+      debugPrint('║ ⏰ Performing automatic logout...');
+      debugPrint('╚════════════════════════════════════════╝\n');
+
+      // Auto logout
+      await logout();
+    } else {
+      // Get remaining time for debug
+      final secondsLeft = JwtUtils.getSecondsUntilExpiration(token);
+      if (secondsLeft != null && secondsLeft < 300) {
+        // Less than 5 minutes remaining
+        debugPrint('⚠️  Token expiring soon: ${secondsLeft}s remaining');
+      }
+    }
   }
 
   /// Clear auth state (for logout or error)
