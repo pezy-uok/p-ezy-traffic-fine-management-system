@@ -192,6 +192,22 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
     state = const NewFineFormState();
   }
 
+  /// Go back to license step without losing license lookup data
+  /// Clears form fields (date, amount, etc.) but keeps license number and driver name
+  void goBackToLicenseStep() {
+    state = state.copyWith(
+      isSubmitted: false,
+      date: '',
+      amount: '',
+      amountConfirm: '',
+      fineType: '',
+      reason: '',
+      extraAmount: '',
+      errorMessage: null,
+      isSuccess: false,
+    );
+  }
+
   /// Update fine date (DD/MM/YYYY format)
   void setDate(String date) {
     state = state.copyWith(date: date);
@@ -282,24 +298,85 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // Simulate API call to submit fine
-      await Future.delayed(const Duration(seconds: 1));
+      print('\n╔════════════════════════════════════════╗');
+      print('║  NEW FINE: SUBMIT FINE                  ║');
+      print('╠════════════════════════════════════════╣');
+      print('║ License: ${state.licenseNo}');
+      print('║ Driver: ${state.userName}');
+      print('║ Date: ${state.date}');
+      print('║ Amount: ${state.amount}');
+      print('║ AmountConfirm: ${state.amountConfirm}');
+      print('║ FineType: ${state.fineType}');
+      print('║ Reason: ${state.reason}');
+      print('╚════════════════════════════════════════╝\n');
+      
+      // Validate license not empty
+      if (state.licenseNo.isEmpty) {
+        throw Exception('License number is empty in form state');
+      }
+      if (state.userName == null || state.userName!.isEmpty) {
+        throw Exception('Driver name is empty in form state');
+      }
 
-      // Success - in production, this would save to backend
+      // Create API service and submit fine
+      final apiService = FineApiService(dio: _dio);
+      
+      // Convert date from DD/MM/YYYY to YYYY-MM-DD format
+      final dateFormatted = _convertDateFormat(state.date);
+      
+      // Parse amount as double
+      final amount = double.parse(state.amount);
+      
+      // For now, using a placeholder officer ID (in production, get from auth)
+      const officerId = '00000000-0000-0000-0000-000000000001';
+      
+      // Call the API to create fine
+      final response = await apiService.createFine(
+        licenseNumber: state.licenseNo,
+        driverName: state.userName ?? '',
+        date: dateFormatted,
+        amount: amount,
+        officerId: officerId,
+        reason: state.reason,
+        violationCode: state.fineType.replaceAll(' ', '_').toUpperCase(),
+      );
+
+      print('✅ Fine submitted successfully');
+      print('Response: $response\n');
+
+      // Success - fine saved to backend
       state = state.copyWith(
         isLoading: false,
         isSuccess: true,
+        errorMessage: null,
       );
 
       // Reset after 2.5 seconds to allow toast to be seen
       await Future.delayed(const Duration(milliseconds: 2500));
       reset();
     } catch (e) {
+      print('❌ Error submitting fine: $e\n');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Error submitting fine: ${e.toString()}',
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
       );
     }
+  }
+
+  /// Convert date format from DD/MM/YYYY to YYYY-MM-DD
+  String _convertDateFormat(String dateStr) {
+    try {
+      final parts = dateStr.split('/');
+      if (parts.length == 3) {
+        final day = parts[0];
+        final month = parts[1];
+        final year = parts[2];
+        return '$year-$month-$day';
+      }
+    } catch (e) {
+      print('Error converting date format: $e');
+    }
+    return dateStr; // Return original if conversion fails
   }
 
   /// Validate date format (DD/MM/YYYY)

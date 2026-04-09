@@ -13,6 +13,11 @@ export const initializeSupabaseClient = () => {
     // Falls back to ANON_KEY if SERVICE_ROLE_KEY not available
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
+    console.log('\n📋 SUPABASE CLIENT INITIALIZATION');
+    console.log(`   URL Set: ${supabaseUrl ? '✅' : '❌'}`);
+    console.log(`   Key Type: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Service Role' : 'Anon'}`);
+    console.log(`   Key Length: ${supabaseKey?.length || 0} chars`);
+
     if (!supabaseUrl || !supabaseKey) {
       console.warn('⚠️  Supabase credentials not configured');
       return null;
@@ -30,6 +35,7 @@ export const initializeSupabaseClient = () => {
     return supabaseClient;
   } catch (error) {
     console.error('❌ Failed to initialize Supabase client:', error.message);
+    console.error('   Stack:', error.stack);
     return null;
   }
 };
