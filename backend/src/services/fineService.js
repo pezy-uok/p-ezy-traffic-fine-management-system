@@ -229,10 +229,26 @@ export const getFinesByLicense = async (licenseNo) => {
     throw new NotFoundError('Driver not found for the provided licenseNo');
   }
 
-  // Step 2: Get fines for this driver (can be empty array)
+  // Step 2: Get fines for this driver (can be empty array - that's fine!)
   const { data: fines, error: finesError } = await supabase
     .from('fines')
-    .select('*')
+    .select(`
+      id,
+      driver_id,
+      issued_by_officer_id,
+      amount,
+      reason,
+      violation_code,
+      location,
+      vehicle_registration,
+      status,
+      issue_date,
+      due_date,
+      payment_date,
+      payment_method,
+      created_at,
+      updated_at
+    `)
     .eq('driver_id', driver.id)
     .order('issue_date', { ascending: false });
 
@@ -269,7 +285,7 @@ export const getFinesByLicense = async (licenseNo) => {
     updated_at: fine.updated_at,
   }));
 
-  // Step 5: Return both driver info and fines
+  // Return both driver info and fines array
   return {
     driver: driverInfo,
     fines: mappedFines,
