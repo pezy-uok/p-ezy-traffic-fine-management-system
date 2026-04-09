@@ -7,13 +7,14 @@ import {
   getOutdatedFines,
   updateFineStatus,
 } from '../controllers/fineController.js';
+import { validateCreateFine, handleValidationErrors } from '../middlewares/fineValidator.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 
 // Public fine endpoints
-router.post('/', createFine);
+router.post('/', validateCreateFine, handleValidationErrors, createFine);
 router.get('/outdated', getOutdatedFines);
 router.get('/driver/:licenseNo', getFinesByLicense);
 router.get('/:fineId', getFineById);
