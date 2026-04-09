@@ -142,7 +142,34 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- G. News Table
+-- G. Audit Logs Table
+CREATE TABLE IF NOT EXISTS auditlogs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_role VARCHAR(50) NOT NULL DEFAULT 'system',
+    license_number VARCHAR(50),
+    driver_id UUID REFERENCES drivers(id) ON DELETE SET NULL,
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID,
+    entity_name VARCHAR(255),
+    field_name VARCHAR(100),
+    old_value JSONB,
+    new_value JSONB,
+    change_summary TEXT,
+    request_method VARCHAR(10),
+    request_path VARCHAR(500),
+    notes TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'success',
+    error_message TEXT,
+    result_summary JSONB,
+    severity VARCHAR(20) NOT NULL DEFAULT 'info',
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- H. News Table
 CREATE TABLE IF NOT EXISTS news (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
@@ -155,7 +182,7 @@ CREATE TABLE IF NOT EXISTS news (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- H. Tips Table
+-- I. Tips Table
 CREATE TABLE IF NOT EXISTS tips (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
