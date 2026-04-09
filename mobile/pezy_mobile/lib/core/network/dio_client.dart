@@ -3,6 +3,7 @@ import '../../../config/app_config.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
+import 'interceptors/connectivity_interceptor.dart';
 
 /// HTTP client for making network requests using Dio
 ///
@@ -52,6 +53,8 @@ class DioClient {
     );
 
     // Add interceptors in order
+    // Connectivity check is first to prevent unnecessary requests
+    _dio.interceptors.add(ConnectivityInterceptor());
     _dio.interceptors.add(LoggingInterceptor());
     _dio.interceptors.add(ErrorInterceptor());
     _dio.interceptors.add(_authInterceptor);

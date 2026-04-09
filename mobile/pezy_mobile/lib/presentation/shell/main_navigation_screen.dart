@@ -32,10 +32,17 @@ class MainNavigationScreen extends ConsumerWidget {
     ];
 
     return Scaffold(
-      // Use IndexedStack to preserve tab state and scroll position
-      body: IndexedStack(
-        index: selectedTab.index,
-        children: screens,
+      // Body with connectivity status banner at the top
+      body: Column(
+        children: [
+          const ConnectivityStatusBanner(),
+          Expanded(
+            child: IndexedStack(
+              index: selectedTab.index,
+              children: screens,
+            ),
+          ),
+        ],
       ),
 
       // Bottom navigation bar

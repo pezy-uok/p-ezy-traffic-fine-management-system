@@ -63,12 +63,12 @@ Dio createAuthenticatedDio(TokenStorageService tokenStorage) {
   debugPrint('\n╔════════════════════════════════════════╗');
   debugPrint('║  Creating Authenticated Dio Instance    ║');
   debugPrint('╠════════════════════════════════════════╣');
-  debugPrint('║ Base URL: http://localhost:8000/api');
+  debugPrint('║ Base URL: http://127.0.0.1:8000/api');
   debugPrint('╚════════════════════════════════════════╝\n');
   
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost:8000/api',
+      baseUrl: 'http://127.0.0.1:8000/api',
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       contentType: 'application/json',
