@@ -2,7 +2,7 @@ import { getSupabaseClient } from '../config/supabaseClient.js';
 import { AppError, NotFoundError, ValidationError } from '../utils/errors.js';
 import { generateFineReference } from '../utils/fineReferenceGenerator.js';
 
-const MAX_UNPAID_FINES = 5;
+const MAX_UNPAID_FINES = 3;
 
 const notImplemented = (methodName) => {
   throw new AppError(`FineService.${methodName} is not implemented yet`, 501);
