@@ -19,6 +19,7 @@ import publicFineRoutes from './routes/publicFineRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import newsRoutes from './routes/newsRoutes.js';
 import tipRoutes from './routes/tipRoutes.js';
+import warningRoutes from './routes/warningRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -97,6 +98,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/criminals', criminalRoutes);
 app.use('/api/fines', fineRoutes);
+app.use('/api/warnings', warningRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/tips', tipRoutes);
