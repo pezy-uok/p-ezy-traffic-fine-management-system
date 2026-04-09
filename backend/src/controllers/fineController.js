@@ -152,7 +152,7 @@ export const deleteFineForAdmin = async (req, res, next) => {
 };
 
 /**
- * Update fine status
+ * Update fine status unpaid to paid
  * PATCH /api/fines/:fineId/status
  */
 export const updateFineStatus = async (req, res, next) => {

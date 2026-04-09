@@ -554,6 +554,49 @@ export const deleteFineForAdmin = async (fineId) => {
   return { id: fineId, deleted: true };
 };
 
+/**
+ * PEZY-410: Update fine status with strict validation
+ * 
+ * Updates the status of a fine with strict validation rules ensuring valid state transitions.
+ * This is critical for maintaining data integrity in the fine management workflow.
+ * 
+ * Valid status transitions:
+ * - unpaid → paid (when payment received)
+ * - unpaid → outdated (when 30 days overdue)
+ * - outdated → paid (if paid after becoming outdated)
+ * - pending → paid or outdated (legacy status support)
+ * - paid → NONE (terminal state, cannot change)
+ * 
+ * Side effects when transitioning to "paid":
+ * - Automatically sets payment_date to today
+ * - Creates audit log with user info and change details
+ * - Fetches driver license for audit trail
+ * 
+ * @param {string} fineId - UUID of the fine to update
+ * @param {string} newStatus - Target status (must be 'paid', 'unpaid', or 'outdated')
+ * @param {Object} authUser - Authenticated user object
+ * @param {string} authUser.id - User ID making the update
+ * @param {string} [authUser.role] - User role (officer, admin, etc.) - defaults to 'officer'
+ * 
+ * @returns {Promise<Object>} Updated fine object with new status
+ * @returns {string} Returns updated fine with: id, status, payment_date (if paid), updated_at
+ * 
+ * @throws {ValidationError} If fineId, newStatus, or authUser is missing
+ * @throws {NotFoundError} If fine with given ID does not exist
+ * @throws {AppError} If:
+ *   - Status transition is invalid (409 Conflict)
+ *   - Database update fails (500 Server Error)
+ *   - Audit log creation fails (500 Server Error)
+ * 
+ * @example
+ * // Update a fine to paid status
+ * const fine = await updateFineStatus(
+ *   'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+ *   'paid',
+ *   { id: 'officer-123', role: 'officer' }
+ * );
+ * // Result: { id: 'f47ac...', status: 'paid', payment_date: '2026-04-09', ... }
+ */
 export const updateFineStatus = async (fineId, newStatus, authUser) => {
   if (!fineId) {
     throw new ValidationError('fineId is required');
