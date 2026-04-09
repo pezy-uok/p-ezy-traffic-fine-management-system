@@ -1,5 +1,15 @@
 import express from 'express';
-import { authenticate, authorize } from '../middlewares/authenticate.js';
+import { authenticate } from '../middlewares/authenticate.js';
+import { authorize } from '../middlewares/authorize.js';
+import {
+  createWarning,
+  getAllWarningsAdmin,
+  getWarningById,
+  getWarningsByLicense,
+  updateWarningAdmin,
+  deleteWarningAdmin,
+  acknowledgeWarning,
+} from '../controllers/warningController.js';
 
 const router = express.Router();
 
@@ -8,17 +18,39 @@ const router = express.Router();
  * Base path: /api/warnings
  */
 
-// Public endpoints (no auth required)
-// TODO: Implement public warning endpoints
-
-// Protected endpoints (auth required)
+// Protected routes (auth required)
 router.use(authenticate);
 
-// Officer endpoints
-// TODO: Implement officer warning endpoints
+/**
+ * OFFICER ENDPOINTS
+ */
 
-// Admin endpoints
+// Create warning
+router.post('/', createWarning);
+
+// Get warnings by driver license
+router.get('/driver/:licenseNo', getWarningsByLicense);
+
+// Acknowledge warning (any user)
+router.patch('/:id/acknowledge', acknowledgeWarning);
+
+/**
+ * ADMIN ENDPOINTS
+ */
+
+// Admin routes require admin role
 router.use(authorize('admin'));
-// TODO: Implement admin warning endpoints
+
+// Get all warnings with optional filters
+router.get('/admin/all', getAllWarningsAdmin);
+
+// Get warning by ID
+router.get('/admin/:id', getWarningById);
+
+// Update warning
+router.patch('/admin/:id', updateWarningAdmin);
+
+// Delete warning (soft delete)
+router.delete('/admin/:id', deleteWarningAdmin);
 
 export default router;
