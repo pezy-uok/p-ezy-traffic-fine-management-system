@@ -214,7 +214,11 @@ export const tipAPI = {
 // Fine API endpoints for driver payment portal
 export const fineAPI = {
   getDriverFines: (licenseNo: string) =>
-    axiosInstance.get<{ success: boolean; fines: any[] }>(`/fines/driver/${licenseNo}`),
+    axiosInstance.get<{
+      success: boolean
+      driver: { driver_id: string; driver_name: string; license_number: string }
+      fines: any[]
+    }>(`/fines/driver/${licenseNo}`),
 }
 
 export default axiosInstance
