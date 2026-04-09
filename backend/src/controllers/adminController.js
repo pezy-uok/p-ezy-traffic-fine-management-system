@@ -119,6 +119,7 @@ export const createNewsForAdmin = async (req, res, next) => {
       category,
       featured,
       pinned,
+      status,
       author_id: req.user?.id || null,
       published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
     };
@@ -166,6 +167,7 @@ export const updateNewsForAdmin = async (req, res, next) => {
       category,
       featured,
       pinned,
+      status,
       published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
     };
 
