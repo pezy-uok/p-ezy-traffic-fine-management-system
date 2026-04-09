@@ -174,4 +174,9 @@ export const adminAPI = {
   getStats: () => axiosInstance.get<{ success: boolean; stats: AdminDashboardStats }>('/admin/stats'),
 }
 
+export const newsAPI = {
+  getPublicNews: (params?: { limit?: number; offset?: number; category?: string; search?: string }) =>
+    axiosInstance.get('/news', { params }),
+}
+
 export default axiosInstance
