@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '../config/supabaseClient.js';
 import { AppError, NotFoundError, ValidationError } from '../utils/errors.js';
+import { generateFineReference } from '../utils/fineReferenceGenerator.js';
 
 const MAX_UNPAID_FINES = 5;
 
@@ -18,14 +19,6 @@ const addDays = (isoDate, days) => {
   const base = new Date(isoDate);
   base.setUTCDate(base.getUTCDate() + days);
   return base.toISOString().split('T')[0];
-};
-
-const generateFineRef = () => {
-  const year = new Date().getUTCFullYear();
-  const sequence = Math.floor(Math.random() * 1_000_000)
-    .toString()
-    .padStart(6, '0');
-  return `PEZY-${year}-${sequence}`;
 };
 
 export const createFine = async (fineData, authUser) => {
@@ -76,7 +69,7 @@ export const createFine = async (fineData, authUser) => {
 
   const issueDate = toIsoDateString(fineData.issuedDate || fineData.issue_date) || toIsoDateString(new Date());
   const dueDate = toIsoDateString(fineData.dueDate || fineData.due_date) || addDays(issueDate, 14);
-  const fineRef = generateFineRef();
+  const fineRef = generateFineReference();
 
   const insertPayload = {
     driver_id: driver.id,
