@@ -21,6 +21,51 @@ const addDays = (isoDate, days) => {
   return base.toISOString().split('T')[0];
 };
 
+/**
+ * PEZY-412: Check if a driver has reached max unpaid fines limit
+ * 
+ * Count unpaid fines for a driver. Throw error if >= 5 fines.
+ * Prevents drivers from accumulating too many unpaid traffic fines.
+ * 
+ * @param {string} driverId - UUID of the driver
+ * @returns {Promise<number>} Count of unpaid fines
+ * @throws {AppError} 409 if count >= 5 (maxFinesExceeded)
+ * 
+ * @example
+ * const count = await checkMaxFines(driverId);
+ * // Returns: 3 (driver has 3 unpaid fines, under limit)
+ * 
+ * // If driver has 5+ unpaid fines:
+ * // Throws: AppError with statusCode 409
+ */
+export const checkMaxFines = async (driverId) => {
+  const supabase = getSupabaseClient();
+
+  const { count: unpaidCount, error: countError } = await supabase
+    .from('fines')
+    .select('id', { count: 'exact', head: true })
+    .eq('driver_id', driverId)
+    .eq('status', 'unpaid');
+
+  if (countError) {
+    throw new AppError(
+      `Failed to validate unpaid fine count: ${countError.message}`,
+      500
+    );
+  }
+
+  const count = unpaidCount || 0;
+
+  if (count >= MAX_UNPAID_FINES) {
+    throw new AppError(
+      `Driver has reached maximum unpaid fines limit (${MAX_UNPAID_FINES}). Current unpaid fines: ${count}. Mobile app shows warning escalation screen.`,
+      409
+    );
+  }
+
+  return count;
+};
+
 export const createFine = async (fineData, authUser) => {
   if (!fineData || typeof fineData !== 'object') {
     throw new ValidationError('Fine payload is required');
@@ -53,19 +98,8 @@ export const createFine = async (fineData, authUser) => {
     throw new NotFoundError('Driver not found for the provided licenseNo');
   }
 
-  const { count: unpaidCount, error: countError } = await supabase
-    .from('fines')
-    .select('id', { count: 'exact', head: true })
-    .eq('driver_id', driver.id)
-    .eq('status', 'unpaid');
-
-  if (countError) {
-    throw new AppError(`Failed to validate unpaid fine count: ${countError.message}`, 500);
-  }
-
-  if ((unpaidCount || 0) >= MAX_UNPAID_FINES) {
-    throw new AppError('maxFinesExceeded', 409);
-  }
+  // PEZY-412: Check max unpaid fines limit
+  await checkMaxFines(driver.id);
 
   const issueDate = toIsoDateString(fineData.issuedDate || fineData.issue_date) || toIsoDateString(new Date());
   const dueDate = toIsoDateString(fineData.dueDate || fineData.due_date) || addDays(issueDate, 14);
