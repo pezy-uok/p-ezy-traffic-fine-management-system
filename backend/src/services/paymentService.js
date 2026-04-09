@@ -63,6 +63,64 @@ const updateFineStatuses = async (supabase, fineIds) => {
       message: `Failed to update fine statuses: ${error.message}`,
     };
   }
+
+  return paymentDate;
+};
+
+const createFineAuditLogs = async (
+  supabase,
+  fineIds,
+  { licenseNo, orderId, paymentId, paymentDate, driverId = null }
+) => {
+  if (!fineIds || fineIds.length === 0) {
+    return;
+  }
+
+  const auditRows = fineIds.map((fineId) => ({
+    user_id: null,
+    user_role: 'system',
+    license_number: licenseNo || null,
+    driver_id: driverId,
+    action: 'update',
+    entity_type: 'Fine',
+    entity_id: fineId,
+    entity_name: fineId,
+    field_name: 'status',
+    old_value: { status: 'unpaid' },
+    new_value: {
+      status: 'paid',
+      payment_date: paymentDate,
+      payment_method: 'credit_card',
+    },
+    change_summary: 'Fine marked as paid after successful PayHere webhook',
+    request_method: 'POST',
+    request_path: '/api/payments/webhook',
+    notes: `orderId=${orderId}; paymentId=${paymentId || 'N/A'}`,
+    status: 'success',
+    result_summary: {
+      orderId,
+      paymentId: paymentId || null,
+      fineId,
+    },
+    severity: 'info',
+  }));
+
+  const { error } = await supabase.from('auditlogs').insert(auditRows);
+
+  if (error) {
+    if (
+      error.message?.includes("Could not find the table 'public.auditlogs'") ||
+      error.message?.includes('schema cache')
+    ) {
+      console.warn('Skipping audit log creation because auditlogs table is not available yet.');
+      return;
+    }
+
+    throw {
+      status: 500,
+      message: `Failed to create audit logs: ${error.message}`,
+    };
+  }
 };
 
 const triggerReceiptGeneration = async ({ orderId, paymentId, fineIds }) => {
@@ -281,9 +339,12 @@ export const handleWebhook = async (payload) => {
   }
 
   const alreadyCompleted = payments.every((payment) => payment.status === 'completed');
-  const fineIds = customFineIds
-    ? customFineIds.split(',').map((id) => id.trim()).filter(Boolean)
-    : payments.map((payment) => payment.fine_id).filter(Boolean);
+  const paymentFineIds = payments.map((payment) => payment.fine_id).filter(Boolean);
+  const fineIds = paymentFineIds.length > 0
+    ? paymentFineIds
+    : customFineIds
+      ? customFineIds.split(',').map((id) => id.trim()).filter(Boolean)
+      : [];
 
   if (!alreadyCompleted) {
     const { error: updateError } = await supabase
@@ -303,7 +364,13 @@ export const handleWebhook = async (payload) => {
     }
 
     if (fineIds.length > 0) {
-      await updateFineStatuses(supabase, fineIds);
+      const paymentDate = await updateFineStatuses(supabase, fineIds);
+      await createFineAuditLogs(supabase, fineIds, {
+        licenseNo,
+        orderId,
+        paymentId,
+        paymentDate,
+      });
     }
   }
 
