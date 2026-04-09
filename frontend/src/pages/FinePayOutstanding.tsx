@@ -9,39 +9,17 @@ import './FinePayOutstanding.css'
 type FinePayLocationState = {
   suspensionReminder?: string
   licenseNumber?: string
+  fines?: any[]
 }
 
 type FineItem = {
   id: string
-  title: string
-  details: string
-  date: string
+  reason: string
+  location: string
+  issue_date: string
   amount: number
+  status: string
 }
-
-const fines: FineItem[] = [
-  {
-    id: 'fine-1',
-    title: 'Speeding (80km/h in 60 zone)',
-    details: 'A 14th Ave',
-    date: '2025-11-06',
-    amount: 3500,
-  },
-  {
-    id: 'fine-2',
-    title: 'Illegal Parking',
-    details: 'St. Clair Road',
-    date: '2025-11-05',
-    amount: 1500,
-  },
-  {
-    id: 'fine-3',
-    title: 'Broken Tail Light',
-    details: 'Kurunegala Road',
-    date: '2025-11-03',
-    amount: 1000,
-  },
-]
 
 const formatCurrency = (value: number) => `LKR ${value.toLocaleString('en-LK')}`
 
@@ -55,12 +33,19 @@ const formatFineDate = (value: string) =>
 export default function FinePayOutstanding() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [selectedFineIds, setSelectedFineIds] = useState<string[]>(fines.map(fine => fine.id))
   const reminderState = location.state as FinePayLocationState | null
+  
+  // Get fines from location state or use empty array
+  const apieFines = reminderState?.fines || []
+  
+  // Initialize selected fines to all by default
+  const [selectedFineIds, setSelectedFineIds] = useState<string[]>(
+    apieFines.map((fine: any) => fine.id)
+  )
 
   const selectedFines = useMemo(
-    () => fines.filter(fine => selectedFineIds.includes(fine.id)),
-    [selectedFineIds],
+    () => apieFines.filter((fine: any) => selectedFineIds.includes(fine.id)),
+    [selectedFineIds, apieFines],
   )
 
   const totalAmount = useMemo(
@@ -80,6 +65,58 @@ export default function FinePayOutstanding() {
     }
 
     navigate('/fine-pay/success')
+  }
+
+  // Get driver info from first fine
+  const driverName = apieFines.length > 0 ? apieFines[0].driver_name : 'Driver'
+  const licenseNumber = reminderState?.licenseNumber || 'N/A'
+
+  // If no fines found, show empty state
+  if (apieFines.length === 0) {
+    return (
+      <section className="home-police fine-pay-outstanding-page">
+        <NavBar />
+
+        <div
+          className="fine-pay-outstanding-page__content"
+          style={{ '--fine-pay-outstanding-bg-image': `url(${finePayBg})` } as CSSProperties}
+        >
+          <div className="fine-pay-outstanding-page__overlay" />
+
+          <div className="fine-pay-outstanding-page__shell">
+            <article className="fine-pay-outstanding-header" aria-labelledby="driver-info-title">
+              <p className="fine-pay-outstanding-header__eyebrow">Driving License Verified</p>
+              <div className="fine-pay-outstanding-header__row">
+                <div>
+                  <h2 id="driver-info-title">{driverName}</h2>
+                  <p>License: {licenseNumber}</p>
+                </div>
+
+                <span className="fine-pay-outstanding-header__status">No Records</span>
+              </div>
+            </article>
+
+            <div className="fine-pay-outstanding-note" role="status" style={{ marginTop: '2rem' }}>
+              <span className="fine-pay-outstanding-note__icon" aria-hidden="true">
+                ✓
+              </span>
+              <p>
+                Great news! There are no outstanding fines for this driving license. Your traffic record is clean.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="fine-pay-outstanding-footer__button"
+              onClick={() => navigate('/fine-pay')}
+              style={{ marginTop: '2rem', width: '100%' }}
+            >
+              Check Another License
+            </button>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -112,8 +149,8 @@ export default function FinePayOutstanding() {
             <p className="fine-pay-outstanding-header__eyebrow">Driving License Verified</p>
             <div className="fine-pay-outstanding-header__row">
               <div>
-                <h2 id="driver-info-title">Mahinda Mahattaya</h2>
-                <p>Light Vehicle (Class C)</p>
+                <h2 id="driver-info-title">{driverName}</h2>
+                <p>License: {licenseNumber}</p>
               </div>
 
               <span className="fine-pay-outstanding-header__status">Active</span>
@@ -122,12 +159,13 @@ export default function FinePayOutstanding() {
 
           <div className="fine-pay-outstanding-list__header">
             <h3>Outstanding Fines</h3>
-            <span>{fines.length} Records Found</span>
+            <span>{apieFines.length} Records Found</span>
           </div>
 
           <div className="fine-pay-outstanding-list" aria-label="Outstanding fines list">
-            {fines.map(fine => {
+            {apieFines.map((fine: any) => {
               const isSelected = selectedFineIds.includes(fine.id)
+              const amount = typeof fine.amount === 'string' ? parseFloat(fine.amount) : fine.amount
 
               return (
                 <label
@@ -141,23 +179,23 @@ export default function FinePayOutstanding() {
                     className="fine-pay-outstanding-card__input"
                     checked={isSelected}
                     onChange={() => toggleFine(fine.id)}
-                    aria-label={isSelected ? `Remove ${fine.title}` : `Select ${fine.title}`}
+                    aria-label={isSelected ? `Remove ${fine.reason}` : `Select ${fine.reason}`}
                   />
 
                   <div className="fine-pay-outstanding-card__top">
                     <div className="fine-pay-outstanding-card__title-group">
-                      <h4>{fine.title}</h4>
-                      <p>{fine.details}</p>
+                      <h4>{fine.reason}</h4>
+                      <p>{fine.location || 'N/A'}</p>
                     </div>
 
                     <div className="fine-pay-outstanding-card__amount-group">
-                      <strong>{formatCurrency(fine.amount)}</strong>
-                      <span className="fine-pay-outstanding-card__tag">Unpaid</span>
+                      <strong>{formatCurrency(amount)}</strong>
+                      <span className="fine-pay-outstanding-card__tag">{fine.status === 'paid' ? 'Paid' : 'Unpaid'}</span>
                     </div>
                   </div>
 
                   <div className="fine-pay-outstanding-card__meta">
-                    <span>Issued {formatFineDate(fine.date)}</span>
+                    <span>Issued {formatFineDate(fine.issue_date)}</span>
                     <span className={`fine-pay-outstanding-card__check${isSelected ? ' is-selected' : ''}`} aria-hidden="true">
                       <span className="fine-pay-outstanding-card__check-mark" />
                     </span>

@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { AxiosError } from 'axios'
 import NavBar from '../components/NavBar'
 import finePayBg from '../assets/slider/slide-1.png'
+import { fineAPI } from '../api'
 import './Home.css'
 import './FinePay.css'
 
@@ -21,6 +23,8 @@ export default function FinePay() {
   const [licenseError, setLicenseError] = useState('')
   const [licenseWarning, setLicenseWarning] = useState('')
   const [showSuspensionWarning, setShowSuspensionWarning] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   // Common Sri Lankan license formats supported by the portal.
   const sriLankanLicensePatterns = [
@@ -65,7 +69,7 @@ export default function FinePay() {
     setLicenseError(validateLicenseNumber(licenseNumber))
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const validationError = validateLicenseNumber(licenseNumber)
 
@@ -73,26 +77,53 @@ export default function FinePay() {
       setLicenseError(validationError)
       setShowSuspensionWarning(false)
       setLicenseWarning('')
+      setApiError('')
       return
     }
 
     setLicenseError('')
+    setApiError('')
+    setLoading(true)
 
-    if (suspendedLicenseNumbers.has(licenseNumber)) {
-      setShowSuspensionWarning(true)
-      setLicenseWarning(suspensionWarningMessage)
-      navigate('/fine-pay/outstanding', {
-        state: {
-          suspensionReminder: suspensionWarningMessage,
-          licenseNumber,
-        },
-      })
-      return
+    try {
+      // Call API to fetch driver's fines
+      const response = await fineAPI.getDriverFines(licenseNumber)
+      
+      if (response.data.success && response.data.fines) {
+        // Check for suspension warning
+        if (suspendedLicenseNumbers.has(licenseNumber)) {
+          setShowSuspensionWarning(true)
+          setLicenseWarning(suspensionWarningMessage)
+        } else {
+          setShowSuspensionWarning(false)
+          setLicenseWarning('')
+        }
+
+        // Navigate with fines data
+        navigate('/fine-pay/outstanding', {
+          state: {
+            fines: response.data.fines,
+            licenseNumber,
+            suspensionReminder: suspendedLicenseNumbers.has(licenseNumber) ? suspensionWarningMessage : undefined,
+          },
+        })
+      }
+    } catch (error) {
+      setShowSuspensionWarning(false)
+      setLicenseWarning('')
+      
+      // Handle different error types
+      const axiosError = error as AxiosError<{ message?: string }>
+      if (axiosError.response?.status === 404) {
+        setApiError('No records found for this license number. Please check and try again.')
+      } else if (axiosError.response?.status === 400) {
+        setApiError(axiosError.response?.data?.message || 'Invalid license number format.')
+      } else {
+        setApiError('Failed to fetch fines. Please try again later.')
+      }
+    } finally {
+      setLoading(false)
     }
-
-    setShowSuspensionWarning(false)
-    setLicenseWarning('')
-    navigate('/fine-pay/outstanding')
   }
 
   return (
@@ -120,11 +151,17 @@ export default function FinePay() {
               aria-invalid={Boolean(licenseError)}
               aria-describedby="license-help license-error"
               className={licenseError ? 'is-invalid' : ''}
+              disabled={loading}
             />
             <small id="license-help">Use your Sri Lankan driving license number as printed on the card.</small>
             {licenseError && (
               <small id="license-error" className="fine-pay-card__error" role="alert">
                 {licenseError}
+              </small>
+            )}
+            {apiError && (
+              <small id="api-error" className="fine-pay-card__error" role="alert">
+                {apiError}
               </small>
             )}
             {showSuspensionWarning && (
@@ -138,7 +175,9 @@ export default function FinePay() {
                 </div>
               </section>
             )}
-            <button type="submit">Check Fines</button>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Checking Fines...' : 'Check Fines'}
+            </button>
           </form>
         </section>
       </div>
