@@ -211,14 +211,14 @@ export const tipAPI = {
     axiosInstance.post('/tips/submit', payload),
 }
 
-// Fine API endpoints for driver payment portal
+// Fine API endpoints for driver payment portal (PUBLIC - NO AUTH)
 export const fineAPI = {
   getDriverFines: (licenseNo: string) =>
     axiosInstance.get<{
       success: boolean
       driver: { driver_id: string; driver_name: string; license_number: string }
       fines: any[]
-    }>(`/fines/driver/${licenseNo}`),
+    }>(`/public-fines/driver/${licenseNo}`),
 }
 
 export default axiosInstance
