@@ -12,6 +12,51 @@
   font-weight: 600;
 }
 
+.admin-dashboard__tip-badges {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-dashboard__tip-badge {
+  border: 1px solid #dbe3f2;
+  border-radius: 10px;
+  padding: 12px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-dashboard__tip-badge-label {
+  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.admin-dashboard__tip-badge strong {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.admin-dashboard__tip-badge.is-red {
+  background: #fff1f2;
+}
+
+.admin-dashboard__tip-badge.is-red strong {
+  color: #be123c;
+}
+
+.admin-dashboard__tip-badge.is-blue {
+  background: #eff6ff;
+}
+
+.admin-dashboard__tip-badge.is-blue strong {
+  color: #1d4ed8;
+}
+
 .admin-dashboard__activity-list {
   display: grid;
 }
@@ -131,6 +176,10 @@
 }
 
 @media (max-width: 760px) {
+  .admin-dashboard__tip-badges {
+    grid-template-columns: 1fr;
+  }
+
   .admin-dashboard__panel-title {
     font-size: 1.45rem;
   }

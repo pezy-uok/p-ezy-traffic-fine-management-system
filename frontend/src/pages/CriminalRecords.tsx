@@ -1,5 +1,6 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import NavBar from '../components/NavBar'
+import { tipAPI } from '../api'
 import { criminalRecords, type CriminalRecord, type RecordStatus } from '../data/criminalRecords'
 import './CriminalRecords.css'
 
@@ -31,6 +32,9 @@ const defaultTipState: TipFormState = {
 export default function CriminalRecords() {
   const [searchTerm, setSearchTerm] = useState('')
   const [tipForm, setTipForm] = useState<TipFormState>(defaultTipState)
+  const [isSubmittingTip, setIsSubmittingTip] = useState(false)
+  const [tipSuccessMessage, setTipSuccessMessage] = useState('')
+  const [tipErrorMessage, setTipErrorMessage] = useState('')
 
   const filteredRecords = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -51,11 +55,36 @@ export default function CriminalRecords() {
     }))
   }
 
-  const handleTipSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleTipSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    // Placeholder submit handler. Integrate with backend tip API when ready.
-    console.info('Secure tip submitted', tipForm)
-    setTipForm(defaultTipState)
+
+    setIsSubmittingTip(true)
+    setTipSuccessMessage('')
+    setTipErrorMessage('')
+
+    try {
+      const response = await tipAPI.submitTip({
+        title: 'Suspicious Activity Report',
+        description: tipForm.description,
+        category: 'suspicious_activity',
+        location: tipForm.location,
+        dateTime: tipForm.sightingTime,
+        isAnonymous: tipForm.anonymous,
+      })
+
+      const tipReference = response?.data?.tipReference
+      setTipSuccessMessage(
+        tipReference
+          ? `Tip submitted successfully. Reference: ${tipReference}`
+          : 'Tip submitted successfully.'
+      )
+      setTipForm(defaultTipState)
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to submit tip. Please try again.'
+      setTipErrorMessage(message)
+    } finally {
+      setIsSubmittingTip(false)
+    }
   }
 
   const handleOpenProfile = (record: CriminalRecord) => {
@@ -162,8 +191,11 @@ export default function CriminalRecords() {
             </label>
 
             <button type="submit" className="records-tip__submit">
-              Submit Secure Tip Now
+              {isSubmittingTip ? 'Submitting...' : 'Submit Secure Tip Now'}
             </button>
+
+            {tipSuccessMessage && <p>{tipSuccessMessage}</p>}
+            {tipErrorMessage && <p>{tipErrorMessage}</p>}
           </form>
         </aside>
       </div>
