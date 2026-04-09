@@ -1,6 +1,15 @@
 import { getSupabaseClient } from '../config/supabaseClient.js';
 import { getAllFinesForAdmin as getAllFinesForAdminService } from '../services/fineService.js';
 import { getAllCriminals as getAllCriminalsService } from '../services/criminalService.js';
+import {
+  getAllAuditLogs,
+  getAuditLogById,
+  getCriticalAuditLogs,
+  getFailedAuditLogs,
+  getAuditLogsByUser,
+  getAuditLogsByDriver,
+  getAuditLogsByEntity,
+} from '../services/auditLogService.js';
 import { ValidationError, ConflictError, NotFoundError } from '../utils/errors.js';
 
 const stripHtml = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
@@ -119,6 +128,7 @@ export const createNewsForAdmin = async (req, res, next) => {
       category,
       featured,
       pinned,
+      status,
       author_id: req.user?.id || null,
       published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
     };
@@ -166,6 +176,7 @@ export const updateNewsForAdmin = async (req, res, next) => {
       category,
       featured,
       pinned,
+      status,
       published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
     };
 
@@ -247,9 +258,13 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
     const supabase = getSupabaseClient();
     const now = new Date();
 
+    // ===== FETCH ALL DATA IN PARALLEL =====
     let fineRecords = [];
     let criminalRecordsList = [];
     let newsRows = [];
+    let driverRows = [];
+    let officerRows = [];
+    let appealRows = [];
 
     try {
       fineRecords = await getAllFinesForAdminService();
@@ -280,11 +295,40 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
       console.error('Failed to load admin news for dashboard stats:', error.message);
     }
 
+    try {
+      const driverResult = await supabase.from('drivers').select('*');
+      if (!driverResult.error) {
+        driverRows = driverResult.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load drivers for stats:', error.message);
+    }
+
+    try {
+      const officerResult = await supabase.from('officers').select('*');
+      if (!officerResult.error) {
+        officerRows = officerResult.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load officers for stats:', error.message);
+    }
+
+    try {
+      const appealResult = await supabase.from('appeals').select('*');
+      if (!appealResult.error) {
+        appealRows = appealResult.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load appeals for stats:', error.message);
+    }
+
+    // ===== CALCULATE TIME PERIODS =====
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7);
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
 
+    // ===== CORE METRICS =====
     const totalFines = fineRecords.length;
     const criminalRecords = criminalRecordsList.length;
     const activeCases = fineRecords.filter((fine) => fine.status !== 'paid').length;
@@ -299,6 +343,59 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
     }).length;
     const wantedCriminals = criminalRecordsList.filter((criminal) => Boolean(criminal.wanted)).length;
 
+    // ===== DRIVER STATISTICS =====
+    const totalDrivers = driverRows.length;
+    const driversWithPendingFines = new Set(
+      fineRecords
+        .filter((fine) => fine.status !== 'paid' && fine.driver_license)
+        .map((fine) => fine.driver_license)
+    ).size;
+
+    // ===== PAYMENT METRICS =====
+    const totalRevenue = fineRecords
+      .filter((fine) => fine.status === 'paid')
+      .reduce((sum, fine) => sum + (parseFloat(fine.amount) || 0), 0);
+    const paidFines = fineRecords.filter((fine) => fine.status === 'paid').length;
+    const pendingPayments = fineRecords.filter((fine) => fine.status === 'pending').length;
+    const paymentSuccessRate = totalFines > 0 ? Math.round((paidFines / totalFines) * 100) : 0;
+    const averageFineAmount = totalFines > 0 ? totalRevenue / paidFines : 0;
+
+    // ===== OFFICER PERFORMANCE =====
+    const totalOfficers = officerRows.length;
+    const finesByOfficer = {};
+    fineRecords.forEach((fine) => {
+      const officerId = fine.officer_id || 'unassigned';
+      finesByOfficer[officerId] = (finesByOfficer[officerId] || 0) + 1;
+    });
+    const topOfficerEntry = Object.entries(finesByOfficer).sort(([, a], [, b]) => b - a)[0];
+    const topOfficerFines = topOfficerEntry ? topOfficerEntry[1] : 0;
+
+    // ===== FINE STATUS BREAKDOWN =====
+    const fineStatusBreakdown = {
+      paid: paidFines,
+      pending: pendingPayments,
+      appealed: fineRecords.filter((fine) => fine.status === 'appealed').length,
+      cancelled: fineRecords.filter((fine) => fine.status === 'cancelled').length,
+      suspended: fineRecords.filter((fine) => fine.status === 'suspended').length,
+    };
+
+    // ===== APPEAL STATISTICS =====
+    const totalAppeals = appealRows.length;
+    const approvedAppeals = appealRows.filter((appeal) => appeal.status === 'approved').length;
+    const rejectedAppeals = appealRows.filter((appeal) => appeal.status === 'rejected').length;
+    const pendingAppeals = appealRows.filter((appeal) => appeal.status === 'pending').length;
+
+    // ===== RECIDIVIST ANALYSIS =====
+    const driverFineCount = {};
+    fineRecords.forEach((fine) => {
+      const license = fine.driver_license;
+      if (license) {
+        driverFineCount[license] = (driverFineCount[license] || 0) + 1;
+      }
+    });
+    const recidivistDrivers = Object.values(driverFineCount).filter((count) => count > 3).length;
+
+    // ===== DASHBOARD CARDS =====
     const cards = [
       {
         id: 'totalFines',
@@ -334,6 +431,7 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
       },
     ];
 
+    // ===== QUICK STATS =====
     const quickStats = [
       { label: 'Avg Fines/Week', value: formatCount(finesThisWeek), tone: 'blue' },
       { label: 'Pending Cases', value: formatCount(activeCases), tone: 'red' },
@@ -346,6 +444,8 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
       stats: {
         cards,
         quickStats,
+
+        // Core Summary
         summary: {
           totalFines,
           criminalRecords,
@@ -355,6 +455,49 @@ export const getDashboardStatsForAdmin = async (req, res, next) => {
           newRecords,
           wantedCriminals,
         },
+
+        // Driver Statistics
+        drivers: {
+          total: totalDrivers,
+          withPendingFines: driversWithPendingFines,
+          recidivists: recidivistDrivers,
+        },
+
+        // Payment Metrics
+        payments: {
+          totalRevenue: Math.round(totalRevenue * 100) / 100,
+          paidFines,
+          pendingPayments,
+          successRate: paymentSuccessRate,
+          averageFineAmount: Math.round(averageFineAmount * 100) / 100,
+        },
+
+        // Officer Performance
+        officers: {
+          total: totalOfficers,
+          topOfficerFines,
+          averageFinesPerOfficer: totalOfficers > 0 ? Math.round(totalFines / totalOfficers) : 0,
+        },
+
+        // Fine Analytics
+        fineStatus: fineStatusBreakdown,
+
+        // Appeal Statistics
+        appeals: {
+          total: totalAppeals,
+          approved: approvedAppeals,
+          rejected: rejectedAppeals,
+          pending: pendingAppeals,
+          approvalRate: totalAppeals > 0 ? Math.round((approvedAppeals / totalAppeals) * 100) : 0,
+        },
+
+        // System Health
+        system: {
+          dataRecords: totalFines + criminalRecords,
+          pendingActions: activeCases + pendingAppeals,
+          systemHealth: 'operational',
+        },
+
         generatedAt: now.toISOString(),
       },
     });
@@ -883,6 +1026,181 @@ export const hardDeleteCriminalAdmin = async (req, res, next) => {
       criminal_id: id,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * AUDIT LOG MANAGEMENT - READONLY
+ * Admins can view audit logs to track system activity and changes
+ */
+
+/**
+ * Get all audit logs with optional filtering and pagination
+ * GET /api/admin/audit-logs
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters:
+ *   - limit (default: 50, max: 500)
+ *   - offset (default: 0)
+ *   - userId, action, entityType, severity, status, licenseNumber (optional filters)
+ *   - startDate, endDate (ISO format for date range)
+ *   - sortBy (default: 'timestamp')
+ *   - sortOrder ('asc' or 'desc', default: 'desc')
+ * Returns: { success, auditLogs: Array, total, limit, offset }
+ */
+export const getAuditLogsForAdmin = async (req, res, next) => {
+  try {
+    const result = await getAllAuditLogs(req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get a single audit log entry by ID
+ * GET /api/admin/audit-logs/:id
+ * Protected: requires authenticate + authorize('admin')
+ * Returns: { success, auditLog: Object }
+ */
+export const getAuditLogByIdForAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Audit log ID is required',
+      });
+    }
+
+    const auditLog = await getAuditLogById(id);
+
+    return res.status(200).json({
+      success: true,
+      auditLog,
+    });
+  } catch (error) {
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get audit logs for a specific user
+ * GET /api/admin/audit-logs/user/:userId
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters: limit, offset, sortBy, sortOrder
+ * Returns: { success, auditLogs: Array, total }
+ */
+export const getAuditLogsByUserForAdmin = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    const result = await getAuditLogsByUser(userId, req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get critical severity audit logs
+ * GET /api/admin/audit-logs/critical
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters: limit, offset, startDate, endDate
+ * Returns: { success, auditLogs: Array, total }
+ */
+export const getCriticalAuditLogsForAdmin = async (req, res, next) => {
+  try {
+    const result = await getCriticalAuditLogs(req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Get failed action audit logs
+ * GET /api/admin/audit-logs/failed
+ * Protected: requires authenticate + authorize('admin')
+ * Query Parameters: limit, offset, startDate, endDate
+ * Returns: { success, auditLogs: Array, total }
+ */
+export const getFailedAuditLogsForAdmin = async (req, res, next) => {
+  try {
+    const result = await getFailedAuditLogs(req.query);
+
+    return res.status(200).json({
+      success: true,
+      auditLogs: result.logs,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     next(error);
   }
 };

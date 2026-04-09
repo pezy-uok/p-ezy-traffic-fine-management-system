@@ -17,6 +17,11 @@ import {
 	restoreCriminalAdmin,
 	updateCriminalAdmin,
 	updateNewsForAdmin,
+	getAuditLogsForAdmin,
+	getAuditLogByIdForAdmin,
+	getAuditLogsByUserForAdmin,
+	getCriticalAuditLogsForAdmin,
+	getFailedAuditLogsForAdmin,
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -39,5 +44,12 @@ router.post('/news', createNewsForAdmin);
 router.put('/news/:newsId', updateNewsForAdmin);
 router.delete('/news/:newsId', deleteNewsForAdmin);
 router.get('/stats', getDashboardStatsForAdmin);
+
+// Audit logs endpoints (read-only)
+router.get('/audit-logs/user/:userId', getAuditLogsByUserForAdmin);
+router.get('/audit-logs/critical', getCriticalAuditLogsForAdmin);
+router.get('/audit-logs/failed', getFailedAuditLogsForAdmin);
+router.get('/audit-logs/:id', getAuditLogByIdForAdmin);
+router.get('/audit-logs', getAuditLogsForAdmin);
 
 export default router;

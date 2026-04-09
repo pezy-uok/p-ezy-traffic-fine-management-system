@@ -12,6 +12,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
+// Public fine endpoints
 router.post('/', createFine);
 router.get('/outdated', getOutdatedFines);
 router.get('/driver/:licenseNo', getFinesByLicense);
