@@ -1,11 +1,22 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import Swal from 'sweetalert2'
 import NavBar from '../components/NavBar'
-import { tipAPI } from '../api'
-import { criminalRecords, type CriminalRecord, type RecordStatus } from '../data/criminalRecords'
+import { tipAPI, criminalAPI } from '../api'
 import './CriminalRecords.css'
+
+type RecordStatus = 'wanted' | 'arrested' | 'unidentified'
+
+interface CriminalCard {
+  id: string
+  name: string
+  alias: string
+  status: RecordStatus
+  badgeLabel: string
+  photoUrl: string | null
+  dangerLevel: string | null
+}
 
 interface TipFormState {
   title: string
@@ -16,6 +27,7 @@ interface TipFormState {
   contactEmail: string
   anonymous: boolean
 }
+
 const statusToVariant: Record<RecordStatus, 'danger' | 'info' | 'warning'> = {
   wanted: 'danger',
   arrested: 'info',
@@ -38,21 +50,48 @@ const defaultTipState: TipFormState = {
   anonymous: true,
 }
 
+function mapToStatus(criminal: { status: string; wanted: boolean }): RecordStatus {
+  if (criminal.wanted) return 'wanted'
+  if (criminal.status === 'arrested') return 'arrested'
+  return 'unidentified'
+}
+
 export default function CriminalRecords() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [criminals, setCriminals] = useState<CriminalCard[]>([])
+  const [loading, setLoading] = useState(true)
   const [tipForm, setTipForm] = useState<TipFormState>(defaultTipState)
   const [submitting, setSubmitting] = useState(false)
 
-  const filteredRecords = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return criminalRecords
-    }
+  useEffect(() => {
+    criminalAPI.getAll({ limit: 100 })
+      .then(res => {
+        const data = res.data.criminals ?? []
+        setCriminals(data.map((c: any) => {
+          const status = mapToStatus(c)
+          return {
+            id: c.id,
+            name: `${c.firstName} ${c.lastName}`.trim(),
+            alias: c.knownAliases?.[0] ?? `${c.lastName?.toUpperCase()}`,
+            status,
+            badgeLabel: status.toUpperCase(),
+            photoUrl: c.photoUrl ?? null,
+            dangerLevel: c.dangerLevel ?? null,
+          }
+        }))
+      })
+      .catch(() => {
+        // silently fail — show empty state
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
-    return criminalRecords.filter(card => {
-      const target = `${card.name} ${card.alias} ${card.summary} ${card.crime}`.toLowerCase()
-      return target.includes(searchTerm.trim().toLowerCase())
-    })
-  }, [searchTerm])
+  const filteredRecords = useMemo(() => {
+    if (!searchTerm.trim()) return criminals
+    return criminals.filter(card =>
+      card.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
+    )
+  }, [searchTerm, criminals])
 
   const handleTipFieldChange = (field: keyof TipFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = field === 'anonymous' ? (event.target as HTMLInputElement).checked : event.target.value
@@ -94,8 +133,8 @@ export default function CriminalRecords() {
     }
   }
 
-  const handleOpenProfile = (record: CriminalRecord) => {
-    const detailUrl = new URL(`/criminal-records/${record.id}`, window.location.origin)
+  const handleOpenProfile = (id: string) => {
+    const detailUrl = new URL(`/criminal-records/${id}`, window.location.origin)
     window.open(detailUrl.toString(), '_blank', 'noopener,noreferrer')
   }
 
@@ -122,29 +161,34 @@ export default function CriminalRecords() {
 
       <div className="records__content">
         <div className="records__grid" aria-live="polite">
-          {filteredRecords.map(card => (
+          {loading && <p style={{ color: '#fff', gridColumn: '1/-1' }}>Loading records...</p>}
+          {!loading && filteredRecords.map(card => (
             <article key={card.id} className={`records-card ${statusToCardClass[card.status]}`}>
               <div className="records-card__badge-wrap">
                 <span className={`records-card__badge is-${statusToVariant[card.status]}`}>{card.badgeLabel}</span>
               </div>
               <div className="records-card__avatar">
-                <img src={card.photoUrl} alt={`Portrait of ${card.name}`} loading="lazy" />
+                {card.photoUrl
+                  ? <img src={card.photoUrl} alt={`Portrait of ${card.name}`} loading="lazy" />
+                  : <div className="records-card__avatar-placeholder">{card.name.charAt(0)}</div>
+                }
               </div>
               <div className="records-card__body">
                 <p className="records-card__name">{card.name}</p>
                 <p className="records-card__alias">{card.alias}</p>
-                <p className="records-card__crime">{card.crime}</p>
-                <p className="records-card__summary">{card.summary}</p>
-                <button type="button" className="records-card__action" onClick={() => handleOpenProfile(card)}>
+                {card.dangerLevel && <p className="records-card__crime">Danger: {card.dangerLevel}</p>}
+                <button type="button" className="records-card__action" onClick={() => handleOpenProfile(card.id)}>
                   View Details
                 </button>
               </div>
             </article>
           ))}
-          {filteredRecords.length === 0 && (
+          {!loading && filteredRecords.length === 0 && (
             <div className="records__empty">
-              <p>No records found for "{searchTerm}".</p>
-              <p>Please refine your search or submit a secure tip below.</p>
+              {searchTerm
+                ? <p>No records found for "{searchTerm}".</p>
+                : <p>No criminal records available.</p>
+              }
             </div>
           )}
         </div>
