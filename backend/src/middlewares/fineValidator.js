@@ -44,10 +44,10 @@ export const validateCreateFine = [
     .trim()
     .notEmpty()
     .withMessage('License number is required')
-    .isLength({ min: 3, max: 20 })
-    .withMessage('License number must be between 3-20 characters')
-    .matches(/^[A-Z0-9\-]+$/i)
-    .withMessage('License number must contain only alphanumeric characters and hyphens'),
+    .isLength({ min: 8, max: 8 })
+    .withMessage('License number must be exactly 8 characters')
+    .matches(/^[A-Z][A-Z0-9]{7}$/)
+    .withMessage('License number must start with a capital English letter followed by 7 alphanumeric characters (e.g., A1234567)'),
 
   // Validate amount
   body('amount')
