@@ -172,11 +172,42 @@ export const adminAPI = {
   getAllNews: () => axiosInstance.get('/admin/news'),
 
   getStats: () => axiosInstance.get<{ success: boolean; stats: AdminDashboardStats }>('/admin/stats'),
+
+  getAllTips: (params?: {
+    limit?: number
+    offset?: number
+    status?: string | string[]
+    category?: string | string[]
+    assignedTo?: string
+    search?: string
+  }) => axiosInstance.get('/admin/tips', { params }),
+
+  getTipById: (tipId: string) => axiosInstance.get(`/admin/tips/${tipId}`),
+
+  assignTipToOfficer: (tipId: string, payload: { assignedOfficerId: string; assignmentNotes?: string }) =>
+    axiosInstance.patch(`/admin/tips/${tipId}/assign`, payload),
+
+  updateTipStatus: (tipId: string, payload: { newStatus: 'submitted' | 'under_review' | 'resolved' | 'closed' | 'archived'; notes?: string }) =>
+    axiosInstance.patch(`/admin/tips/${tipId}/status`, payload),
 }
 
 export const newsAPI = {
   getPublicNews: (params?: { limit?: number; offset?: number; category?: string; search?: string }) =>
     axiosInstance.get('/news', { params }),
+}
+
+export const tipAPI = {
+  submitTip: (payload: {
+    title: string
+    description: string
+    category: string
+    location: string
+    dateTime: string
+    contactEmail?: string
+    isAnonymous?: boolean
+  }) => axiosInstance.post('/tips/submit', payload),
+
+  getTipStatus: (tipReference: string) => axiosInstance.get(`/tips/${tipReference}/status`),
 }
 
 export default axiosInstance

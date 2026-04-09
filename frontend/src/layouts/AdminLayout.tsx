@@ -62,6 +62,15 @@ const navItems: AdminNavItem[] = [
       </svg>
     ),
   },
+  {
+    label: 'Tips',
+    to: '/admin/tips',
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 2c-4.42 0-8 3.58-8 8 0 2.97 1.62 5.56 4.03 6.95L8 21h8l-.03-4.05A7.98 7.98 0 0 0 20 10c0-4.42-3.58-8-8-8Zm-3 9a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor" />
+      </svg>
+    ),
+  },
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

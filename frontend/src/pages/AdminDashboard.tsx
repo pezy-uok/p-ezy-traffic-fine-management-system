@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { adminAPI } from '@/api'
 import type { AdminDashboardStats } from '@/types'
 import AdminMainContent from '../layouts/AdminMainContent'
@@ -76,6 +77,10 @@ export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashb
   const [stats, setStats] = useState<AdminDashboardStats | null>(null)
   const [isStatsLoading, setIsStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState<string | null>(null)
+  const [tipNotificationCounts, setTipNotificationCounts] = useState({
+    unassigned: 0,
+    newlySubmitted: 0,
+  })
 
   useEffect(() => {
     let isMounted = true
@@ -85,13 +90,25 @@ export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashb
         setIsStatsLoading(true)
         setStatsError(null)
 
-        const response = await adminAPI.getStats()
+        const [statsResponse, unassignedTipsResponse, submittedTipsResponse] = await Promise.all([
+          adminAPI.getStats(),
+          adminAPI.getAllTips({ limit: 1, offset: 0, assignedTo: 'unassigned' }),
+          adminAPI.getAllTips({ limit: 1, offset: 0, status: 'submitted' }),
+        ])
 
         if (!isMounted) {
           return
         }
 
-        setStats(response.data.stats)
+        setStats(statsResponse.data.stats)
+
+        const unassignedTotal = (unassignedTipsResponse.data as any)?.pagination?.total || 0
+        const submittedTotal = (submittedTipsResponse.data as any)?.pagination?.total || 0
+
+        setTipNotificationCounts({
+          unassigned: unassignedTotal,
+          newlySubmitted: submittedTotal,
+        })
       } catch (error) {
         if (!isMounted) {
           return
@@ -116,6 +133,16 @@ export default function AdminDashboard({ sectionName = 'Dashboard' }: AdminDashb
   const topSection = (
     <div>
       {statsError ? <p className="admin-dashboard__error">{statsError}</p> : null}
+      <div className="admin-dashboard__tip-badges" aria-label="Tip notifications">
+        <Link to="/admin/tips" className="admin-dashboard__tip-badge is-red">
+          <span className="admin-dashboard__tip-badge-label">Unassigned Tips</span>
+          <strong>{tipNotificationCounts.unassigned}</strong>
+        </Link>
+        <Link to="/admin/tips" className="admin-dashboard__tip-badge is-blue">
+          <span className="admin-dashboard__tip-badge-label">Newly Submitted Tips</span>
+          <strong>{tipNotificationCounts.newlySubmitted}</strong>
+        </Link>
+      </div>
       <AdminStatCards cards={stats?.cards} isLoading={isStatsLoading} />
     </div>
   )
