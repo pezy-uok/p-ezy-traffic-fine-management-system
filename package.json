@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "express-validator": "^7.3.2"
+    "express-validator": "^7.3.2",
+    "node-cron": "^4.2.1"
   }
 }
