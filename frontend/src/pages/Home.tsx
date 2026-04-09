@@ -8,6 +8,7 @@ import serviceBg from '../assets/service-bg.jpg'
 import policeLogo from '../assets/plogo.png'
 import igpImage from '../assets/igp.png'
 import NavBar from '../components/NavBar'
+import { newsAPI } from '../api'
 import './Home.css'
 
 const heroSlides = [
@@ -48,8 +49,44 @@ const servicesData = [
   },
 ]
 
+type HomeNewsArticle = {
+  id: string
+  title: string
+  summary: string
+  category: string
+  publishedAt: string | null
+  author: string
+  featured: boolean
+  pinned: boolean
+}
+
+type PublicNewsResponse = {
+  success: boolean
+  news: HomeNewsArticle[]
+  total: number
+  limit: number
+  offset: number
+}
+
+const formatNewsDate = (value: string | null) => {
+  if (!value) return 'Recent update'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Recent update'
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [newsSlides, setNewsSlides] = useState<HomeNewsArticle[]>([])
+  const [activeNewsIndex, setActiveNewsIndex] = useState(0)
+  const [isNewsLoading, setIsNewsLoading] = useState(true)
+  const [newsError, setNewsError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -62,12 +99,78 @@ export default function Home() {
     }
   }, [])
 
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchNews = async () => {
+      try {
+        setIsNewsLoading(true)
+        setNewsError('')
+
+        const response = await newsAPI.getPublicNews({ limit: 6 })
+        const payload = response.data as PublicNewsResponse
+
+        if (!isMounted) return
+
+        const orderedNews = [...(payload.news || [])].sort((left, right) => {
+          const leftPriority = (left.featured ? 2 : 0) + (left.pinned ? 1 : 0)
+          const rightPriority = (right.featured ? 2 : 0) + (right.pinned ? 1 : 0)
+
+          if (rightPriority !== leftPriority) {
+            return rightPriority - leftPriority
+          }
+
+          return new Date(right.publishedAt || '').getTime() - new Date(left.publishedAt || '').getTime()
+        })
+
+        setNewsSlides(orderedNews)
+        setActiveNewsIndex(0)
+      } catch (error) {
+        if (!isMounted) return
+
+        console.error('Failed to load news for home page:', error)
+        setNewsError('Unable to load the latest news right now.')
+        setNewsSlides([])
+      } finally {
+        if (isMounted) {
+          setIsNewsLoading(false)
+        }
+      }
+    }
+
+    void fetchNews()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (newsSlides.length < 2) return undefined
+
+    const timer = window.setInterval(() => {
+      setActiveNewsIndex(previous => (previous + 1) % newsSlides.length)
+    }, 6000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [newsSlides.length])
+
   const goToPrevious = () => {
     setActiveIndex(previous => (previous - 1 + heroSlides.length) % heroSlides.length)
   }
 
   const goToNext = () => {
     setActiveIndex(previous => (previous + 1) % heroSlides.length)
+  }
+
+  const goToPreviousNews = () => {
+    setActiveNewsIndex(previous => (previous - 1 + newsSlides.length) % newsSlides.length)
+  }
+
+  const goToNextNews = () => {
+    setActiveNewsIndex(previous => (previous + 1) % newsSlides.length)
   }
 
   return (
@@ -141,6 +244,137 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* News Slider Section */}
+      <div className="home-police__news-wrapper">
+        <div className="home-police__container home-police__news-section">
+          <div className="home-police__section-head">
+            <div>
+              <p className="home-police__section-kicker">Public News</p>
+              <h2 className="home-police__section-title">Latest updates from the force</h2>
+              <p className="home-police__section-subtitle home-police__section-subtitle--news">
+                Highlights, advisories, and community updates presented in a rotating news slider.
+              </p>
+            </div>
+          </div>
+
+          <div className="home-police__news-slider" aria-label="Latest news carousel">
+            {!isNewsLoading && newsSlides.length > 0 ? (
+              <div className="home-police__news-ledger">
+                <div className="home-police__news-live">
+                  <span className="home-police__news-live-dot" />
+                  Live bulletin
+                </div>
+                <span className="home-police__news-ledger-count">
+                  {String(activeNewsIndex + 1).padStart(2, '0')} / {String(newsSlides.length).padStart(2, '0')}
+                </span>
+              </div>
+            ) : null}
+
+            {isNewsLoading ? (
+              <article className="home-police__news-card home-police__news-card--loading" aria-live="polite">
+                <span className="home-police__news-pill">Loading</span>
+                <h3 className="home-police__news-title">Fetching the latest public updates</h3>
+                <p className="home-police__news-summary">Please wait while we load the newest news from the public feed.</p>
+              </article>
+            ) : newsSlides.length > 0 ? (
+              <>
+                {newsSlides.length > 1 ? (
+                  <button
+                    type="button"
+                    className="home-police__news-arrow is-left"
+                    onClick={goToPreviousNews}
+                    aria-label="Previous news item"
+                  >
+                    &#8249;
+                  </button>
+                ) : null}
+
+                <div className="home-police__news-viewport">
+                  <div
+                    className="home-police__news-track"
+                    style={{ transform: `translateX(-${activeNewsIndex * 100}%)` }}
+                  >
+                    {newsSlides.map((article, index) => (
+                      <article key={article.id} className="home-police__news-card">
+                        <div className="home-police__news-card-shell">
+                          <div className="home-police__news-card-copy">
+                            <div className="home-police__news-pill-row">
+                              <span className="home-police__news-pill">{article.category}</span>
+                              {article.featured ? <span className="home-police__news-pill home-police__news-pill--accent">Featured</span> : null}
+                              {article.pinned ? <span className="home-police__news-pill home-police__news-pill--muted">Pinned</span> : null}
+                            </div>
+
+                            <h3 className="home-police__news-title">{article.title}</h3>
+
+                            <p className="home-police__news-summary">
+                              {article.summary || 'Stay tuned for the latest public announcement and guidance.'}
+                            </p>
+                          </div>
+
+                          <aside className="home-police__news-rail" aria-label="News metadata">
+                            <span className="home-police__news-rail-label">Bulletin</span>
+                            <strong className="home-police__news-rail-value">{String(index + 1).padStart(2, '0')}</strong>
+                            <div className="home-police__news-rail-list">
+                              <div>
+                                <span>Date</span>
+                                <strong>{formatNewsDate(article.publishedAt)}</strong>
+                              </div>
+                              <div>
+                                <span>Source</span>
+                                <strong>{article.author}</strong>
+                              </div>
+                              <div>
+                                <span>Status</span>
+                                <strong>{article.featured ? 'Featured' : article.pinned ? 'Pinned' : 'Update'}</strong>
+                              </div>
+                            </div>
+                          </aside>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                {newsSlides.length > 1 ? (
+                  <button
+                    type="button"
+                    className="home-police__news-arrow is-right"
+                    onClick={goToNextNews}
+                    aria-label="Next news item"
+                  >
+                    &#8250;
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <article className="home-police__news-card home-police__news-card--empty" aria-live="polite">
+                <span className="home-police__news-pill home-police__news-pill--muted">No updates</span>
+                <h3 className="home-police__news-title">News will appear here once published</h3>
+                <p className="home-police__news-summary">
+                  {newsError || 'The public news feed is currently empty. Check back later for announcements.'}
+                </p>
+              </article>
+            )}
+          </div>
+
+          {!isNewsLoading && newsSlides.length > 1 ? (
+            <div className="home-police__news-dots" role="tablist" aria-label="News slide selector">
+              {newsSlides.map((article, index) => (
+                <button
+                  key={article.id}
+                  type="button"
+                  className={`home-police__news-dot${index === activeNewsIndex ? ' is-active' : ''}`}
+                  onClick={() => setActiveNewsIndex(index)}
+                  aria-label={`Show news item ${index + 1}`}
+                  aria-selected={index === activeNewsIndex}
+                  role="tab"
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 
