@@ -1,20 +1,30 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
+import Swal from 'sweetalert2'
 import pLogo from '../assets/plogo.png'
+import { tipAPI } from '../api'
 import { findCriminalRecord } from '../data/criminalRecords'
 import './CriminalRecordProfile.css'
 
 interface TipFormState {
+  title: string
   location: string
-  sightingTime: string
+  sightingTime: Date | null
   description: string
+  category: string
+  contactEmail: string
   anonymous: boolean
 }
 
 const defaultTipState: TipFormState = {
+  title: '',
   location: '',
-  sightingTime: '',
+  sightingTime: null,
   description: '',
+  category: '',
+  contactEmail: '',
   anonymous: true,
 }
 
@@ -25,8 +35,9 @@ export default function CriminalRecordProfile() {
   const navigate = useNavigate()
   const record = recordId ? findCriminalRecord(recordId) : undefined
   const [tipForm, setTipForm] = useState<TipFormState>(defaultTipState)
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleTipFieldChange = (field: keyof TipFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleTipFieldChange = (field: keyof TipFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = field === 'anonymous' ? (event.target as HTMLInputElement).checked : event.target.value
     setTipForm(previous => ({
       ...previous,
@@ -34,10 +45,36 @@ export default function CriminalRecordProfile() {
     }))
   }
 
-  const handleTipSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleTipSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.info('Secure tip submitted for record', record?.id, tipForm)
-    setTipForm(defaultTipState)
+    setSubmitting(true)
+    try {
+      await tipAPI.submit({
+        title: tipForm.title,
+        description: tipForm.description,
+        category: tipForm.category,
+        location: tipForm.location,
+        dateTime: tipForm.sightingTime ? tipForm.sightingTime.toISOString() : new Date().toISOString(),
+        contactEmail: tipForm.anonymous ? undefined : tipForm.contactEmail || undefined,
+        isAnonymous: tipForm.anonymous,
+      })
+      setTipForm(defaultTipState)
+      await Swal.fire({
+        icon: 'success',
+        title: 'Tip Submitted',
+        text: 'Your secure tip has been received. Thank you for helping the community.',
+        confirmButtonColor: '#e84393',
+      })
+    } catch {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Submission Failed',
+        text: 'Unable to submit your tip. Please try again later.',
+        confirmButtonColor: '#e84393',
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleGoBack = () => {
@@ -145,6 +182,39 @@ export default function CriminalRecordProfile() {
 
                 <form className="record-profile__form" onSubmit={handleTipSubmit}>
                   <label>
+                    Title
+                    <input
+                      type="text"
+                      value={tipForm.title}
+                      onChange={handleTipFieldChange('title')}
+                      placeholder="Brief title of your tip"
+                      maxLength={255}
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Category
+                    <select
+                      value={tipForm.category}
+                      onChange={handleTipFieldChange('category')}
+                      required
+                    >
+                      <option value="" disabled>Select a category</option>
+                      <option value="suspicious_activity">Suspicious Activity</option>
+                      <option value="wanted_person">Wanted Person Sighting</option>
+                      <option value="crime_report">Crime Report</option>
+                      <option value="theft">Theft</option>
+                      <option value="violence">Violence</option>
+                      <option value="drug_related">Drug Related</option>
+                      <option value="fraud">Fraud</option>
+                      <option value="traffic_violation">Traffic Violation</option>
+                      <option value="missing_person">Missing Person</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+
+                  <label>
                     Location Found
                     <input
                       type="text"
@@ -155,15 +225,22 @@ export default function CriminalRecordProfile() {
                     />
                   </label>
 
-                  <label>
-                    Time of Sighting
-                    <input
-                      type="datetime-local"
-                      value={tipForm.sightingTime}
-                      onChange={handleTipFieldChange('sightingTime')}
+                  <div className="record-profile__datepicker-field">
+                    <span>Date &amp; Time of Sighting</span>
+                    <DatePicker
+                      selected={tipForm.sightingTime}
+                      onChange={(date: Date | null) => setTipForm(prev => ({ ...prev, sightingTime: date }))}
+                      showTimeSelect
+                      timeFormat="HH:mm"
+                      timeIntervals={15}
+                      dateFormat="MMMM d, yyyy h:mm aa"
+                      placeholderText="Select date and time"
+                      maxDate={new Date()}
                       required
+                      wrapperClassName="record-profile__datepicker-wrapper"
+                      className="record-profile__datepicker-input"
                     />
-                  </label>
+                  </div>
 
                   <label>
                     Detailed Description
@@ -172,7 +249,7 @@ export default function CriminalRecordProfile() {
                       value={tipForm.description}
                       onChange={handleTipFieldChange('description')}
                       placeholder="What were they wearing? Which direction were they heading?"
-                      minLength={12}
+                      minLength={20}
                       required
                     />
                   </label>
@@ -182,7 +259,21 @@ export default function CriminalRecordProfile() {
                     Submit Anonymously
                   </label>
 
-                  <button type="submit">Submit Secure Tip Now</button>
+                  {!tipForm.anonymous && (
+                    <label>
+                      Contact Email
+                      <input
+                        type="email"
+                        value={tipForm.contactEmail}
+                        onChange={handleTipFieldChange('contactEmail')}
+                        placeholder="your@email.com"
+                      />
+                    </label>
+                  )}
+
+                  <button type="submit" disabled={submitting}>
+                    {submitting ? 'Submitting...' : 'Submit Secure Tip Now'}
+                  </button>
                 </form>
               </section>
             </div>
