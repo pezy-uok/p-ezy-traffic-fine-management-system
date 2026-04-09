@@ -56,12 +56,7 @@ const libraryMenu: SubMenuItem[] = [
   },
 ]
 
-const surveyMenu: SubMenuItem[] = [
-  {
-    label: 'Inspector General of Police',
-    path: '/igp-profile',
-  },
-]
+const surveyMenu: SubMenuItem[] = []
 
 const primaryMenu: PrimaryMenuItem[] = [
   { label: 'Home', path: '/' },

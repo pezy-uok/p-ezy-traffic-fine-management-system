@@ -4,6 +4,14 @@ import { authorize } from '../middlewares/authorize.js';
 import adminFineRoutes from './adminFineRoutes.js';
 import adminDriverRoutes from './adminDriverRoutes.js';
 import adminOfficerRoutes from './adminOfficerRoutes.js';
+import {
+	getAllTipsAdmin,
+	getTipByIdAdmin,
+	assignTip,
+	updateTipStatus,
+	updateTipCategory,
+	deleteTip,
+} from '../controllers/tipController.js';
 import { getAllCriminalsForAdmin } from '../controllers/criminalController.js';
 import {
 	createCriminalAdmin,
@@ -44,6 +52,14 @@ router.post('/news', createNewsForAdmin);
 router.put('/news/:newsId', updateNewsForAdmin);
 router.delete('/news/:newsId', deleteNewsForAdmin);
 router.get('/stats', getDashboardStatsForAdmin);
+
+// Tip management endpoints
+router.get('/tips', getAllTipsAdmin);
+router.get('/tips/:id', getTipByIdAdmin);
+router.patch('/tips/:id/assign', assignTip);
+router.patch('/tips/:id/status', updateTipStatus);
+router.patch('/tips/:id/category', updateTipCategory);
+router.delete('/tips/:id', deleteTip);
 
 // Audit logs endpoints (read-only)
 router.get('/audit-logs/user/:userId', getAuditLogsByUserForAdmin);

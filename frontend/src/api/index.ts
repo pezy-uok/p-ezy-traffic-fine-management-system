@@ -172,6 +172,23 @@ export const adminAPI = {
   getAllNews: () => axiosInstance.get('/admin/news'),
 
   getStats: () => axiosInstance.get<{ success: boolean; stats: AdminDashboardStats }>('/admin/stats'),
+
+  getAllTips: (params?: {
+    limit?: number
+    offset?: number
+    status?: string | string[]
+    category?: string | string[]
+    assignedTo?: string
+    search?: string
+  }) => axiosInstance.get('/admin/tips', { params }),
+
+  getTipById: (tipId: string) => axiosInstance.get(`/admin/tips/${tipId}`),
+
+  assignTipToOfficer: (tipId: string, payload: { assignedOfficerId: string; assignmentNotes?: string }) =>
+    axiosInstance.patch(`/admin/tips/${tipId}/assign`, payload),
+
+  updateTipStatus: (tipId: string, payload: { newStatus: 'submitted' | 'under_review' | 'resolved' | 'closed' | 'archived'; notes?: string }) =>
+    axiosInstance.patch(`/admin/tips/${tipId}/status`, payload),
 }
 
 export const newsAPI = {

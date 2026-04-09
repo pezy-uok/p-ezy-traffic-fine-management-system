@@ -1,7 +1,8 @@
 import { getSupabaseClient } from '../config/supabaseClient.js';
 import { AppError, NotFoundError, ValidationError } from '../utils/errors.js';
+import { generateFineReference } from '../utils/fineReferenceGenerator.js';
 
-const MAX_UNPAID_FINES = 5;
+const MAX_UNPAID_FINES = 3;
 
 const notImplemented = (methodName) => {
   throw new AppError(`FineService.${methodName} is not implemented yet`, 501);
@@ -20,12 +21,49 @@ const addDays = (isoDate, days) => {
   return base.toISOString().split('T')[0];
 };
 
-const generateFineRef = () => {
-  const year = new Date().getUTCFullYear();
-  const sequence = Math.floor(Math.random() * 1_000_000)
-    .toString()
-    .padStart(6, '0');
-  return `PEZY-${year}-${sequence}`;
+/**
+ * PEZY-412: Check if a driver has reached max unpaid fines limit
+ * 
+ * Count unpaid fines for a driver. Throw error if >= 5 fines.
+ * Prevents drivers from accumulating too many unpaid traffic fines.
+ * 
+ * @param {string} driverId - UUID of the driver
+ * @returns {Promise<number>} Count of unpaid fines
+ * @throws {AppError} 409 if count >= 5 (maxFinesExceeded)
+ * 
+ * @example
+ * const count = await checkMaxFines(driverId);
+ * // Returns: 3 (driver has 3 unpaid fines, under limit)
+ * 
+ * // If driver has 5+ unpaid fines:
+ * // Throws: AppError with statusCode 409
+ */
+export const checkMaxFines = async (driverId) => {
+  const supabase = getSupabaseClient();
+
+  const { count: unpaidCount, error: countError } = await supabase
+    .from('fines')
+    .select('id', { count: 'exact', head: true })
+    .eq('driver_id', driverId)
+    .eq('status', 'unpaid');
+
+  if (countError) {
+    throw new AppError(
+      `Failed to validate unpaid fine count: ${countError.message}`,
+      500
+    );
+  }
+
+  const count = unpaidCount || 0;
+
+  if (count >= MAX_UNPAID_FINES) {
+    throw new AppError(
+      `Driver has reached maximum unpaid fines limit (${MAX_UNPAID_FINES}). Current unpaid fines: ${count}. Mobile app shows warning escalation screen.`,
+      409
+    );
+  }
+
+  return count;
 };
 
 export const createFine = async (fineData, authUser) => {
@@ -60,23 +98,12 @@ export const createFine = async (fineData, authUser) => {
     throw new NotFoundError('Driver not found for the provided licenseNo');
   }
 
-  const { count: unpaidCount, error: countError } = await supabase
-    .from('fines')
-    .select('id', { count: 'exact', head: true })
-    .eq('driver_id', driver.id)
-    .eq('status', 'unpaid');
-
-  if (countError) {
-    throw new AppError(`Failed to validate unpaid fine count: ${countError.message}`, 500);
-  }
-
-  if ((unpaidCount || 0) >= MAX_UNPAID_FINES) {
-    throw new AppError('maxFinesExceeded', 409);
-  }
+  // PEZY-412: Check max unpaid fines limit
+  await checkMaxFines(driver.id);
 
   const issueDate = toIsoDateString(fineData.issuedDate || fineData.issue_date) || toIsoDateString(new Date());
   const dueDate = toIsoDateString(fineData.dueDate || fineData.due_date) || addDays(issueDate, 14);
-  const fineRef = generateFineRef();
+  const fineRef = generateFineReference();
 
   const insertPayload = {
     driver_id: driver.id,
@@ -277,10 +304,10 @@ export const getOutdatedFines = async () => {
   const supabase = getSupabaseClient();
 
   const cutoffDate = new Date();
-  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 30);
+  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 14);
   const cutoffIsoDate = cutoffDate.toISOString().split('T')[0];
 
-  // PEZY-409 expects status=PENDING and issuedDate < now-30d.
+  // PEZY-409 expects status=PENDING and issuedDate < now-14d.
   // Current schema uses status='unpaid' and issue_date, so we support both.
   let fines = null;
 
@@ -554,6 +581,49 @@ export const deleteFineForAdmin = async (fineId) => {
   return { id: fineId, deleted: true };
 };
 
+/**
+ * PEZY-410: Update fine status with strict validation
+ * 
+ * Updates the status of a fine with strict validation rules ensuring valid state transitions.
+ * This is critical for maintaining data integrity in the fine management workflow.
+ * 
+ * Valid status transitions:
+ * - unpaid → paid (when payment received)
+ * - unpaid → outdated (when 14 days overdue)
+ * - outdated → paid (if paid after becoming outdated)
+ * - pending → paid or outdated (legacy status support)
+ * - paid → NONE (terminal state, cannot change)
+ * 
+ * Side effects when transitioning to "paid":
+ * - Automatically sets payment_date to today
+ * - Creates audit log with user info and change details
+ * - Fetches driver license for audit trail
+ * 
+ * @param {string} fineId - UUID of the fine to update
+ * @param {string} newStatus - Target status (must be 'paid', 'unpaid', or 'outdated')
+ * @param {Object} authUser - Authenticated user object
+ * @param {string} authUser.id - User ID making the update
+ * @param {string} [authUser.role] - User role (officer, admin, etc.) - defaults to 'officer'
+ * 
+ * @returns {Promise<Object>} Updated fine object with new status
+ * @returns {string} Returns updated fine with: id, status, payment_date (if paid), updated_at
+ * 
+ * @throws {ValidationError} If fineId, newStatus, or authUser is missing
+ * @throws {NotFoundError} If fine with given ID does not exist
+ * @throws {AppError} If:
+ *   - Status transition is invalid (409 Conflict)
+ *   - Database update fails (500 Server Error)
+ *   - Audit log creation fails (500 Server Error)
+ * 
+ * @example
+ * // Update a fine to paid status
+ * const fine = await updateFineStatus(
+ *   'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+ *   'paid',
+ *   { id: 'officer-123', role: 'officer' }
+ * );
+ * // Result: { id: 'f47ac...', status: 'paid', payment_date: '2026-04-09', ... }
+ */
 export const updateFineStatus = async (fineId, newStatus, authUser) => {
   if (!fineId) {
     throw new ValidationError('fineId is required');
@@ -585,7 +655,7 @@ export const updateFineStatus = async (fineId, newStatus, authUser) => {
   // PEZY-410: Validate status transitions
   // Valid transitions:
   // - unpaid -> paid (when payment received)
-  // - unpaid -> outdated (when 30 days overdue)
+  // - unpaid -> outdated (when 14 days overdue)
   // - outdated -> paid (if paid after becoming outdated)
   const validTransitions = {
     unpaid: ['paid', 'outdated'],

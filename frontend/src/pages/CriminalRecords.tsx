@@ -252,6 +252,9 @@ export default function CriminalRecords() {
             <button type="submit" className="records-tip__submit" disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit Secure Tip Now'}
             </button>
+
+            {tipSuccessMessage && <p>{tipSuccessMessage}</p>}
+            {tipErrorMessage && <p>{tipErrorMessage}</p>}
           </form>
         </aside>
       </div>

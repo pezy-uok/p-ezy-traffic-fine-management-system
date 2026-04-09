@@ -11,13 +11,16 @@ const bool _isDevelopmentMode = false;
 
 class CriminalApiService {
   final Dio _dio;
-  static const String _baseUrl = 'http://127.0.0.1:8000/api/criminals';
+  
+  // Note: When using authenticated Dio, baseUrl is set via the provider
+  // The Dio instance is configured with baseUrl: http://127.0.0.1:8000/api
+  // So relative paths will be: /criminals, /criminals/:id, etc.
 
   CriminalApiService({Dio? dio})
       : _dio = dio ??
             Dio(
               BaseOptions(
-                baseUrl: _baseUrl,
+                baseUrl: 'http://127.0.0.1:8000/api',
                 connectTimeout: const Duration(seconds: 10),
                 receiveTimeout: const Duration(seconds: 10),
                 contentType: 'application/json',
@@ -102,7 +105,7 @@ class CriminalApiService {
       debugPrint('\n═══════════════════════════════════════');
       debugPrint('🚔 FETCHING CRIMINALS');
       debugPrint('═══════════════════════════════════════');
-      debugPrint('📍 Base URL: $_baseUrl');
+      debugPrint('📍 Base URL: ${_dio.options.baseUrl}');
       debugPrint('📍 Limit: $limit, Offset: $offset');
       if (status != null) debugPrint('📍 Status Filter: $status');
       if (wanted != null) debugPrint('📍 Wanted Filter: $wanted');

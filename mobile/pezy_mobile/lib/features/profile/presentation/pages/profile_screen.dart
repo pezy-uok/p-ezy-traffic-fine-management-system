@@ -303,6 +303,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ),
                 const SizedBox(height: 20),
 
+                // Logout section
+                _buildSection(
+                  title: 'Session',
+                  icon: Icons.logout_rounded,
+                  children: [
+                    PezyButton(
+                      label: 'Logout',
+                      variant: PezyButtonVariant.filled,
+                      isFullWidth: true,
+                      backgroundColor: AppColors.error,
+                      textColor: Colors.white,
+                      onPressed: () async {
+                        // Show confirmation dialog
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              title: const Text('Logout?'),
+                              content: const Text(
+                                'You will be logged out and taken back to the login screen.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.error,
+                                  ),
+                                  child: const Text('Logout'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirmed == true && context.mounted) {
+                          // Perform logout
+                          ref.read(authProvider.notifier).logout();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
                 // Dev tools
                 if (!kIsWeb)
                   _buildSection(

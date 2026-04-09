@@ -13,7 +13,7 @@ class AppConfig {
   /// - Development: 'http://localhost:8000/api'
   /// - Staging: 'https://staging-api.pezy.com/api'
   /// - Production: 'https://api.pezy.com/api'
-  static const String apiBaseUrl = 'http://localhost:8000/api';
+  static const String apiBaseUrl = 'http://127.0.0.1:8000/api';
 
   /// API Timeout (in seconds)
   static const int apiTimeoutSeconds = 30;

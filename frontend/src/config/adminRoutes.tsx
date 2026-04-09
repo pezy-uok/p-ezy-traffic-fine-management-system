@@ -6,6 +6,7 @@ import AdminFineManagement from '../pages/AdminFineManagement'
 import AdminCriminalRecords from '../pages/AdminCriminalRecordsLive'
 import AdminNewsManagement from '../pages/AdminNewsManagement'
 import AdminUsersManagement from '../pages/AdminUsersManagement'
+import AdminTipsManagement from '../pages/AdminTipsManagement'
 import AdminAuthGuard from '../components/admin/AdminAuthGuard'
 
 export interface AdminRouteConfig {
@@ -50,5 +51,10 @@ export const adminRoutes: AdminRouteConfig[] = [
     path: '/admin/users',
     element: withAdminGuard(<AdminUsersManagement />),
     name: 'Admin Users',
+  },
+  {
+    path: '/admin/tips',
+    element: withAdminGuard(<AdminTipsManagement />),
+    name: 'Admin Tips',
   },
 ]
