@@ -19,14 +19,14 @@ type FinePayLocationState = {
   fines?: any[]
 }
 
-type FineItem = {
-  id: string
-  reason: string
-  location: string
-  issue_date: string
-  amount: number
-  status: string
-}
+// type FineItem = {
+//   id: string
+//   reason: string
+//   location: string
+//   issue_date: string
+//   amount: number
+//   status: string
+// }
 
 const formatCurrency = (value: number) => `LKR ${value.toLocaleString('en-LK')}`
 
@@ -228,7 +228,7 @@ export default function FinePayOutstanding() {
               <div className="fine-pay-outstanding-footer__section">
                 <span className="fine-pay-outstanding-footer__label">Fines Selected</span>
                 <strong className="fine-pay-outstanding-footer__count">
-                  {selectedFineIds.length} / {reminderState.fines.length}
+                  {selectedFineIds.length} / {reminderState?.fines?.length || 0}
                 </strong>
               </div>
 
