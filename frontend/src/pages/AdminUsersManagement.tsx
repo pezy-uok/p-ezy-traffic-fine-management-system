@@ -12,6 +12,8 @@ interface OfficerRecord {
   rank: string
   status: 'active' | 'inactive' | 'suspended' | string
   is_online: boolean
+  last_login: string | null
+  last_logout: string | null
 }
 
 interface OfficerFormValues {
@@ -28,6 +30,30 @@ const officerStatusLabel: Record<string, string> = {
   active: 'Active',
   inactive: 'Inactive',
   suspended: 'Suspended',
+}
+
+const toEpoch = (value: string | null | undefined) => {
+  if (!value) return null
+  const epoch = new Date(value).getTime()
+  return Number.isNaN(epoch) ? null : epoch
+}
+
+const isTimeBetweenLoginAndLogout = (
+  nowEpoch: number,
+  lastLoginRaw: string | null,
+  lastLogoutRaw: string | null,
+) => {
+  const lastLoginEpoch = toEpoch(lastLoginRaw)
+  const lastLogoutEpoch = toEpoch(lastLogoutRaw)
+
+  if (!lastLoginEpoch) return false
+
+  if (lastLogoutEpoch && lastLogoutEpoch >= lastLoginEpoch) {
+    return nowEpoch >= lastLoginEpoch && nowEpoch <= lastLogoutEpoch
+  }
+
+  // If no logout yet (or login is newer than logout), treat as active after login.
+  return nowEpoch >= lastLoginEpoch
 }
 
 const initialForm: OfficerFormValues = {
@@ -51,6 +77,7 @@ export default function AdminUsersManagement() {
   const [editingOfficerId, setEditingOfficerId] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<OfficerFormValues>(initialForm)
   const [formError, setFormError] = useState<string | null>(null)
+  const [nowEpoch, setNowEpoch] = useState(Date.now())
 
   const fetchOfficers = async () => {
     try {
@@ -69,6 +96,10 @@ export default function AdminUsersManagement() {
           rank?: string
           status?: string
           is_online?: boolean
+          last_login?: string | null
+          last_login_at?: string | null
+          last_logout?: string | null
+          last_logout_at?: string | null
         }>
       }
 
@@ -82,6 +113,8 @@ export default function AdminUsersManagement() {
         rank: officer.rank || '-',
         status: officer.status || 'active',
         is_online: Boolean(officer.is_online),
+        last_login: officer.last_login || officer.last_login_at || null,
+        last_logout: officer.last_logout || officer.last_logout_at || null,
       }))
 
       setOfficers(mapped)
@@ -95,6 +128,16 @@ export default function AdminUsersManagement() {
 
   useEffect(() => {
     fetchOfficers()
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowEpoch(Date.now())
+    }, 30000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
   }, [])
 
   const filteredOfficers = useMemo(() => {
@@ -211,7 +254,9 @@ export default function AdminUsersManagement() {
     }
   }
 
-  const onlineCount = filteredOfficers.filter((officer) => officer.is_online).length
+  const onlineCount = filteredOfficers.filter((officer) =>
+    isTimeBetweenLoginAndLogout(nowEpoch, officer.last_login, officer.last_logout),
+  ).length
 
   return (
     <section className="admin-users" aria-label="Users management page">
@@ -279,35 +324,43 @@ export default function AdminUsersManagement() {
             ) : null}
 
             {!isLoading && !loadError
-              ? filteredOfficers.map((officer) => (
-                  <tr key={officer.id}>
-                    <td>{officer.name}</td>
-                    <td>{officer.email}</td>
-                    <td>{officer.phone}</td>
-                    <td>{officer.badge_number}</td>
-                    <td>{officer.department}</td>
-                    <td>{officer.rank}</td>
-                    <td>
-                      <span className={`admin-users__pill is-${officer.status}`}>
-                        {officerStatusLabel[officer.status] || officer.status}
-                      </span>
-                    </td>
-                    <td>{officer.is_online ? 'Online' : 'Offline'}</td>
-                    <td>
-                      <div className="admin-users__actions">
-                        <button type="button" onClick={() => openEditModal(officer)}>Edit</button>
-                        <button
-                          type="button"
-                          className="is-danger"
-                          onClick={() => handleDeleteOfficer(officer)}
-                          disabled={isDeletingId === officer.id}
-                        >
-                          {isDeletingId === officer.id ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+              ? filteredOfficers.map((officer) => {
+                  const computedStatus = officer.status === 'suspended'
+                    ? 'suspended'
+                    : isTimeBetweenLoginAndLogout(nowEpoch, officer.last_login, officer.last_logout)
+                      ? 'active'
+                      : 'inactive'
+
+                  return (
+                    <tr key={officer.id}>
+                      <td>{officer.name}</td>
+                      <td>{officer.email}</td>
+                      <td>{officer.phone}</td>
+                      <td>{officer.badge_number}</td>
+                      <td>{officer.department}</td>
+                      <td>{officer.rank}</td>
+                      <td>
+                        <span className={`admin-users__pill is-${computedStatus}`}>
+                          {officerStatusLabel[computedStatus] || computedStatus}
+                        </span>
+                      </td>
+                      <td>{computedStatus === 'active' ? 'Online' : 'Offline'}</td>
+                      <td>
+                        <div className="admin-users__actions">
+                          <button type="button" onClick={() => openEditModal(officer)}>Edit</button>
+                          <button
+                            type="button"
+                            className="is-danger"
+                            onClick={() => handleDeleteOfficer(officer)}
+                            disabled={isDeletingId === officer.id}
+                          >
+                            {isDeletingId === officer.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               : null}
           </tbody>
         </table>
