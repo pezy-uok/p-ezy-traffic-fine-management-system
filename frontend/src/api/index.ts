@@ -221,4 +221,44 @@ export const fineAPI = {
     }>(`/public-fines/driver/${licenseNo}`),
 }
 
+// Payment API endpoints
+export const paymentAPI = {
+  // Initiate payment - POST to /api/payments/initiate
+  initiatePayment: (payload: { fineIds: string[]; licenseNo: string }) =>
+    axiosInstance.post<{
+      success: boolean
+      orderId: string
+      total: string
+      currency: string
+      fineCount: number
+      driver: {
+        licenseNo: string
+        name: string
+        email: string
+        phone: string
+      }
+      checkoutParams: any
+    }>('/payments/initiate', payload),
+
+  // Webhook - simulate payment gateway callback (for testing)
+  simulateWebhook: (payload: { transaction_id: string; status: 'completed' | 'failed'; hash: string }) =>
+    axiosInstance.post<{
+      success: boolean
+      message: string
+    }>('/payments/webhook', payload),
+
+  // Get payment status
+  getPaymentStatus: (orderId: string) =>
+    axiosInstance.get<{
+      success: boolean
+      data: {
+        orderId: string
+        status: string
+        amount: string
+        paymentMethod: string
+        fineIds: string[]
+      }
+    }>(`/payments/${orderId}`),
+}
+
 export default axiosInstance

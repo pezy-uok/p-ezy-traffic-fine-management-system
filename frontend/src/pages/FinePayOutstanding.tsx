@@ -12,21 +12,22 @@ type DriverInfo = {
   license_number: string
 }
 
+type FineItem = {
+  id: string
+  driver_id: string
+  amount: number
+  reason: string
+  location?: string
+  issue_date: string
+  status: string
+}
+
 type FinePayLocationState = {
   suspensionReminder?: string
   licenseNumber?: string
   driver?: DriverInfo
-  fines?: any[]
+  fines?: FineItem[]
 }
-
-// type FineItem = {
-//   id: string
-//   reason: string
-//   location: string
-//   issue_date: string
-//   amount: number
-//   status: string
-// }
 
 const formatCurrency = (value: number) => `LKR ${value.toLocaleString('en-LK')}`
 
@@ -42,22 +43,28 @@ export default function FinePayOutstanding() {
   const location = useLocation()
   const reminderState = location.state as FinePayLocationState | null
   
-  // Get driver info from location state
+  // Debug logging
+  console.log('🔍 FinePayOutstanding Component Loaded')
+  console.log('📍 Location State:', reminderState)
+  
+  // Safely extract data from location state
   const driverInfo = reminderState?.driver
   const driverName = driverInfo?.driver_name || 'Driver'
   const licenseNumber = driverInfo?.license_number || reminderState?.licenseNumber || 'N/A'
   
   // Get fines from location state or use empty array
-  const apieFines = reminderState?.fines || []
+  const allFines = useMemo(() => reminderState?.fines || [], [reminderState?.fines])
   
-  // Initialize selected fines to all by default
-  const [selectedFineIds, setSelectedFineIds] = useState<string[]>(
-    apieFines.map((fine: any) => fine.id)
-  )
+  console.log('📋 Fines Data:', { driverName, licenseNumber, finesCount: allFines.length, fines: allFines })
+  
+  const [selectedFineIds, setSelectedFineIds] = useState<string[]>(() => {
+    if (!allFines || allFines.length === 0) return []
+    return allFines.map((fine: FineItem) => fine.id)
+  })
 
   const selectedFines = useMemo(
-    () => apieFines.filter((fine: any) => selectedFineIds.includes(fine.id)),
-    [selectedFineIds, apieFines],
+    () => allFines.filter((fine: FineItem) => selectedFineIds.includes(fine.id)),
+    [selectedFineIds, allFines],
   )
 
   const totalAmount = useMemo(
@@ -76,11 +83,19 @@ export default function FinePayOutstanding() {
       return
     }
 
-    navigate('/fine-pay/success')
+    // Navigate to payment details page with order information
+    navigate('/fine-pay/payment-details', {
+      state: {
+        fineIds: selectedFineIds,
+        licenseNo: licenseNumber,
+        fines: selectedFines,
+        totalAmount,
+      },
+    })
   }
 
   // If no fines found, show empty state
-  if (apieFines.length === 0) {
+  if (allFines.length === 0) {
     return (
       <section className="home-police fine-pay-outstanding-page">
         <NavBar />
@@ -109,7 +124,11 @@ export default function FinePayOutstanding() {
                 ✓
               </span>
               <p>
-                Great news! There are no outstanding fines for this driving license. Your traffic record is clean.
+                {!reminderState ? (
+                  <>Great news! There are no outstanding fines for this driving license. Your traffic record is clean.</>
+                ) : (
+                  <>Please go back and search for a driving license number to view fines.</>
+                )}
               </p>
             </div>
 
@@ -119,7 +138,7 @@ export default function FinePayOutstanding() {
               onClick={() => navigate('/fine-pay')}
               style={{ marginTop: '2rem', width: '100%' }}
             >
-              Check Another License
+              Search Another License
             </button>
           </div>
         </div>
@@ -165,15 +184,16 @@ export default function FinePayOutstanding() {
             </div>
           </article>
 
-          <div className="fine-pay-outstanding-list__header">
+        <div className="fine-pay-outstanding-list__header">
             <h3>Outstanding Fines</h3>
-            <span>{apieFines.length} Records Found</span>
+            <span>{allFines.length} Records Found</span>
           </div>
 
           <div className="fine-pay-outstanding-list" aria-label="Outstanding fines list">
-            {apieFines.map((fine: any) => {
-              const isSelected = selectedFineIds.includes(fine.id)
-              const amount = typeof fine.amount === 'string' ? parseFloat(fine.amount) : fine.amount
+            {allFines && allFines.length > 0 ? (
+              allFines.map((fine: FineItem) => {
+                const isSelected = selectedFineIds.includes(fine.id)
+                const amount = typeof fine.amount === 'string' ? parseFloat(fine.amount) : fine.amount
 
               return (
                 <label
@@ -210,7 +230,12 @@ export default function FinePayOutstanding() {
                   </div>
                 </label>
               )
-            })}
+            })
+            ) : (
+              <div className="fine-pay-outstanding-empty" style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>No fines found. Please go back and try again.</p>
+              </div>
+            )}
           </div>
 
           <div className="fine-pay-outstanding-note" role="note">
@@ -228,7 +253,7 @@ export default function FinePayOutstanding() {
               <div className="fine-pay-outstanding-footer__section">
                 <span className="fine-pay-outstanding-footer__label">Fines Selected</span>
                 <strong className="fine-pay-outstanding-footer__count">
-                  {selectedFineIds.length} / {reminderState?.fines?.length || 0}
+                  {selectedFineIds.length} / {allFines.length}
                 </strong>
               </div>
 

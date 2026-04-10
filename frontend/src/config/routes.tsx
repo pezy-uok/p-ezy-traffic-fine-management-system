@@ -7,6 +7,7 @@ import NewsAwareness from '../pages/NewsAwareness'
 import IGPProfile from '../pages/IGPProfile'
 import FinePay from '../pages/FinePay'
 import FinePayOutstanding from '../pages/FinePayOutstanding'
+import PaymentDetails from '../pages/PaymentDetails'
 import FinePaySuccess from '../pages/FinePaySuccess'
 import FinePayFailure from '../pages/FinePayFailure'
 import CriminalRecords from '../pages/CriminalRecords'
@@ -124,6 +125,11 @@ export const routes: RouteConfig[] = [
     path: '/fine-pay/outstanding',
     element: <FinePayOutstanding />,
     name: 'Fine Pay Outstanding',
+  },
+  {
+    path: '/fine-pay/payment-details',
+    element: <PaymentDetails />,
+    name: 'Payment Details',
   },
   {
     path: '/fine-pay/success',
