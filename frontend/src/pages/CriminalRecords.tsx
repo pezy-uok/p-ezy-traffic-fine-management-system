@@ -1,11 +1,25 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import Swal from 'sweetalert2'
 import NavBar from '../components/NavBar'
 import { tipAPI } from '../api'
-import { criminalRecords, type CriminalRecord, type RecordStatus } from '../data/criminalRecords'
+import criminalService from '../services/criminalService'
+import type { Criminal } from '../types'
 import './CriminalRecords.css'
+
+type RecordStatus = 'wanted' | 'arrested' | 'unidentified'
+
+interface CriminalRecord {
+  id: string
+  badgeLabel: string
+  status: RecordStatus
+  name: string
+  alias: string
+  crime: string
+  summary: string
+  photoUrl: string
+}
 
 interface TipFormState {
   title: string
@@ -38,12 +52,69 @@ const defaultTipState: TipFormState = {
   anonymous: true,
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+const ASSET_BASE_URL = API_BASE_URL.replace(/\/api$/, '')
+const FALLBACK_PHOTO_URL = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&w=640&h=640&q=80'
+
+const buildPhotoUrl = (photoPath: string | null) => {
+  if (!photoPath) return FALLBACK_PHOTO_URL
+  if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) return photoPath
+  return `${ASSET_BASE_URL}${photoPath}`
+}
+
+const toRecordStatus = (criminal: Criminal): RecordStatus => {
+  if (criminal.wanted) return 'wanted'
+  if (criminal.status === 'deceased' || criminal.status === 'deported') return 'unidentified'
+  return 'arrested'
+}
+
+const toCriminalCard = (criminal: Criminal): CriminalRecord => {
+  const aliases = Array.isArray(criminal.known_aliases) ? criminal.known_aliases : []
+  const status = toRecordStatus(criminal)
+  const crimeFromDanger = criminal.danger_level ? `${criminal.danger_level.toUpperCase()} RISK` : 'UNDER INVESTIGATION'
+
+  return {
+    id: criminal.id,
+    badgeLabel: status === 'wanted' ? 'WANTED' : status === 'arrested' ? 'ARRESTED' : 'UNIDENTIFIED',
+    status,
+    name: `${criminal.first_name || ''} ${criminal.last_name || ''}`.trim() || 'Unknown',
+    alias: aliases.length > 0 ? aliases.join(', ') : 'N/A',
+    crime: crimeFromDanger,
+    summary: criminal.physical_description || 'No public description available.',
+    photoUrl: buildPhotoUrl(criminal.photo_path),
+  }
+}
+
 export default function CriminalRecords() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [criminalRecords, setCriminalRecords] = useState<CriminalRecord[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [tipForm, setTipForm] = useState<TipFormState>(defaultTipState)
   const [submitting, setSubmitting] = useState(false)
   const [_tipSuccessMessage, _setTipSuccessMessage] = useState('')
   const [_tipErrorMessage, _setTipErrorMessage] = useState('')
+
+  useEffect(() => {
+    const fetchCriminalRecords = async () => {
+      try {
+        setIsLoading(true)
+        setLoadError('')
+
+        const response = await criminalService.getCriminals({ limit: 100 })
+        const mapped = (response.criminals || []).map(toCriminalCard)
+        setCriminalRecords(mapped)
+      } catch (error) {
+        console.error('Failed to fetch public criminal records:', error)
+        setLoadError('Unable to load criminal records right now. Please try again later.')
+        setCriminalRecords([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void fetchCriminalRecords()
+  }, [])
 
   const filteredRecords = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -54,7 +125,7 @@ export default function CriminalRecords() {
       const target = `${card.name} ${card.alias} ${card.summary} ${card.crime}`.toLowerCase()
       return target.includes(searchTerm.trim().toLowerCase())
     })
-  }, [searchTerm])
+  }, [criminalRecords, searchTerm])
 
   const handleTipFieldChange = (field: keyof TipFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = field === 'anonymous' ? (event.target as HTMLInputElement).checked : event.target.value
@@ -124,7 +195,19 @@ export default function CriminalRecords() {
 
       <div className="records__content">
         <div className="records__grid" aria-live="polite">
-          {filteredRecords.map(card => (
+          {isLoading && (
+            <div className="records__empty">
+              <p>Loading criminal records...</p>
+            </div>
+          )}
+
+          {!isLoading && loadError && (
+            <div className="records__empty">
+              <p>{loadError}</p>
+            </div>
+          )}
+
+          {!isLoading && !loadError && filteredRecords.map(card => (
             <article key={card.id} className={`records-card ${statusToCardClass[card.status]}`}>
               <div className="records-card__badge-wrap">
                 <span className={`records-card__badge is-${statusToVariant[card.status]}`}>{card.badgeLabel}</span>
@@ -143,7 +226,7 @@ export default function CriminalRecords() {
               </div>
             </article>
           ))}
-          {filteredRecords.length === 0 && (
+          {!isLoading && !loadError && filteredRecords.length === 0 && (
             <div className="records__empty">
               <p>No records found for "{searchTerm}".</p>
               <p>Please refine your search or submit a secure tip below.</p>
