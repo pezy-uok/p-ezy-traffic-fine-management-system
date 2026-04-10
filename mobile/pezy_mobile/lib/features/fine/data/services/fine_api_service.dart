@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+import '../../domain/exceptions/max_fines_exception.dart';
 
 class DriverLookupResponse {
   final bool success;
@@ -238,13 +239,43 @@ class FineApiService {
     } on DioException catch (e) {
       debugPrint('❌ Create fine error: ${e.message}');
       debugPrint('Status Code: ${e.response?.statusCode}');
+      debugPrint('Response Headers: ${e.response?.headers}');
+      debugPrint('Response Data Type: ${e.response?.data.runtimeType}');
       debugPrint('Response: ${e.response?.data}\n');
 
-      if (e.response?.statusCode == 400) {
+      if (e.response?.statusCode == 400 || e.response?.statusCode == 409) {
         final errorData = e.response?.data;
-        if (errorData is Map && errorData.containsKey('message')) {
-          throw Exception(errorData['message']);
+        String errorMessage = '';
+        
+        debugPrint('🔍 Processing error response (status: ${e.response!.statusCode})');
+        debugPrint('   Error data is Map: ${errorData is Map}');
+        
+        if (errorData is Map) {
+          errorMessage = (errorData['message'] ?? '').toString();
+          debugPrint('   Extracted message: $errorMessage');
+          
+          // Check if max fines exceeded (case-insensitive check with multiple keywords)
+          final lowerMessage = errorMessage.toLowerCase();
+          debugPrint('   Lowercase message: $lowerMessage');
+          
+          final hasMaxKeyword = lowerMessage.contains('max') || lowerMessage.contains('maximum');
+          final hasFineKeyword = lowerMessage.contains('fine');
+          final isFineError = hasMaxKeyword && hasFineKeyword;
+          
+          debugPrint('   Keyword check: hasMax=$hasMaxKeyword, hasFine=$hasFineKeyword, combined=$isFineError');
+          
+          if (isFineError) {
+            debugPrint('🚨 MAX FINES EXCEEDED DETECTED in API: $errorMessage');
+            throw MaxFinesExceededException(errorMessage);
+          }
+          
+          if (errorMessage.isNotEmpty) {
+            throw Exception(errorMessage);
+          }
+        } else {
+          debugPrint('   Error data is NOT a Map, it is: $errorData');
         }
+        
         throw Exception('Invalid fine data. Please check your inputs.');
       } else if (e.response?.statusCode == 401) {
         throw Exception('Unauthorized. Please login again.');
@@ -257,7 +288,7 @@ class FineApiService {
       }
     } catch (e) {
       debugPrint('❌ Unexpected error: $e\n');
-      throw Exception('Unexpected error: $e');
+      rethrow;
     }
   }
 }

@@ -2,7 +2,7 @@ import { getSupabaseClient } from '../config/supabaseClient.js';
 import { AppError, NotFoundError, ValidationError } from '../utils/errors.js';
 import { generateFineReference } from '../utils/fineReferenceGenerator.js';
 
-const MAX_UNPAID_FINES = 3;
+const MAX_UNPAID_FINES = 2;
 
 const notImplemented = (methodName) => {
   throw new AppError(`FineService.${methodName} is not implemented yet`, 501);
@@ -131,13 +131,20 @@ export const createFine = async (fineData, authUser) => {
   let unpaidCount = 0;
   try {
     unpaidCount = await checkMaxFines(driver.id);
+    console.log(`   ✅ Max fines check passed. Unpaid count: ${unpaidCount}`);
   } catch (maxFinesError) {
     console.error('❌ Max Fines Check Failed:', maxFinesError.message);
-    if (maxFinesError.statusCode === 409) {
-      throw maxFinesError; // Re-throw 409 Max Fines errors
+    console.error('   Error type:', maxFinesError.constructor.name);
+    console.error('   Error statusCode:', maxFinesError.statusCode);
+    
+    // Re-throw max fines errors (status 409)
+    if (maxFinesError.statusCode === 409 || maxFinesError instanceof AppError) {
+      console.error('   ♻️ Re-throwing max fines error...');
+      throw maxFinesError;
     }
+    
     // For other errors, log but continue - might be a Supabase connectivity issue
-    console.warn('⚠️  Continuing despite max fines check failure...');
+    console.warn('⚠️  Continuing despite max fines check failure (non-409 error)...');
   }
 
   const issueDate = toIsoDateString(fineData.issuedDate || fineData.issue_date) || toIsoDateString(new Date());
