@@ -575,7 +575,13 @@ export default function AdminCriminalRecordsLive() {
                 </label>
                 <label>
                   <span>Date of Birth</span>
-                  <input type="date" value={formValues.date_of_birth} onChange={event => updateForm('date_of_birth', event.target.value)} />
+                  <input
+                    type="date"
+                    value={formValues.date_of_birth}
+                    onChange={event => updateForm('date_of_birth', event.target.value)}
+                    onFocus={event => event.currentTarget.showPicker?.()}
+                    onClick={event => event.currentTarget.showPicker?.()}
+                  />
                 </label>
                 <label>
                   <span>Gender</span>

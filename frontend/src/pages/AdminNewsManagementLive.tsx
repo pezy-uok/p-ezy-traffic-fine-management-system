@@ -220,7 +220,7 @@ export default function AdminNewsManagementLive() {
       status: article.status,
       featured: article.featured,
       pinned: article.pinned,
-        publishedAt: article.publishedAt ? article.publishedAt.slice(0, 16) : '',
+        publishedAt: article.publishedAt ? article.publishedAt.slice(0, 10) : '',
     })
     setSelectedImage(null)
     setImagePreviewUrl('')
@@ -556,7 +556,13 @@ export default function AdminNewsManagementLive() {
 
                 <label>
                   <span>Published At</span>
-                  <input type="datetime-local" value={formValues.publishedAt} onChange={event => updateForm('publishedAt', event.target.value)} />
+                  <input
+                    type="date"
+                    value={formValues.publishedAt}
+                    onChange={event => updateForm('publishedAt', event.target.value)}
+                    onFocus={event => event.currentTarget.showPicker?.()}
+                    onClick={event => event.currentTarget.showPicker?.()}
+                  />
                 </label>
 
                 <label>
