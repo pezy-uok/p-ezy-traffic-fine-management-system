@@ -14,6 +14,8 @@ const mapOfficer = (officer) => ({
   is_online: officer.is_online,
   is_verified: officer.is_verified,
   phone_verified: officer.phone_verified,
+  last_login: officer.last_login || officer.last_login_at || null,
+  last_logout: officer.last_logout || officer.last_logout_at || null,
   last_login_at: officer.last_login_at,
   last_logout_at: officer.last_logout_at,
   created_at: officer.created_at,

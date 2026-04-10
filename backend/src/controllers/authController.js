@@ -645,12 +645,16 @@ export const logout = async (req, res) => {
     if (userId) {
       console.log('║ Attempting to update last_activity_at...');
       const supabase = getSupabaseClient();
+      const nowIso = new Date().toISOString();
       
-      // Mark user as offline - update last activity
+      // Mark user as offline and store logout timestamps
       const { data, error } = await supabase
         .from('users')
         .update({
-          last_activity_at: new Date().toISOString(),
+          last_activity_at: nowIso,
+          is_online: false,
+          last_logout: nowIso,
+          last_logout_at: nowIso,
         })
         .eq('id', userId);
 
