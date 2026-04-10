@@ -6,51 +6,61 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const createStorage = (folderName, filenamePrefix) => multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '..', '..', 'public', 'uploads', folderName);
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const timestamp = Date.now();
+    const recordId = req.params.id || req.params.newsId || 'new';
+    const filename = `${filenamePrefix}-${recordId}-${timestamp}${ext}`;
+    cb(null, filename);
+  },
+});
+
+const createImageUpload = (storage) => multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
+
+    if (!allowedMimes.includes(file.mimetype)) {
+      return cb(new Error('Only JPEG and PNG images are allowed'));
+    }
+
+    cb(null, true);
+  },
+});
+
 /**
  * Storage configuration for multer
  * Stores criminal photos in: backend/public/uploads/criminals
  */
-const criminalStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'criminals');
-    
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    // Generate filename: criminal-{criminalId}-{timestamp}.{extension}
-    const ext = path.extname(file.originalname);
-    const timestamp = Date.now();
-    const criminalId = req.params.id || 'unknown';
-    const filename = `criminal-${criminalId}-${timestamp}${ext}`;
-    cb(null, filename);
-  }
-});
+const criminalStorage = createStorage('criminals', 'criminal');
+const newsStorage = createStorage('news', 'news');
 
 /**
  * Multer middleware for criminal photo uploads
  * File size limit: 10MB
  * Accepted file types: jpeg, png, jpg
  */
-export const uploadCriminalPhoto = multer({
-  storage: criminalStorage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
-    
-    if (!allowedMimes.includes(file.mimetype)) {
-      return cb(new Error('Only JPEG and PNG images are allowed'));
-    }
-    
-    cb(null, true);
-  }
-});
+export const uploadCriminalPhoto = createImageUpload(criminalStorage);
+
+/**
+ * Multer middleware for news image uploads
+ * File size limit: 10MB
+ * Accepted file types: jpeg, png, jpg
+ */
+export const uploadNewsImage = createImageUpload(newsStorage);
 
 /**
  * Delete a photo file from disk
@@ -77,6 +87,8 @@ export const deletePhotoFile = (photoPath) => {
     return false;
   }
 };
+
+export const deleteUploadedFile = deletePhotoFile;
 
 /**
  * Upload criminal photo record controller

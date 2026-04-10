@@ -103,7 +103,35 @@ export const adminAPI = {
     known_aliases?: string[] | string | null
     arrested_before?: boolean
     arrest_count?: number
-  }) => axiosInstance.post('/admin/criminals/create', payload),
+  }, image?: File | null) => {
+    if (!image) {
+      return axiosInstance.post('/admin/criminals/create', payload)
+    }
+
+    const formData = new FormData()
+    formData.append('first_name', payload.first_name)
+    formData.append('last_name', payload.last_name)
+    formData.append('status', payload.status || 'active')
+    formData.append('wanted', String(Boolean(payload.wanted)))
+    formData.append('danger_level', payload.danger_level || '')
+    formData.append('arrested_before', String(Boolean(payload.arrested_before)))
+    formData.append('arrest_count', String(payload.arrest_count ?? 0))
+    if (payload.date_of_birth) formData.append('date_of_birth', payload.date_of_birth)
+    if (payload.gender) formData.append('gender', payload.gender)
+    if (payload.physical_description) formData.append('physical_description', payload.physical_description)
+    if (payload.identification_number) formData.append('identification_number', payload.identification_number)
+    if (payload.known_aliases) {
+      formData.append(
+        'known_aliases',
+        Array.isArray(payload.known_aliases)
+          ? JSON.stringify(payload.known_aliases)
+          : String(payload.known_aliases),
+      )
+    }
+    formData.append('image', image)
+
+    return axiosInstance.post('/admin/criminals/create', formData)
+  },
 
   updateCriminal: (criminalId: string, payload: {
     first_name?: string
@@ -118,7 +146,26 @@ export const adminAPI = {
     known_aliases?: string[] | string | null
     arrested_before?: boolean
     arrest_count?: number
-  }) => axiosInstance.patch(`/admin/criminals/${criminalId}`, payload),
+  }, image?: File | null) => {
+    if (!image) {
+      return axiosInstance.patch(`/admin/criminals/${criminalId}`, payload)
+    }
+
+    const formData = new FormData()
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value === undefined || value === null) return
+
+      if (key === 'known_aliases' && Array.isArray(value)) {
+        formData.append(key, JSON.stringify(value))
+        return
+      }
+
+      formData.append(key, String(value))
+    })
+    formData.append('image', image)
+
+    return axiosInstance.patch(`/admin/criminals/${criminalId}`, formData)
+  },
 
   deleteCriminal: (criminalId: string) => axiosInstance.delete(`/admin/criminals/${criminalId}/permanent`),
 
@@ -130,7 +177,23 @@ export const adminAPI = {
     pinned?: boolean
     status?: 'draft' | 'scheduled' | 'published'
     publishedAt?: string | null
-  }) => axiosInstance.post('/admin/news', payload),
+  }, image?: File | null) => {
+    if (!image) {
+      return axiosInstance.post('/admin/news', payload)
+    }
+
+    const formData = new FormData()
+    formData.append('title', payload.title)
+    formData.append('content', payload.content)
+    formData.append('category', payload.category || 'general')
+    formData.append('status', payload.status || 'draft')
+    formData.append('featured', String(Boolean(payload.featured)))
+    formData.append('pinned', String(Boolean(payload.pinned)))
+    if (payload.publishedAt) formData.append('publishedAt', payload.publishedAt)
+    formData.append('image', image)
+
+    return axiosInstance.post('/admin/news', formData)
+  },
 
   updateNews: (newsId: string, payload: {
     title?: string
@@ -140,7 +203,20 @@ export const adminAPI = {
     pinned?: boolean
     status?: 'draft' | 'scheduled' | 'published'
     publishedAt?: string | null
-  }) => axiosInstance.put(`/admin/news/${newsId}`, payload),
+  }, image?: File | null) => {
+    if (!image) {
+      return axiosInstance.put(`/admin/news/${newsId}`, payload)
+    }
+
+    const formData = new FormData()
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value === undefined || value === null) return
+      formData.append(key, String(value))
+    })
+    formData.append('image', image)
+
+    return axiosInstance.put(`/admin/news/${newsId}`, formData)
+  },
 
   deleteNews: (newsId: string) => axiosInstance.delete(`/admin/news/${newsId}`),
 

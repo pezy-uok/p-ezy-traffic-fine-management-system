@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
+import { uploadCriminalPhoto, uploadNewsImage } from '../middlewares/uploadPhoto.js';
 import adminFineRoutes from './adminFineRoutes.js';
 import adminDriverRoutes from './adminDriverRoutes.js';
 import adminOfficerRoutes from './adminOfficerRoutes.js';
@@ -42,14 +43,14 @@ router.use('/drivers', adminDriverRoutes);
 router.use('/officers', adminOfficerRoutes);
 router.get('/criminals', getAllCriminalsForAdmin);
 router.get('/criminals/:id', getCriminalByIdAdmin);
-router.post('/criminals/create', createCriminalAdmin);
-router.patch('/criminals/:id', updateCriminalAdmin);
+router.post('/criminals/create', uploadCriminalPhoto.single('image'), createCriminalAdmin);
+router.patch('/criminals/:id', uploadCriminalPhoto.single('image'), updateCriminalAdmin);
 router.delete('/criminals/:id', deleteCriminalAdmin);
 router.patch('/criminals/:id/restore', restoreCriminalAdmin);
 router.delete('/criminals/:id/permanent', hardDeleteCriminalAdmin);
 router.get('/news', getAllNewsForAdmin);
-router.post('/news', createNewsForAdmin);
-router.put('/news/:newsId', updateNewsForAdmin);
+router.post('/news', uploadNewsImage.single('image'), createNewsForAdmin);
+router.put('/news/:newsId', uploadNewsImage.single('image'), updateNewsForAdmin);
 router.delete('/news/:newsId', deleteNewsForAdmin);
 router.get('/stats', getDashboardStatsForAdmin);
 
