@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../data/services/fine_api_service.dart';
+import '../../domain/exceptions/max_fines_exception.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Model for new fine form state
@@ -124,6 +125,20 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
       final apiService = FineApiService(dio: _dio);
       final response = await apiService.getDriverByLicenseNumber(state.licenseNo);
 
+      // Check if driver has more than 2 unpaid fines
+      print('   Fines count: ${response.fines.length}');
+      if (response.fines.length > 2) {
+        print('🚨 DRIVER HAS TOO MANY FINES (${response.fines.length} > 2)');
+        
+        // Get today's date for issue_date
+        final issueDate = DateTime.now().toIso8601String().split('T')[0];
+        
+        throw MaxFinesExceededException(
+          'Driver ${response.driver.driverName} already has ${response.fines.length} unpaid fines. Maximum fine limit exceeded. Please escalate to warning.',
+          // Pass additional context
+        );
+      }
+
       // Check if driver has any overdue fines
       bool isOverdue = _hasOverdueFines(response.fines);
 
@@ -138,11 +153,12 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
         isLoading: false,
         errorMessage: null,
       );
-    } catch (e) {
-      print('❌ Error: $e\n');
+    } on MaxFinesExceededException catch (e) {
+      print('🚨 MAX FINES DETECTED AT LICENSE LOOKUP: ${e.toString()}\n');
+      // Set error message to trigger warning escalation in screen listener
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString().replaceAll('Exception: ', ''),
+        errorMessage: e.toString().replaceAll('MaxFinesExceededException: ', ''),
       );
     }
   }
@@ -354,12 +370,23 @@ class NewFineNotifier extends StateNotifier<NewFineFormState> {
       // Reset after 2.5 seconds to allow toast to be seen
       await Future.delayed(const Duration(milliseconds: 2500));
       reset();
+    } on MaxFinesExceededException catch (e) {
+      print('🚨 MAX FINES EXCEPTION CAUGHT: ${e.toString()}\n');
+      final errorMsg = e.toString().replaceAll('MaxFinesExceededException: ', '');
+      print('   Setting error message: $errorMsg');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: errorMsg,
+      );
+      print('   New state error: ${state.errorMessage}');
     } catch (e) {
       print('❌ Error submitting fine: $e\n');
+      print('   Error type: ${e.runtimeType}');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       );
+      print('   New state error: ${state.errorMessage}');
     }
   }
 

@@ -5,6 +5,9 @@ import '../../../../core/navigation/navigation_tab.dart';
 import '../../../../core/providers/navigation_providers.dart';
 import '../../../../shared/widgets/index.dart';
 import '../providers/new_fine_provider.dart';
+import '../../domain/exceptions/max_fines_exception.dart';
+import '../../../warning/presentation/providers/warning_escalation_provider.dart';
+import '../../../warning/presentation/pages/warning_escalation_screen.dart';
 
 /// Add New Fine initial screen with license number input
 ///
@@ -111,6 +114,59 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
           // Navigate to home tab (form reset happens automatically in provider)
           ref.read(navigationProvider.notifier).state = NavigationTab.home;
         });
+      }
+      
+      // Check for max fines exceeded error - more robust detection
+      print('📧 LISTENER TRIGGERED: error="${next.errorMessage}", previousError="${previous?.errorMessage}"');
+      
+      if (next.errorMessage != null && next.errorMessage!.isNotEmpty) {
+        final errorLower = next.errorMessage!.toLowerCase();
+        print('📧 Error message (lowercase): $errorLower');
+        
+        // Check for max fines keywords - more permissive matching
+        final hasMaxKeyword = errorLower.contains('max') || errorLower.contains('maximum');
+        final hasFineKeyword = errorLower.contains('fine');
+        final hasMaxFinesKeywords = hasMaxKeyword && hasFineKeyword;
+        
+        print('📧 Keyword check: hasMax=$hasMaxKeyword, hasFine=$hasFineKeyword, both=$hasMaxFinesKeywords');
+        
+        // Check if this is a NEW max fines error (not a previous error)
+        final previousHadMaxFinesError = (previous?.errorMessage ?? '').toLowerCase().contains('maximum') &&
+                                         (previous?.errorMessage ?? '').toLowerCase().contains('fine');
+        final isNewMaxFinesError = hasMaxFinesKeywords && !previousHadMaxFinesError;
+        
+        print('📧 Previous had max fines: $previousHadMaxFinesError, is new: $isNewMaxFinesError');
+        
+        if (isNewMaxFinesError) {
+          print('🚨 MAX FINES EXCEEDED DETECTED!');
+          print('Error Message: ${next.errorMessage}');
+          
+          // Get today's date for issue_date
+          final issueDate = DateTime.now().toIso8601String().split('T')[0];
+          
+          print('📧 Setting warning data: license=${formState.licenseNo}, driver=${formState.userName}');
+          
+          ref.read(warningEscalationProvider.notifier).setWarningData(
+            licenseNo: formState.licenseNo,
+            driverName: formState.userName ?? '',
+            reason: 'Too many unpaid fines - automatic escalation',
+            violationCode: 'MAX_FINES_EXCEEDED',
+            location: '',
+            vehicleRegistration: '',
+            issueDate: issueDate,
+          );
+          
+          print('📧 Navigating to WarningEscalationScreen...');
+          
+          // Navigate to warning escalation screen
+          Future.delayed(const Duration(milliseconds: 100), () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const WarningEscalationScreen(),
+              ),
+            );
+          });
+        }
       }
     });
 
@@ -744,5 +800,21 @@ class _NewFineScreenState extends ConsumerState<NewFineScreen>
         ),
       ),
     );
+  }
+  
+  /// Convert date from DD/MM/YYYY format to YYYY-MM-DD ISO format
+  String _convertDateToISO(String dateStr) {
+    try {
+      final parts = dateStr.split('/');
+      if (parts.length == 3) {
+        final day = parts[0];
+        final month = parts[1];
+        final year = parts[2];
+        return '$year-$month-$day';
+      }
+    } catch (e) {
+      return DateTime.now().toIso8601String().split('T')[0];
+    }
+    return DateTime.now().toIso8601String().split('T')[0];
   }
 }
