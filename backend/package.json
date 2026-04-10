@@ -10,6 +10,8 @@
     "test": "node tests/users.test.js",
     "test:auth": "node testAuthWithSeedData.js",
     "test:auth:flow": "node testCompleteAuthFlow.js",
+    "test:payhere": "node tests/payhere.test.js",
+    "test:payhere:quick": "node tests/payhere-hash.test.js",
     "seed": "node src/database/cli.js seed",
     "seed:clear": "node src/database/cli.js clear",
     "seed:reset": "node src/database/cli.js reset",
