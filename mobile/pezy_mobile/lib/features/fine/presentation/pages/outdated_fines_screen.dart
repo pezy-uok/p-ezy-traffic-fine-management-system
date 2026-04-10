@@ -130,6 +130,40 @@ class _OutdatedFinesScreenState extends ConsumerState<OutdatedFinesScreen>
                   ),
                 ),
               )
+            else if (finesState.errorMessage != null && finesState.errorMessage!.isNotEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: AppColors.error.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(
+                        'Error loading fines',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                        child: Text(
+                          finesState.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
             else if (finesState.fines.isEmpty)
               SliverFillRemaining(
                 child: Center(
