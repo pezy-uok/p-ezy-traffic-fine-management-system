@@ -1,0 +1,84 @@
+name: Build & Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          timeout: 60s
+          script: |
+            echo "🚀 Starting deployment..."
+            
+            cd /home/ubuntu/pezy-app
+            
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git pull origin main
+            
+            # Update .env file with secrets
+            echo "⚙️  Setting up environment variables..."
+            cat > .env << 'ENVFILE'
+            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PAYHERE_MERCHANT_ID=${{ secrets.PAYHERE_MERCHANT_ID }}
+            PAYHERE_MERCHANT_SECRET=${{ secrets.PAYHERE_MERCHANT_SECRET }}
+            AWS_BUCKET=${{ secrets.AWS_BUCKET }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            SES_USER=${{ secrets.SES_USER }}
+            SES_PASS=${{ secrets.SES_PASS }}
+            ENVFILE
+            
+            # Rebuild and restart containers
+            echo "🐳 Building Docker images..."
+            docker-compose build
+            
+            echo "🚀 Starting containers..."
+            docker-compose down
+            docker-compose up -d
+            
+            # Wait for services to start
+            echo "⏳ Waiting for services to be ready..."
+            sleep 10
+            
+            # Health check backend
+            echo "💊 Checking backend health..."
+            if curl -f http://localhost:8000/api/health > /dev/null 2>&1; then
+              echo "✅ Backend is healthy"
+            else
+              echo "❌ Backend health check failed"
+              docker-compose logs backend | tail -50
+              exit 1
+            fi
+            
+            # Check frontend
+            echo "💊 Checking frontend..."
+            if curl -f http://localhost/ > /dev/null 2>&1; then
+              echo "✅ Frontend is healthy"
+            else
+              echo "❌ Frontend health check failed"
+              docker-compose logs frontend | tail -50
+              exit 1
+            fi
+            
+            echo "✅ Deployment successful!"
+            echo "Application running at:"
+            echo "  Frontend: http://${{ secrets.EC2_HOST }}"
+            echo "  Backend:  http://${{ secrets.EC2_HOST }}:8000"
