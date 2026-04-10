@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../../data/services/fine_api_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Model for a single outdated fine
 class OutdatedFine {
@@ -41,7 +44,9 @@ class OutdatedFinesState {
 
 /// Notifier for managing outdated fines state
 class OutdatedFinesNotifier extends StateNotifier<OutdatedFinesState> {
-  OutdatedFinesNotifier() : super(const OutdatedFinesState()) {
+  final Dio _dio;
+
+  OutdatedFinesNotifier(this._dio) : super(const OutdatedFinesState()) {
     // Load fines on initialization
     loadOutdatedFines();
   }
@@ -51,63 +56,42 @@ class OutdatedFinesNotifier extends StateNotifier<OutdatedFinesState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // Simulate API call to fetch outdated fines
-      await Future.delayed(const Duration(seconds: 1));
+      print('\n╔════════════════════════════════════════╗');
+      print('║  OUTDATED FINES PROVIDER: LOAD         ║');
+      print('╚════════════════════════════════════════╝\n');
 
-      // Mock data for outdated fines
-      final mockFines = _getMockOutdatedFines();
+      // Use the authenticated Dio instance
+      final apiService = FineApiService(dio: _dio);
+      final finesList = await apiService.getOutdatedFines();
+
+      print('✅ Loaded ${finesList.length} outdated fines');
+
+      // Convert FineInfo to OutdatedFine
+      final outdatedFines = finesList.map((fine) {
+        return OutdatedFine(
+          licenseNo: fine.licenseNumber,
+          driverName: fine.driverName,
+          amount: fine.amount,
+        );
+      }).toList();
 
       state = state.copyWith(
-        fines: mockFines,
+        fines: outdatedFines,
         isLoading: false,
       );
     } catch (e) {
+      print('❌ Error loading outdated fines: $e\n');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Error loading outdated fines: ${e.toString()}',
+        errorMessage: 'Error loading outdated fines: ${e.toString().replaceAll('Exception: ', '')}',
       );
     }
-  }
-
-  /// Mock data for testing - replace with actual API call
-  List<OutdatedFine> _getMockOutdatedFines() {
-    return [
-      OutdatedFine(
-        licenseNo: 'DL0001',
-        driverName: 'John Doe',
-        amount: 5000.0,
-      ),
-      OutdatedFine(
-        licenseNo: 'DL0002',
-        driverName: 'Jane Smith',
-        amount: 7500.0,
-      ),
-      OutdatedFine(
-        licenseNo: 'DL0003',
-        driverName: 'Robert Johnson',
-        amount: 3200.0,
-      ),
-      OutdatedFine(
-        licenseNo: 'DL0004',
-        driverName: 'Emily Williams',
-        amount: 6800.0,
-      ),
-      OutdatedFine(
-        licenseNo: 'DL0005',
-        driverName: 'Michael Brown',
-        amount: 4500.0,
-      ),
-      OutdatedFine(
-        licenseNo: 'DL0006',
-        driverName: 'Sarah Davis',
-        amount: 8200.0,
-      ),
-    ];
   }
 }
 
 /// Riverpod provider for outdated fines state
 final outdatedFinesProvider =
     StateNotifierProvider<OutdatedFinesNotifier, OutdatedFinesState>((ref) {
-  return OutdatedFinesNotifier();
+  final authenticatedDio = ref.watch(authenticatedDioProvider);
+  return OutdatedFinesNotifier(authenticatedDio);
 });

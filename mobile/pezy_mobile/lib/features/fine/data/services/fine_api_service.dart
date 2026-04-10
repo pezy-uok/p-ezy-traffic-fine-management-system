@@ -291,4 +291,57 @@ class FineApiService {
       rethrow;
     }
   }
+
+  /// Fetch outdated fines list
+  /// GET /api/fines/outdated
+  /// Returns list of fines that are past their due date and unpaid
+  Future<List<FineInfo>> getOutdatedFines() async {
+    try {
+      debugPrint('\n╔════════════════════════════════════════╗');
+      debugPrint('║  FINE API: GET OUTDATED FINES          ║');
+      debugPrint('╚════════════════════════════════════════╝\n');
+
+      final response = await _dio.get('/fines/outdated');
+
+      debugPrint('✅ Outdated fines fetched successfully');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response: ${response.data}\n');
+
+      if (response.statusCode == 200) {
+        // Response should be a list of fines directly
+        if (response.data is Map && response.data.containsKey('fines')) {
+          // If wrapped in object
+          final finesList = (response.data['fines'] as List?)
+              ?.map((f) => FineInfo.fromJson(f))
+              .toList() ?? [];
+          return finesList;
+        } else if (response.data is List) {
+          // If response is directly a list
+          return (response.data as List)
+              .map((f) => FineInfo.fromJson(f))
+              .toList();
+        }
+        return [];
+      } else {
+        throw Exception('Failed to fetch outdated fines. Status: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      debugPrint('❌ Get outdated fines error: ${e.message}');
+      debugPrint('Status Code: ${e.response?.statusCode}');
+      debugPrint('Response: ${e.response?.data}\n');
+
+      if (e.response?.statusCode == 401) {
+        throw Exception('Unauthorized. Please login again.');
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('Connection timeout - please check your internet connection');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Request timeout - please try again');
+      } else {
+        throw Exception('Error: ${e.message}');
+      }
+    } catch (e) {
+      debugPrint('❌ Unexpected error: $e\n');
+      rethrow;
+    }
+  }
 }
