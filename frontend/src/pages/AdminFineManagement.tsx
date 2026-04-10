@@ -517,6 +517,8 @@ export default function AdminFineManagement() {
                   type="date"
                   value={formValues.date}
                   onChange={event => updateFormValue('date', event.target.value)}
+                  onFocus={event => event.currentTarget.showPicker?.()}
+                  onClick={event => event.currentTarget.showPicker?.()}
                   aria-invalid={Boolean(formErrors.date)}
                 />
                 {formErrors.date ? <span className="admin-fines__field-error">{formErrors.date}</span> : null}
