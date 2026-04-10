@@ -17,6 +17,7 @@ interface NewsArticle {
   featured: boolean
   pinned: boolean
   views?: number
+  imagePath: string | null
 }
 
 const statusLabel: Record<ArticleStatus, string> = {
@@ -56,6 +57,15 @@ const formatDate = (value: string) => {
   return date.toISOString().split('T')[0]
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+const ASSET_BASE_URL = API_BASE_URL.replace(/\/api$/, '')
+
+const buildImageUrl = (path: string | null) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${ASSET_BASE_URL}${path}`
+}
+
 export default function AdminNewsManagementLive() {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -69,6 +79,9 @@ export default function AdminNewsManagementLive() {
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<NewsFormValues>(initialFormValues)
   const [formError, setFormError] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('')
+  const [existingImagePath, setExistingImagePath] = useState<string | null>(null)
 
   const fetchNews = async () => {
     try {
@@ -90,6 +103,12 @@ export default function AdminNewsManagementLive() {
           featured?: boolean
           pinned?: boolean
           views?: number
+          imagePath?: string | null
+          image_path?: string | null
+          image_url?: string | null
+          thumbnail_url?: string | null
+          cover_image?: string | null
+          featured_image?: string | null
         }>
       }
 
@@ -110,6 +129,14 @@ export default function AdminNewsManagementLive() {
           featured: Boolean(article.featured),
           pinned: Boolean(article.pinned),
           views: article.views,
+          imagePath:
+            article.imagePath ||
+            article.image_path ||
+            article.image_url ||
+            article.thumbnail_url ||
+            article.cover_image ||
+            article.featured_image ||
+            null,
         }
       })
 
@@ -125,6 +152,14 @@ export default function AdminNewsManagementLive() {
   useEffect(() => {
     fetchNews()
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl)
+      }
+    }
+  }, [imagePreviewUrl])
 
   const filteredArticles = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -170,6 +205,9 @@ export default function AdminNewsManagementLive() {
     setEditingNewsId(null)
     setFormValues(initialFormValues)
     setFormError(null)
+    setSelectedImage(null)
+    setImagePreviewUrl('')
+    setExistingImagePath(null)
     setIsModalOpen(true)
   }
 
@@ -184,6 +222,9 @@ export default function AdminNewsManagementLive() {
       pinned: article.pinned,
         publishedAt: article.publishedAt ? article.publishedAt.slice(0, 16) : '',
     })
+    setSelectedImage(null)
+    setImagePreviewUrl('')
+    setExistingImagePath(article.imagePath)
     setFormError(null)
     setIsModalOpen(true)
   }
@@ -192,6 +233,9 @@ export default function AdminNewsManagementLive() {
     if (isSaving) return
     setIsModalOpen(false)
     setEditingNewsId(null)
+    setSelectedImage(null)
+    setImagePreviewUrl('')
+    setExistingImagePath(null)
   }
 
   const updateForm = <K extends keyof NewsFormValues>(field: K, value: NewsFormValues[K]) => {
@@ -222,9 +266,9 @@ export default function AdminNewsManagementLive() {
       }
 
       if (editingNewsId) {
-        await adminAPI.updateNews(editingNewsId, payload)
+        await adminAPI.updateNews(editingNewsId, payload, selectedImage)
       } else {
-        await adminAPI.createNews(payload)
+        await adminAPI.createNews(payload, selectedImage)
       }
 
       await fetchNews()
@@ -236,6 +280,36 @@ export default function AdminNewsManagementLive() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleImageChange = (event: import('react').ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      setSelectedImage(null)
+      setImagePreviewUrl('')
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setFormError('Please choose a valid image file.')
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setFormError('Image must be smaller than 10MB.')
+      event.target.value = ''
+      return
+    }
+
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl)
+    }
+
+    setSelectedImage(file)
+    setImagePreviewUrl(URL.createObjectURL(file))
+    if (formError) setFormError(null)
   }
 
   const handleDeleteNews = async (article: NewsArticle) => {
@@ -445,6 +519,25 @@ export default function AdminNewsManagementLive() {
                 <span>Content</span>
                 <textarea value={formValues.content} onChange={event => updateForm('content', event.target.value)} />
               </label>
+
+              <label>
+                <span>News Image (one image)</span>
+                <input type="file" accept="image/jpeg,image/png,image/jpg" onChange={handleImageChange} />
+                {selectedImage ? <small>{selectedImage.name}</small> : null}
+                {!selectedImage && existingImagePath ? <small>Current image: {existingImagePath.split('/').pop()}</small> : null}
+              </label>
+
+              {imagePreviewUrl ? (
+                <div className="admin-news__image-preview-wrap">
+                  <img src={imagePreviewUrl} alt="Selected news" className="admin-news__image-preview" />
+                </div>
+              ) : null}
+
+              {!imagePreviewUrl && existingImagePath ? (
+                <div className="admin-news__image-preview-wrap">
+                  <img src={buildImageUrl(existingImagePath)} alt="Current news" className="admin-news__image-preview" />
+                </div>
+              ) : null}
 
               <div className="admin-news__modal-grid">
                 <label>

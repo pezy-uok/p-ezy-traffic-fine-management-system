@@ -18,6 +18,7 @@ interface CriminalRecordData {
   arrestCount: number
   dateOfBirth: string
   createdAt: string
+  imagePath: string | null
 }
 
 interface CriminalFormValues {
@@ -92,6 +93,15 @@ const formatDate = (value: string) => {
   return date.toISOString().split('T')[0]
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+const ASSET_BASE_URL = API_BASE_URL.replace(/\/api$/, '')
+
+const buildImageUrl = (path: string | null) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${ASSET_BASE_URL}${path}`
+}
+
 type StatusFilter = 'all' | CriminalStatus
 
 export default function AdminCriminalRecordsLive() {
@@ -107,6 +117,9 @@ export default function AdminCriminalRecordsLive() {
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<CriminalFormValues>(initialFormValues)
   const [formError, setFormError] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('')
+  const [existingImagePath, setExistingImagePath] = useState<string | null>(null)
 
   const fetchCriminals = async () => {
     try {
@@ -127,6 +140,7 @@ export default function AdminCriminalRecordsLive() {
           arrest_count?: number
           date_of_birth?: string
           created_at?: string
+          photo_path?: string | null
         }>
       }
 
@@ -143,6 +157,7 @@ export default function AdminCriminalRecordsLive() {
         arrestCount: criminal.arrest_count || 0,
         dateOfBirth: criminal.date_of_birth || '-',
         createdAt: criminal.created_at || '-',
+        imagePath: criminal.photo_path || null,
       }))
 
       setCriminalRecords(mappedRecords)
@@ -157,6 +172,14 @@ export default function AdminCriminalRecordsLive() {
   useEffect(() => {
     fetchCriminals()
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl)
+      }
+    }
+  }, [imagePreviewUrl])
 
   const filteredCriminalRecords = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -197,6 +220,9 @@ export default function AdminCriminalRecordsLive() {
     setEditingCriminalId(null)
     setFormValues(initialFormValues)
     setFormError(null)
+    setSelectedImage(null)
+    setImagePreviewUrl('')
+    setExistingImagePath(null)
     setIsModalOpen(true)
   }
 
@@ -220,6 +246,7 @@ export default function AdminCriminalRecordsLive() {
         known_aliases?: string[] | string | null
         arrested_before?: boolean
         arrest_count?: number | null
+        photo_path?: string | null
       }
 
       setFormValues({
@@ -236,6 +263,9 @@ export default function AdminCriminalRecordsLive() {
         arrested_before: Boolean(criminal.arrested_before),
         arrest_count: String(criminal.arrest_count ?? 0),
       })
+      setSelectedImage(null)
+      setImagePreviewUrl('')
+      setExistingImagePath(criminal.photo_path || null)
     } catch (error) {
       console.error('Failed to load criminal for edit:', error)
       setLoadError('Unable to load criminal details right now. Please try again.')
@@ -248,6 +278,9 @@ export default function AdminCriminalRecordsLive() {
     if (isSaving) return
     setIsModalOpen(false)
     setEditingCriminalId(null)
+    setSelectedImage(null)
+    setImagePreviewUrl('')
+    setExistingImagePath(null)
   }
 
   const updateForm = <K extends keyof CriminalFormValues>(field: K, value: CriminalFormValues[K]) => {
@@ -283,9 +316,9 @@ export default function AdminCriminalRecordsLive() {
       setFormError(null)
 
       if (editingCriminalId) {
-        await adminAPI.updateCriminal(editingCriminalId, payload)
+        await adminAPI.updateCriminal(editingCriminalId, payload, selectedImage)
       } else {
-        await adminAPI.createCriminal(payload)
+        await adminAPI.createCriminal(payload, selectedImage)
       }
 
       await fetchCriminals()
@@ -297,6 +330,36 @@ export default function AdminCriminalRecordsLive() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleImageChange = (event: import('react').ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      setSelectedImage(null)
+      setImagePreviewUrl('')
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setFormError('Please choose a valid image file.')
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setFormError('Image must be smaller than 10MB.')
+      event.target.value = ''
+      return
+    }
+
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl)
+    }
+
+    setSelectedImage(file)
+    setImagePreviewUrl(URL.createObjectURL(file))
+    if (formError) setFormError(null)
   }
 
   const handleDeleteCriminal = async (criminal: CriminalRecordData) => {
@@ -550,6 +613,25 @@ export default function AdminCriminalRecordsLive() {
                 <span>Known Aliases</span>
                 <textarea value={formValues.known_aliases} onChange={event => updateForm('known_aliases', event.target.value)} />
               </label>
+
+              <label>
+                <span>Record Image (one image)</span>
+                <input type="file" accept="image/jpeg,image/png,image/jpg" onChange={handleImageChange} />
+                {selectedImage ? <small>{selectedImage.name}</small> : null}
+                {!selectedImage && existingImagePath ? <small>Current image: {existingImagePath.split('/').pop()}</small> : null}
+              </label>
+
+              {imagePreviewUrl ? (
+                <div className="admin-criminals__image-preview-wrap">
+                  <img src={imagePreviewUrl} alt="Selected criminal" className="admin-criminals__image-preview" />
+                </div>
+              ) : null}
+
+              {!imagePreviewUrl && existingImagePath ? (
+                <div className="admin-criminals__image-preview-wrap">
+                  <img src={buildImageUrl(existingImagePath)} alt="Current criminal" className="admin-criminals__image-preview" />
+                </div>
+              ) : null}
 
               <div className="admin-criminals__modal-flags">
                 <label className="admin-criminals__check-item">

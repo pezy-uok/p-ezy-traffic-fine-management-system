@@ -10,11 +10,76 @@ import {
   getAuditLogsByDriver,
   getAuditLogsByEntity,
 } from '../services/auditLogService.js';
+import { deleteUploadedFile } from '../middlewares/uploadPhoto.js';
 import { ValidationError, ConflictError, NotFoundError } from '../utils/errors.js';
 
 const stripHtml = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 
 const formatCount = (value) => new Intl.NumberFormat('en-US').format(Number(value || 0));
+
+const parseBoolean = (value, fallback = false) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  if (typeof value === 'number') return value === 1;
+  return fallback;
+};
+
+const parseNumber = (value, fallback = 0) => {
+  if (value === undefined || value === null || value === '') return fallback;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const parseAliases = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return value
+        .split(',')
+        .map((alias) => alias.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return null;
+};
+
+const NEWS_IMAGE_FIELD_CANDIDATES = ['image_path', 'image_url', 'thumbnail_url', 'cover_image', 'featured_image'];
+
+const getNewsImagePathFromRow = (row = {}) => {
+  for (const field of NEWS_IMAGE_FIELD_CANDIDATES) {
+    if (row[field]) {
+      return row[field];
+    }
+  }
+  return null;
+};
+
+const getNewsColumnSet = async (supabase) => {
+  const { data, error } = await supabase
+    .from('information_schema.columns')
+    .select('column_name')
+    .eq('table_schema', 'public')
+    .eq('table_name', 'news');
+
+  if (error || !Array.isArray(data)) {
+    return null;
+  }
+
+  return new Set(data.map((column) => column.column_name));
+};
 
 export const getAllNewsForAdmin = async (req, res, next) => {
   try {
@@ -63,6 +128,7 @@ export const getAllNewsForAdmin = async (req, res, next) => {
         pinned: Boolean(row.pinned),
         publishedAt,
         createdAt,
+        imagePath: getNewsImagePathFromRow(row),
         author: author ? author.name : row.authorName || row.author_id || 'Unknown Author',
         authorEmail: author?.email || null,
       };
@@ -82,8 +148,8 @@ const normalizeNewsPayload = (body) => ({
   title: String(body.title || '').trim(),
   content: String(body.content || '').trim(),
   category: String(body.category || 'general').trim(),
-  featured: Boolean(body.featured),
-  pinned: Boolean(body.pinned),
+  featured: parseBoolean(body.featured),
+  pinned: parseBoolean(body.pinned),
   published_at: body.publishedAt || body.published_at || null,
 });
 
@@ -104,6 +170,7 @@ const mapNewsRow = (row, authorMap = {}) => {
     pinned: Boolean(row.pinned),
     publishedAt,
     createdAt,
+    imagePath: getNewsImagePathFromRow(row),
     author: author ? author.name : row.authorName || row.author_id || 'Unknown Author',
     authorEmail: author?.email || null,
   };
@@ -133,6 +200,26 @@ export const createNewsForAdmin = async (req, res, next) => {
       published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
     };
 
+    const imagePath = req.file ? `/uploads/news/${req.file.filename}` : null;
+    if (imagePath) {
+      const newsColumns = await getNewsColumnSet(supabase);
+      const imageField = newsColumns ? NEWS_IMAGE_FIELD_CANDIDATES.find((field) => newsColumns.has(field)) : null;
+      if (!imageField) {
+        deleteUploadedFile(imagePath);
+        return res.status(400).json({
+          success: false,
+          message: 'News image column is missing in the database. Add one of: image_path, image_url, thumbnail_url, cover_image, featured_image.',
+        });
+      }
+      payload[imageField] = imagePath;
+      if (newsColumns && newsColumns.has('image_size')) {
+        payload.image_size = req.file.size;
+      }
+      if (newsColumns && newsColumns.has('image_uploaded_at')) {
+        payload.image_uploaded_at = new Date().toISOString();
+      }
+    }
+
     const { data: createdNews, error } = await supabase
       .from('news')
       .insert(payload)
@@ -140,6 +227,9 @@ export const createNewsForAdmin = async (req, res, next) => {
       .single();
 
     if (error) {
+      if (req.file) {
+        deleteUploadedFile(`/uploads/news/${req.file.filename}`);
+      }
       return res.status(500).json({
         success: false,
         message: `Failed to create news: ${error.message}`,
@@ -180,6 +270,42 @@ export const updateNewsForAdmin = async (req, res, next) => {
       published_at: status === 'published' ? (published_at || new Date().toISOString()) : published_at || null,
     };
 
+    let existingNewsRow = null;
+    if (req.file) {
+      const { data: existingNews, error: existingNewsError } = await supabase
+        .from('news')
+        .select('*')
+        .eq('id', newsId)
+        .single();
+
+      if (existingNewsError || !existingNews) {
+        deleteUploadedFile(`/uploads/news/${req.file.filename}`);
+        return res.status(404).json({
+          success: false,
+          message: 'News article not found',
+        });
+      }
+
+      existingNewsRow = existingNews;
+      const newsColumns = await getNewsColumnSet(supabase);
+      const imageField = newsColumns ? NEWS_IMAGE_FIELD_CANDIDATES.find((field) => newsColumns.has(field)) : null;
+      if (!imageField) {
+        deleteUploadedFile(`/uploads/news/${req.file.filename}`);
+        return res.status(400).json({
+          success: false,
+          message: 'News image column is missing in the database. Add one of: image_path, image_url, thumbnail_url, cover_image, featured_image.',
+        });
+      }
+
+      updatePayload[imageField] = `/uploads/news/${req.file.filename}`;
+      if (newsColumns && newsColumns.has('image_size')) {
+        updatePayload.image_size = req.file.size;
+      }
+      if (newsColumns && newsColumns.has('image_uploaded_at')) {
+        updatePayload.image_uploaded_at = new Date().toISOString();
+      }
+    }
+
     const { data: updatedNews, error } = await supabase
       .from('news')
       .update(updatePayload)
@@ -195,10 +321,20 @@ export const updateNewsForAdmin = async (req, res, next) => {
     }
 
     if (!updatedNews) {
+      if (req.file) {
+        deleteUploadedFile(`/uploads/news/${req.file.filename}`);
+      }
       return res.status(404).json({
         success: false,
         message: 'News article not found',
       });
+    }
+
+    if (req.file && existingNewsRow) {
+      const previousImagePath = getNewsImagePathFromRow(existingNewsRow);
+      if (previousImagePath) {
+        deleteUploadedFile(previousImagePath);
+      }
     }
 
     return res.status(200).json({
@@ -649,6 +785,9 @@ export const getCriminalByIdAdmin = async (req, res, next) => {
         known_aliases: criminal.known_aliases,
         arrested_before: criminal.arrested_before,
         arrest_count: criminal.arrest_count,
+        photo_path: criminal.photo_path,
+        photo_size: criminal.photo_size,
+        photo_uploaded_at: criminal.photo_uploaded_at,
         created_at: criminal.created_at,
         updated_at: criminal.updated_at,
         deleted_at: criminal.deleted_at,
@@ -702,11 +841,14 @@ export const createCriminalAdmin = async (req, res, next) => {
       physical_description: otherData.physical_description || null,
       identification_number: otherData.identification_number || null,
       status: otherData.status || 'active',
-      wanted: otherData.wanted || false,
+      wanted: parseBoolean(otherData.wanted),
       danger_level: otherData.danger_level || null,
-      known_aliases: otherData.known_aliases || null,
-      arrested_before: otherData.arrested_before || false,
-      arrest_count: otherData.arrest_count || 0,
+      known_aliases: parseAliases(otherData.known_aliases),
+      arrested_before: parseBoolean(otherData.arrested_before),
+      arrest_count: parseNumber(otherData.arrest_count),
+      photo_path: req.file ? `/uploads/criminals/${req.file.filename}` : null,
+      photo_size: req.file ? req.file.size : null,
+      photo_uploaded_at: req.file ? new Date().toISOString() : null,
     };
 
     const { data: criminal, error } = await supabase
@@ -716,6 +858,9 @@ export const createCriminalAdmin = async (req, res, next) => {
       .single();
 
     if (error) {
+      if (req.file) {
+        deleteUploadedFile(`/uploads/criminals/${req.file.filename}`);
+      }
       return res.status(500).json({
         success: false,
         message: `Failed to create criminal: ${error.message}`,
@@ -738,6 +883,9 @@ export const createCriminalAdmin = async (req, res, next) => {
         known_aliases: criminal.known_aliases,
         arrested_before: criminal.arrested_before,
         arrest_count: criminal.arrest_count,
+        photo_path: criminal.photo_path,
+        photo_size: criminal.photo_size,
+        photo_uploaded_at: criminal.photo_uploaded_at,
         created_at: criminal.created_at,
         updated_at: criminal.updated_at,
       },
@@ -770,7 +918,7 @@ export const updateCriminalAdmin = async (req, res, next) => {
     // Check if criminal exists
     const { data: existing } = await supabase
       .from('criminals')
-      .select('id')
+      .select('id, photo_path')
       .eq('id', id)
       .single();
 
@@ -806,6 +954,25 @@ export const updateCriminalAdmin = async (req, res, next) => {
       }
     });
 
+    if (updatePayload.wanted !== undefined) {
+      updatePayload.wanted = parseBoolean(updatePayload.wanted);
+    }
+    if (updatePayload.arrested_before !== undefined) {
+      updatePayload.arrested_before = parseBoolean(updatePayload.arrested_before);
+    }
+    if (updatePayload.arrest_count !== undefined) {
+      updatePayload.arrest_count = parseNumber(updatePayload.arrest_count);
+    }
+    if (updatePayload.known_aliases !== undefined) {
+      updatePayload.known_aliases = parseAliases(updatePayload.known_aliases);
+    }
+
+    if (req.file) {
+      updatePayload.photo_path = `/uploads/criminals/${req.file.filename}`;
+      updatePayload.photo_size = req.file.size;
+      updatePayload.photo_uploaded_at = new Date().toISOString();
+    }
+
     const { data: criminal, error } = await supabase
       .from('criminals')
       .update(updatePayload)
@@ -814,10 +981,17 @@ export const updateCriminalAdmin = async (req, res, next) => {
       .single();
 
     if (error) {
+      if (req.file) {
+        deleteUploadedFile(`/uploads/criminals/${req.file.filename}`);
+      }
       return res.status(500).json({
         success: false,
         message: `Failed to update criminal: ${error.message}`,
       });
+    }
+
+    if (req.file && existing.photo_path) {
+      deleteUploadedFile(existing.photo_path);
     }
 
     return res.status(200).json({
@@ -836,6 +1010,9 @@ export const updateCriminalAdmin = async (req, res, next) => {
         known_aliases: criminal.known_aliases,
         arrested_before: criminal.arrested_before,
         arrest_count: criminal.arrest_count,
+        photo_path: criminal.photo_path,
+        photo_size: criminal.photo_size,
+        photo_uploaded_at: criminal.photo_uploaded_at,
         created_at: criminal.created_at,
         updated_at: criminal.updated_at,
         deleted_at: criminal.deleted_at,

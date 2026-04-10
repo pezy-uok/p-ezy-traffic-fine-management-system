@@ -427,6 +427,31 @@
   outline: 0;
 }
 
+.admin-criminals__modal-form input[type='file'] {
+  height: auto;
+  padding: 10px 12px;
+}
+
+.admin-criminals__modal-form small {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.admin-criminals__image-preview-wrap {
+  border: 1px solid #d6dde7;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 8px;
+}
+
+.admin-criminals__image-preview {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
 .admin-criminals__modal-form input,
 .admin-criminals__modal-form select {
   height: 42px;
