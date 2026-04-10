@@ -42,6 +42,8 @@ export default function CriminalRecords() {
   const [searchTerm, setSearchTerm] = useState('')
   const [tipForm, setTipForm] = useState<TipFormState>(defaultTipState)
   const [submitting, setSubmitting] = useState(false)
+  const [_tipSuccessMessage, _setTipSuccessMessage] = useState('')
+  const [_tipErrorMessage, _setTipErrorMessage] = useState('')
 
   const filteredRecords = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -253,8 +255,8 @@ export default function CriminalRecords() {
               {submitting ? 'Submitting...' : 'Submit Secure Tip Now'}
             </button>
 
-            {tipSuccessMessage && <p>{tipSuccessMessage}</p>}
-            {tipErrorMessage && <p>{tipErrorMessage}</p>}
+            {_tipSuccessMessage && <p>{_tipSuccessMessage}</p>}
+            {_tipErrorMessage && <p>{_tipErrorMessage}</p>}
           </form>
         </aside>
       </div>
