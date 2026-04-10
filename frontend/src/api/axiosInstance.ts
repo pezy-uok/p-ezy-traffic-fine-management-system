@@ -17,14 +17,19 @@ const clearAuthStorage = () => {
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Let the browser set multipart/form-data boundaries for file uploads.
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type']
+        delete config.headers['content-type']
+      }
+    }
+
     // Add auth token if available
     const token = localStorage.getItem(AUTH_TOKEN_KEY)
     if (token) {

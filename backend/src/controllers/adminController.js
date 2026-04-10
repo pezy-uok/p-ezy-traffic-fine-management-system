@@ -67,20 +67,6 @@ const getNewsImagePathFromRow = (row = {}) => {
   return null;
 };
 
-const getNewsColumnSet = async (supabase) => {
-  const { data, error } = await supabase
-    .from('information_schema.columns')
-    .select('column_name')
-    .eq('table_schema', 'public')
-    .eq('table_name', 'news');
-
-  if (error || !Array.isArray(data)) {
-    return null;
-  }
-
-  return new Set(data.map((column) => column.column_name));
-};
-
 export const getAllNewsForAdmin = async (req, res, next) => {
   try {
     const supabase = getSupabaseClient();
@@ -202,22 +188,9 @@ export const createNewsForAdmin = async (req, res, next) => {
 
     const imagePath = req.file ? `/uploads/news/${req.file.filename}` : null;
     if (imagePath) {
-      const newsColumns = await getNewsColumnSet(supabase);
-      const imageField = newsColumns ? NEWS_IMAGE_FIELD_CANDIDATES.find((field) => newsColumns.has(field)) : null;
-      if (!imageField) {
-        deleteUploadedFile(imagePath);
-        return res.status(400).json({
-          success: false,
-          message: 'News image column is missing in the database. Add one of: image_path, image_url, thumbnail_url, cover_image, featured_image.',
-        });
-      }
-      payload[imageField] = imagePath;
-      if (newsColumns && newsColumns.has('image_size')) {
-        payload.image_size = req.file.size;
-      }
-      if (newsColumns && newsColumns.has('image_uploaded_at')) {
-        payload.image_uploaded_at = new Date().toISOString();
-      }
+      payload.image_path = imagePath;
+      payload.image_size = req.file.size;
+      payload.image_uploaded_at = new Date().toISOString();
     }
 
     const { data: createdNews, error } = await supabase
@@ -287,23 +260,9 @@ export const updateNewsForAdmin = async (req, res, next) => {
       }
 
       existingNewsRow = existingNews;
-      const newsColumns = await getNewsColumnSet(supabase);
-      const imageField = newsColumns ? NEWS_IMAGE_FIELD_CANDIDATES.find((field) => newsColumns.has(field)) : null;
-      if (!imageField) {
-        deleteUploadedFile(`/uploads/news/${req.file.filename}`);
-        return res.status(400).json({
-          success: false,
-          message: 'News image column is missing in the database. Add one of: image_path, image_url, thumbnail_url, cover_image, featured_image.',
-        });
-      }
-
-      updatePayload[imageField] = `/uploads/news/${req.file.filename}`;
-      if (newsColumns && newsColumns.has('image_size')) {
-        updatePayload.image_size = req.file.size;
-      }
-      if (newsColumns && newsColumns.has('image_uploaded_at')) {
-        updatePayload.image_uploaded_at = new Date().toISOString();
-      }
+      updatePayload.image_path = `/uploads/news/${req.file.filename}`;
+      updatePayload.image_size = req.file.size;
+      updatePayload.image_uploaded_at = new Date().toISOString();
     }
 
     const { data: updatedNews, error } = await supabase
