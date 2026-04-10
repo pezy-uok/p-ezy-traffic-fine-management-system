@@ -1,8 +1,16 @@
 import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import NavBar from '../components/NavBar'
 import './Home.css'
 import './FinePaySuccess.css'
+
+interface PaymentSuccessData {
+  orderId?: string
+  paymentId?: string
+  amount?: number
+  fineCount?: number
+  cardLast4?: string
+}
 
 const formatDate = (date: Date) => {
   const month = date.getMonth() + 1
@@ -11,8 +19,18 @@ const formatDate = (date: Date) => {
   return `${month}/${day}/${year}`
 }
 
+const formatCurrency = (value: number) => `LKR ${value.toLocaleString('en-LK')}`
+
 export default function FinePaySuccess() {
+  const location = useLocation()
+  const paymentData = location.state as PaymentSuccessData | null
+
   const transactionDate = useMemo(() => formatDate(new Date()), [])
+
+  const amount = paymentData?.amount || 0
+  const paymentId = paymentData?.paymentId || 'N/A'
+  const cardLast4 = paymentData?.cardLast4 || '****'
+  const fineCount = paymentData?.fineCount || 0
 
   return (
     <section className="home-police fine-pay-success-page">
@@ -25,12 +43,12 @@ export default function FinePaySuccess() {
           </div>
 
           <h2 id="fine-pay-success-title">Payment Successful!</h2>
-          <p>Your transaction has been completed and the selected fines have been cleared from the system.</p>
+          <p>Your transaction has been completed and the selected {fineCount} fine(s) have been cleared from the system.</p>
 
           <section className="fine-pay-success-summary" aria-label="Payment summary">
             <div className="fine-pay-success-summary__row fine-pay-success-summary__row--amount">
               <span>Amount Paid</span>
-              <strong>LKR 6,000</strong>
+              <strong>{formatCurrency(amount)}</strong>
             </div>
 
             <div className="fine-pay-success-summary__row">
@@ -40,12 +58,12 @@ export default function FinePaySuccess() {
 
             <div className="fine-pay-success-summary__row">
               <span>Reference ID</span>
-              <span>TRX-291763</span>
+              <span>{paymentId}</span>
             </div>
 
             <div className="fine-pay-success-summary__row">
               <span>Payment Method</span>
-              <span>VISA **** 4242</span>
+              <span>CARD **** {cardLast4}</span>
             </div>
           </section>
 
